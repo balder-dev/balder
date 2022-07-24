@@ -14,10 +14,12 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../../src'))
 
+from balder import __version__
 
 # -- Project information -----------------------------------------------------
 
 project = 'balder'
+version = __version__
 copyright = '2021, Max Stahlschmidt'
 author = 'Max Stahlschmidt'
 
