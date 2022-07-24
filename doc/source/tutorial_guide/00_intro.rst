@@ -33,7 +33,7 @@ After you have installed git, you can checkout the repository with the command:
 
 .. code-block::
 
-    >>> git checkout <TODO insert here>
+    >>> git clone https://github.com/balder-dev/balderexample-loginserver.git
 
 This command will download the latest environment of the loginserver.
 
