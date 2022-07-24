@@ -105,23 +105,18 @@ trees between all device mappings - later more) will be determined
 
 To make this clearer, lets take a look to the following example. Imagine, we have the following scenario:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: ScenarioLogin
 
-    digraph {
-        label="ScenarioLogin"
-        subgraph cluster_a {
-            label=""
-            ServerDevice  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ServerDevice</FONT></TD></TR>
-                </TABLE>>];
-            ClientDevice  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ClientDevice</FONT></TD></TR>
-                </TABLE>>];
-            ServerDevice -> ClientDevice [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+    classDiagram
+        direction RL
+        class ClientDevice
+        class ServerDevice
+
+        ClientDevice <--> ServerDevice: HttpConnection
+
+
 
 In Balder this could be described like the following:
 
