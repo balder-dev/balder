@@ -253,25 +253,18 @@ We will not add features, that we do not need here!
 
 So let us add some features to our example before:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: ScenarioLogin
 
-    digraph {
-        label="ScenarioLogin"
-        subgraph cluster_a {
-            label=""
-            ServerDevice  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ServerDevice</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">WebServerFeature()</FONT></TD></TR>
-                </TABLE>>];
-            ClientDevice  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ClientDevice</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">SendGetRequestFeature()</FONT></TD></TR>
-                </TABLE>>];
-            ServerDevice -> ClientDevice [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+    classDiagram
+        direction RL
+        class ClientDevice
+        ClientDevice: SendGetRequestFeature()
+        class ServerDevice
+        ServerDevice: WebServerFeature()
+
+        ClientDevice <--> ServerDevice: HttpConnection
 
 This scenario can be described like the following:
 
