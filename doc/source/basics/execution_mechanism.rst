@@ -137,28 +137,19 @@ In Balder this could be described like the following:
 
 In addition to that, we create a setup in our project too. This setup looks like the following:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: SetupBasic
 
-    digraph {
-        label="SetupBasic"
-        subgraph cluster_a {
-            label=""
-            This  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">This</FONT></TD></TR>
-                </TABLE>>];
-            MyServerDevice1  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice1</FONT></TD></TR>
-                </TABLE>>];
-            MyServerDevice2  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice2</FONT></TD></TR>
-                </TABLE>>];
-            This -> MyServerDevice1 [label="HttpConnection",dir="both",weight=2]
-            This -> MyServerDevice2 [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+    classDiagram
+        direction RL
+        class This
+        class MyServerDevice1
+        class MyServerDevice2
+
+        This <--> MyServerDevice1: HttpConnection
+        This <--> MyServerDevice2: HttpConnection
+
 
 In code, this will looks like the following:
 
