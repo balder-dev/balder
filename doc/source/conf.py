@@ -31,7 +31,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
-    'sphinx.ext.graphviz'
+    'sphinxcontrib.mermaid'
 ]
 
 # output format for graphviz extension
