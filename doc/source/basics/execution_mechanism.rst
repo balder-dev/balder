@@ -308,35 +308,24 @@ the related scenario feature.
 
 For this, we expand our setup in the following way:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: SetupBasic
 
-    digraph {
-        label="SetupBasic"
-        subgraph cluster_a {
-            label=""
-            This  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">This</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">WebServerImplFeature()</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">..</FONT></TD></TR>
-                </TABLE>>];
-            MyServerDevice1  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice1</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">SendGetRequestImplFeature()</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">..</FONT></TD></TR>
+    classDiagram
+        direction RL
+        class This
+        This: WebServerImplFeature()
+        This: ...()
+        class MyServerDevice1
+        MyServerDevice1: SendGetRequestImplFeature()
+        MyServerDevice1: ...()
+        class MyServerDevice2
+        MyServerDevice2: SendGetRequestImplFeature()
+        MyServerDevice2: ...()
 
-                </TABLE>>];
-            MyServerDevice2  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice2</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">SendGetRequestImplFeature()</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">..</FONT></TD></TR>
-                </TABLE>>];
-            This -> MyServerDevice1 [label="HttpConnection",dir="both",weight=2]
-            This -> MyServerDevice2 [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+        This <--> MyServerDevice1: HttpConnection
+        This <--> MyServerDevice2: HttpConnection
 
 In balder, his looks like the following:
 
