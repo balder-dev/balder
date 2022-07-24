@@ -83,22 +83,17 @@ So back to our example test. How can we generalize it? What is the common proces
 With these information we can create a ``Scenario`` later, but first let's think about the components of our scenario.
 Let us organize the information above a little bit:
 
-.. graphviz::
+.. mermaid::
+    :align: center
 
-    digraph {
-        ServerDevice  [shape=box,label=<
-            <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                <TR><TD><FONT COLOR="blue">Developer</FONT></TD></TR>
-                <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">ManageACoffeeMachineFeature()</FONT></TD></TR>
-                <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">ManageACupFeature()</FONT></TD></TR>
-                <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">TasteAndDrinkCoffeesFeature()</FONT></TD></TR>
-            </TABLE>>];
-        ClientDevice  [shape=box,label=<
-            <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                <TR><TD><FONT COLOR="blue">CoffeeMachine</FONT></TD></TR>
-                <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">CreateCoffeeFeature()</FONT></TD></TR>
-            </TABLE>>];
-    }
+    classDiagram
+        class Developer
+        Developer : ManageACoffeeMachineFeature()
+        Developer : ManageACupFeature()
+        Developer : TasteAndDrinkCoffeesFeature()
+
+        class CoffeeMachine
+        CoffeeMachine : CreateCoffeeFeature()
 
 We uses the keyword ``*Feature`` in the functionality classes, the devices are using. This helps us to categorize the
 functionality a little bit.

@@ -105,23 +105,18 @@ trees between all device mappings - later more) will be determined
 
 To make this clearer, lets take a look to the following example. Imagine, we have the following scenario:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: ScenarioLogin
 
-    digraph {
-        label="ScenarioLogin"
-        subgraph cluster_a {
-            label=""
-            ServerDevice  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ServerDevice</FONT></TD></TR>
-                </TABLE>>];
-            ClientDevice  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ClientDevice</FONT></TD></TR>
-                </TABLE>>];
-            ServerDevice -> ClientDevice [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+    classDiagram
+        direction RL
+        class ClientDevice
+        class ServerDevice
+
+        ClientDevice <--> ServerDevice: HttpConnection
+
+
 
 In Balder this could be described like the following:
 
@@ -142,28 +137,19 @@ In Balder this could be described like the following:
 
 In addition to that, we create a setup in our project too. This setup looks like the following:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: SetupBasic
 
-    digraph {
-        label="SetupBasic"
-        subgraph cluster_a {
-            label=""
-            This  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">This</FONT></TD></TR>
-                </TABLE>>];
-            MyServerDevice1  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice1</FONT></TD></TR>
-                </TABLE>>];
-            MyServerDevice2  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice2</FONT></TD></TR>
-                </TABLE>>];
-            This -> MyServerDevice1 [label="HttpConnection",dir="both",weight=2]
-            This -> MyServerDevice2 [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+    classDiagram
+        direction RL
+        class This
+        class MyServerDevice1
+        class MyServerDevice2
+
+        This <--> MyServerDevice1: HttpConnection
+        This <--> MyServerDevice2: HttpConnection
+
 
 In code, this will looks like the following:
 
@@ -267,25 +253,18 @@ We will not add features, that we do not need here!
 
 So let us add some features to our example before:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: ScenarioLogin
 
-    digraph {
-        label="ScenarioLogin"
-        subgraph cluster_a {
-            label=""
-            ServerDevice  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ServerDevice</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">WebServerFeature()</FONT></TD></TR>
-                </TABLE>>];
-            ClientDevice  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">ClientDevice</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">SendGetRequestFeature()</FONT></TD></TR>
-                </TABLE>>];
-            ServerDevice -> ClientDevice [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+    classDiagram
+        direction RL
+        class ClientDevice
+        ClientDevice: SendGetRequestFeature()
+        class ServerDevice
+        ServerDevice: WebServerFeature()
+
+        ClientDevice <--> ServerDevice: HttpConnection
 
 This scenario can be described like the following:
 
@@ -329,35 +308,24 @@ the related scenario feature.
 
 For this, we expand our setup in the following way:
 
-.. graphviz::
+.. mermaid::
+    :align: center
+    :caption: SetupBasic
 
-    digraph {
-        label="SetupBasic"
-        subgraph cluster_a {
-            label=""
-            This  [shape=box,label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">This</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">WebServerImplFeature()</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">..</FONT></TD></TR>
-                </TABLE>>];
-            MyServerDevice1  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice1</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">SendGetRequestImplFeature()</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">..</FONT></TD></TR>
+    classDiagram
+        direction RL
+        class This
+        This: WebServerImplFeature()
+        This: ...()
+        class MyServerDevice1
+        MyServerDevice1: SendGetRequestImplFeature()
+        MyServerDevice1: ...()
+        class MyServerDevice2
+        MyServerDevice2: SendGetRequestImplFeature()
+        MyServerDevice2: ...()
 
-                </TABLE>>];
-            MyServerDevice2  [shape=box, label=<
-                <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
-                    <TR><TD><FONT COLOR="blue">MyServerDevice2</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">SendGetRequestImplFeature()</FONT></TD></TR>
-                    <TR><TD><FONT FACE="Courier New" POINT-SIZE="12.0">..</FONT></TD></TR>
-                </TABLE>>];
-            This -> MyServerDevice1 [label="HttpConnection",dir="both",weight=2]
-            This -> MyServerDevice2 [label="HttpConnection",dir="both",weight=2]
-        }
-    }
+        This <--> MyServerDevice1: HttpConnection
+        This <--> MyServerDevice2: HttpConnection
 
 In balder, his looks like the following:
 
