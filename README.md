@@ -1,6 +1,6 @@
 
 <div align="center">
-  <img style="margin: 20px;max-width: 68%" src="doc/source/_static/balder_w_boarder.png">
+  <img style="margin: 20px;max-width: 68%" src="https://docs.balder.dev/en/latest/_static/balder_w_boarder.png" alt="Balder logo">
 </div>
 
 Balder is a very powerful, universal and flexible python test system that allows you to reuse a once written testcode as 
