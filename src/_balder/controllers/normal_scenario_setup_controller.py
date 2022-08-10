@@ -6,16 +6,16 @@ from typing import Type, List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from _balder.device import Device
-    from _balder.scenario import Scenario
-    from _balder.setup import Setup
     from _balder.connection import Connection
     from _balder.controllers import ScenarioController
     from _balder.controllers import SetupController
 
 import inspect
+from _balder.setup import Setup
+from _balder.scenario import Scenario
 from .controller import Controller
 from .device_controller import DeviceController
-from _balder.exceptions import MultiInheritanceError
+from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError
 
 
 logger = logging.getLogger(__file__)
@@ -126,3 +126,93 @@ class NormalScenarioSetupController(Controller, ABC):
                     if cur_cnn not in all_connections:
                         all_connections.append(cur_cnn)
         return all_connections
+
+    def validate_inheritance(self):
+        """
+        This method validates that the inheritance of the related :class:`Setup`/:class:`Scenario` class was done
+        correctly. It checks that all inner devices that are inherited has the same naming as their parents and also
+        that every reused name (that is already be used for a device in the parent class) does also inherit from this
+        parent scenario/setup device.
+
+        In addition to that, it secures that either all devices are overwritten in the current class or no devices are
+        overwritten in the related class.
+        """
+
+        # get parent scenario / setup class and check no multi inheritance
+        parent_scenario_or_setup = None
+        for cur_base_class in self.related_cls.__bases__:
+            if issubclass(cur_base_class, Scenario) or issubclass(cur_base_class, Setup):
+                if parent_scenario_or_setup is not None:
+                    # multi inheritance is not allowed
+                    raise MultiInheritanceError(
+                        f"found more than one Scenario/Setup parent classes for `{self.related_cls.__name__}` "
+                        f"- multi inheritance is not allowed for Scenario/Setup classes")
+                parent_scenario_or_setup = cur_base_class
+        if parent_scenario_or_setup == Scenario or parent_scenario_or_setup == Setup:
+            # done, because the parent class is direct Scenario/Setup class
+            return
+
+        parent_scenario_or_setup_controller = self.__class__.get_for(parent_scenario_or_setup)
+
+        devices = self.get_all_inner_device_classes()
+        abs_parent_devices = parent_scenario_or_setup_controller.get_all_abs_inner_device_classes()
+        abs_parent_devices_as_names = [cur_parent.__name__ for cur_parent in abs_parent_devices]
+
+        if len(devices) == 0:
+            # ignore it because cur item has no own device definitions
+            return
+        else:
+            # check that a device is newly defined or has the same name as the parent device
+            for cur_item_device in devices:
+                # check if name exists in parent
+                relevant_parent_according_naming = None
+                if cur_item_device.__name__ in abs_parent_devices_as_names:
+                    relevant_parent_according_naming = \
+                        abs_parent_devices[abs_parent_devices_as_names.index(cur_item_device.__name__)]
+
+                # check if device is inherited from a parent
+                relevant_parent_device_according_inheritance = None
+                for cur_parent in abs_parent_devices:
+                    if issubclass(cur_item_device, cur_parent):
+                        if relevant_parent_device_according_inheritance is not None:
+                            # multi inheritance is not allowed
+                            raise MultiInheritanceError(
+                                f"found more than one {self._related_type.__name__}-Device parent classes for the "
+                                f"class `{cur_item_device.__name__}` - multi inheritance is not allowed for device "
+                                f"classes")
+                        relevant_parent_device_according_inheritance = cur_parent
+
+                # now check if both is fulfilled
+                if relevant_parent_according_naming == relevant_parent_device_according_inheritance and \
+                        relevant_parent_device_according_inheritance is not None:
+                    # device is inherited AND has the same name as used in parent -> ALLOWED
+                    pass
+                elif relevant_parent_according_naming is None and relevant_parent_device_according_inheritance is None:
+                    # both are none -> it is a new device -> ALLOWED
+                    pass
+                elif relevant_parent_according_naming is None:
+                    # reused a naming but does not inherit from it -> NOT ALLOWED
+                    raise DeviceOverwritingError(
+                        f"the inner device class `{cur_item_device.__qualname__}` which inherits from another "
+                        f"device `{relevant_parent_device_according_inheritance.__qualname__}` - it should also have "
+                        f"the same name")
+                elif relevant_parent_device_according_inheritance is None:
+                    # inherit from a parent device, but it doesn't have the same naming -> NOT ALLOWED
+                    raise DeviceOverwritingError(
+                        f"the inner device class `{cur_item_device.__qualname__}` has the same name than the "
+                        f"device `{relevant_parent_according_naming.__qualname__}` - it should also inherit from it")
+
+            # secure that all parent devices are implemented here too
+            for cur_parent in abs_parent_devices:
+                found_parent = False
+                for cur_item_device in devices:
+                    if issubclass(cur_item_device, cur_parent):
+                        found_parent = True
+                        break
+                if not found_parent:
+                    raise DeviceOverwritingError(
+                        f"found a device `{cur_parent.__qualname__}` which is part of a parent class, but it is "
+                        f"not implemented in child class `{self.related_cls.__name__}`")
+
+        # also check the parent class here
+        self.__class__.get_for(parent_scenario_or_setup).validate_inheritance()

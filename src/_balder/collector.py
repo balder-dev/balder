@@ -21,11 +21,11 @@ from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
-    FeatureController
+    FeatureController, NormalScenarioSetupController
 from _balder.exceptions import InnerFeatureResolvingError, VDeviceResolvingError, IllegalVDeviceMappingError, \
     DeviceResolvingException, UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, \
-    DuplicateForVDeviceError, UnknownVDeviceException, DeviceOverwritingError, MultiInheritanceError, \
-    FeatureOverwritingError, VDeviceOverwritingError
+    DuplicateForVDeviceError, UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError, \
+    VDeviceOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
 
 logger = logging.getLogger(__file__)
@@ -286,93 +286,8 @@ class Collector:
         the current class or non device
         """
         for cur_scenario_or_setup in items:
-            cur_scenario_or_setup_controller = None
-            if issubclass(cur_scenario_or_setup, Scenario):
-                cur_scenario_or_setup_controller = ScenarioController.get_for(cur_scenario_or_setup)
-            elif issubclass(cur_scenario_or_setup, Setup):
-                cur_scenario_or_setup_controller = SetupController.get_for(cur_scenario_or_setup)
-
-            parent_scenario_or_setup = None
-            for cur_base_class in cur_scenario_or_setup.__bases__:
-                if issubclass(cur_base_class, Scenario) or issubclass(cur_base_class, Setup):
-                    if parent_scenario_or_setup is not None:
-                        # multi inheritance is not allowed
-                        raise MultiInheritanceError(
-                            f"found more than one Scenario/Setup parent classes for `{cur_scenario_or_setup.__name__}` "
-                            f"- multi inheritance is not allowed for Scenario/Setup classes")
-                    parent_scenario_or_setup = cur_base_class
-            if parent_scenario_or_setup == Scenario or parent_scenario_or_setup == Setup:
-                # done, because the parent class is direct Scenario/Setup class
-                continue
-
-            parent_scenario_or_setup_controller = None
-            if issubclass(parent_scenario_or_setup, Scenario):
-                parent_scenario_or_setup_controller = ScenarioController.get_for(parent_scenario_or_setup)
-            elif issubclass(parent_scenario_or_setup, Setup):
-                parent_scenario_or_setup_controller = SetupController.get_for(parent_scenario_or_setup)
-
-            devices = cur_scenario_or_setup_controller.get_all_inner_device_classes()
-            abs_parent_devices = parent_scenario_or_setup_controller.get_all_abs_inner_device_classes()
-            abs_parent_devices_as_names = [cur_parent.__name__ for cur_parent in abs_parent_devices]
-
-            if len(devices) == 0:
-                # ignore it because cur item has no special definitions
-                pass
-            else:
-                # check if a device has the same name and/or inherits from a device of the parent item
-                for cur_item_device in devices:
-                    # check if name exist
-                    relevant_parent_device_naming = None
-                    if cur_item_device.__name__ in abs_parent_devices_as_names:
-                        relevant_parent_device_naming = \
-                            abs_parent_devices[abs_parent_devices_as_names.index(cur_item_device.__name__)]
-
-                    # check if device is inherited
-                    relevant_parent_device_inheritance = None
-                    for cur_parent in abs_parent_devices:
-                        if issubclass(cur_item_device, cur_parent):
-                            if relevant_parent_device_inheritance is not None:
-                                # multi inheritance is not allowed
-                                raise MultiInheritanceError(
-                                    f"found more than one Scenario/Setup Device parent classes for "
-                                    f"`{cur_item_device.__name__}` - multi inheritance is not allowed for Device "
-                                    f"classes")
-                            relevant_parent_device_inheritance = cur_parent
-
-                    # now check if both is fulfilled
-                    if relevant_parent_device_naming == relevant_parent_device_inheritance and \
-                            relevant_parent_device_inheritance is not None:
-                        #
-                        pass
-                    elif relevant_parent_device_naming is None and relevant_parent_device_inheritance is None:
-                        # both are none -> it is a new device -> ALLOWED
-                        pass
-                    elif relevant_parent_device_naming is None:
-                        # reused a naming but does not inherit from it -> NOT ALLOWED
-                        raise DeviceOverwritingError(
-                            f"the inner device class `{cur_item_device.__qualname__}` which inherits from another "
-                            f"device `{relevant_parent_device_inheritance.__qualname__}` - it should also have the "
-                            f"same name")
-                    elif relevant_parent_device_inheritance is None:
-                        # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
-                        raise DeviceOverwritingError(
-                            f"the inner device class `{cur_item_device.__qualname__}` has the same name than the "
-                            f"device `{relevant_parent_device_naming.__qualname__}` - it should also inherit from it")
-
-                # secure that all parent devices are implemented here too
-                for cur_parent in abs_parent_devices:
-                    found_parent = False
-                    for cur_item_device in devices:
-                        if issubclass(cur_item_device, cur_parent):
-                            found_parent = True
-                            break
-                    if not found_parent:
-                        raise DeviceOverwritingError(
-                            f"found a device `{cur_parent.__qualname__}` which is part of a parent class, but it is "
-                            f"not implemented in child class `{cur_scenario_or_setup.__name__}`")
-
-            # also check the parent class here
-            Collector.validate_inheritance_of([parent_scenario_or_setup])
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            cur_scenario_or_setup_controller.validate_inheritance()
 
     @staticmethod
     def resolve_raw_fixtures():
