@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
-from typing import Type, List, Optional, TYPE_CHECKING
+from typing import Type, List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from _balder.device import Device
     from _balder.scenario import Scenario
     from _balder.setup import Setup
     from _balder.connection import Connection
+    from _balder.controllers import ScenarioController
+    from _balder.controllers import SetupController
 
 import inspect
 from .controller import Controller
@@ -35,6 +37,24 @@ class NormalScenarioSetupController(Controller, ABC):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_for(related_cls) -> Union[ScenarioController, SetupController]:
+        """
+        This class returns the current existing controller instance for the given item. If the instance does not exist
+        yet, it will automatically create it and saves the instance in an internal dictionary.
+
+        .. note::
+            This method automatically returns the correct controller type, depending on the class you provide with
+            `related_cls`.
+        """
+        from _balder.controllers import ScenarioController, SetupController
+        if issubclass(related_cls, Scenario):
+            return ScenarioController.get_for(related_cls)
+        elif issubclass(related_cls, Setup):
+            return SetupController.get_for(related_cls)
+        else:
+            raise TypeError(f"illegal non supported type `{related_cls.__name__}` given for `related_cls`")
 
     def get_all_inner_device_classes(self) -> List[Type[Device]]:
         """
