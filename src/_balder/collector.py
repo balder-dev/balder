@@ -23,9 +23,8 @@ from _balder.connection import Connection
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import InnerFeatureResolvingError, VDeviceResolvingError, IllegalVDeviceMappingError, \
-    DeviceResolvingException, UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, \
-    DuplicateForVDeviceError, UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError, \
-    VDeviceOverwritingError
+    UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, DuplicateForVDeviceError, \
+    UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError, VDeviceOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
 
 logger = logging.getLogger(__file__)
@@ -534,39 +533,8 @@ class Collector:
 
         for cur_device in all_devices:
             cur_device_controller = DeviceController.get_for(cur_device)
-            for cur_node in cur_device_controller.connections.keys():
-                for cur_conn in cur_device_controller.connections[cur_node]:
-                    # for every connection applies that the `from_device` must already be a type; also the
-                    # `to_device` has to be an inner class of this type
+            cur_device_controller.resolve_connection_device_strings()
 
-                    if isinstance(cur_conn.to_device, type) and issubclass(cur_conn.to_device, Device):
-                        # Skip because resolving already done
-                        return
-
-                    # get outer class of `from_device`
-                    outer_cls_name_from_device = cur_conn.from_device.__qualname__.rpartition('.')[0]
-                    mod = sys.modules[cur_conn.from_device.__module__]
-                    parent_cls_from_device = getattr(mod, outer_cls_name_from_device)
-
-                    all_outer_inner_classes = inspect.getmembers(parent_cls_from_device, inspect.isclass)
-                    all_outer_inner_classes = {name: value for name, value in all_outer_inner_classes}
-                    if cur_conn.to_device in all_outer_inner_classes.keys():
-                        meta = cur_conn.metadata
-
-                        meta["to_device"] = all_outer_inner_classes[cur_conn.to_device]
-                        if meta["to_device_node_name"] is None:
-                            # no unique node was given -> create one
-                            meta["to_device_node_name"] = \
-                                DeviceController.get_for(meta["to_device"]).get_new_empty_auto_node()
-
-                        # first reset whole metadata
-                        cur_conn.metadata = {}
-                        # now set metadata
-                        cur_conn.metadata = meta
-                    else:
-                        raise DeviceResolvingException(
-                            f"cannot resolve the str for the given device class `{cur_conn.to_device}` for "
-                            f"`@connect` decorator at device `{cur_conn.from_device.__qualname__}`")
 
     def exchange_vdevice_mapping_device_strings(self):
         """

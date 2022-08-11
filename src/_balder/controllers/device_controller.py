@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import logging
 from abc import ABC
 from typing import Dict, List, Type, Tuple, Union, TYPE_CHECKING
@@ -8,13 +9,13 @@ if TYPE_CHECKING:
     from _balder.scenario import Scenario
     from _balder.setup import Setup
     from _balder.connection import Connection
-    from _balder.device import Device
     from _balder.vdevice import VDevice
     from _balder.controllers import ScenarioController, SetupController
 
 import inspect
+from _balder.device import Device
 from .base_device_controller import BaseDeviceController
-from _balder.exceptions import DeviceScopeError
+from _balder.exceptions import DeviceScopeError, DeviceResolvingException
 
 logger = logging.getLogger(__file__)
 
@@ -301,3 +302,50 @@ class DeviceController(BaseDeviceController, ABC):
                     f"the outer class is of the type `{outer_class.__name__}` - this is not allowed")
             return outer_class
         raise RuntimeError(f"can not find the outer class of this given device `{self.related_cls.__qualname__}`")
+
+    def resolve_connection_device_strings(self):
+        """
+        This method ensures that device names, that are provided as strings within connections between the current
+        device and another device (which is given as string), are resolved. Since the `@connect` marker makes it
+        possible to specify the other device as a string, this method will exchange these strings with the related
+        device class.
+
+        .. note::
+            This is required, because in some cases you have to provide the devices for the decorator as a string,
+            because the outer class could be imported later than the execution of the decorator was done. After Balder
+            has read all files, all required information are available and this method should be able to resolve the
+            device-strings.
+        """
+        for cur_node in self.connections.keys():
+            for cur_conn in self.connections[cur_node]:
+                # for every connection applies that the `from_device` must already be a type; also the
+                # `to_device` has to be an inner class of this type
+
+                if isinstance(cur_conn.to_device, type) and issubclass(cur_conn.to_device, Device):
+                    # Skip because resolving already done
+                    return
+
+                # get outer class of `from_device`
+                outer_cls_name_from_device = cur_conn.from_device.__qualname__.rpartition('.')[0]
+                mod = sys.modules[cur_conn.from_device.__module__]
+                parent_cls_from_device = getattr(mod, outer_cls_name_from_device)
+
+                all_inner_classes_of_outer = inspect.getmembers(parent_cls_from_device, inspect.isclass)
+                all_inner_classes_of_outer = {name: value for name, value in all_inner_classes_of_outer}
+                if cur_conn.to_device in all_inner_classes_of_outer.keys():
+                    meta = cur_conn.metadata
+
+                    meta["to_device"] = all_inner_classes_of_outer[cur_conn.to_device]
+                    if meta["to_device_node_name"] is None:
+                        # no unique node was given -> create one
+                        meta["to_device_node_name"] = \
+                            DeviceController.get_for(meta["to_device"]).get_new_empty_auto_node()
+
+                    # first reset whole metadata
+                    cur_conn.metadata = {}
+                    # now set metadata
+                    cur_conn.metadata = meta
+                else:
+                    raise DeviceResolvingException(
+                        f"cannot resolve the str for the given device class `{cur_conn.to_device}` for "
+                        f"`@connect` decorator at device `{cur_conn.from_device.__qualname__}`")
