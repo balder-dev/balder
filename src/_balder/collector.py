@@ -256,11 +256,7 @@ class Collector:
         variation by the :class:`ExecutorTree`!
         """
         for cur_scenario_or_setup in scenarios_or_setups:
-            cur_scenario_or_setup_controller = None
-            if issubclass(cur_scenario_or_setup, Scenario):
-                cur_scenario_or_setup_controller = ScenarioController.get_for(cur_scenario_or_setup)
-            elif issubclass(cur_scenario_or_setup, Setup):
-                cur_scenario_or_setup_controller = SetupController.get_for(cur_scenario_or_setup)
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
 
             devices = cur_scenario_or_setup_controller.get_all_abs_inner_device_classes()
             for cur_device in devices:
