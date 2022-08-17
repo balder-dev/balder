@@ -154,7 +154,7 @@ class FeatureController(Controller):
         :return: the method variation callable for the given data (or none, if the method does not exist in this object
                  or in a parent class of it)
         """
-        from balder import Connection
+        from _balder.connection import Connection
 
         all_vdevice_method_variations = self.get_method_based_for_vdevice()
 

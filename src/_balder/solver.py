@@ -10,11 +10,11 @@ if TYPE_CHECKING:
     from _balder.plugin_manager import PluginManager
 
 import itertools
-from .executor.executor_tree import ExecutorTree
-from .executor.setup_executor import SetupExecutor
-from .executor.scenario_executor import ScenarioExecutor
-from .executor.testcase_executor import TestcaseExecutor
-from .executor.variation_executor import VariationExecutor
+from _balder.executor.executor_tree import ExecutorTree
+from _balder.executor.setup_executor import SetupExecutor
+from _balder.executor.scenario_executor import ScenarioExecutor
+from _balder.executor.testcase_executor import TestcaseExecutor
+from _balder.executor.variation_executor import VariationExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.controllers import ScenarioController, SetupController
 

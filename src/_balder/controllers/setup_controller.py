@@ -6,7 +6,7 @@ from typing import Type, Dict, TYPE_CHECKING
 if TYPE_CHECKING:
     from _balder.setup import Setup
 
-from .normal_scenario_setup_controller import NormalScenarioSetupController
+from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
 
 logger = logging.getLogger(__file__)
 

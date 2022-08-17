@@ -1,12 +1,12 @@
-from .controller import Controller
+from _balder.controllers.controller import Controller
 
-from .base_device_controller import BaseDeviceController
-from .device_controller import DeviceController
+from _balder.controllers.base_device_controller import BaseDeviceController
+from _balder.controllers.device_controller import DeviceController
 
-from .vdevice_controller import VDeviceController
+from _balder.controllers.vdevice_controller import VDeviceController
 
-from .normal_scenario_setup_controller import NormalScenarioSetupController
-from .scenario_controller import ScenarioController
-from .setup_controller import SetupController
+from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
+from _balder.controllers.scenario_controller import ScenarioController
+from _balder.controllers.setup_controller import SetupController
 
-from .feature_controller import FeatureController
+from _balder.controllers.feature_controller import FeatureController

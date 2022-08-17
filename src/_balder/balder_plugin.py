@@ -2,10 +2,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Type, Tuple, List
 
 if TYPE_CHECKING:
-    from .executor.executor_tree import ExecutorTree
-    from .balder_session import BalderSession
-    from .setup import Setup
-    from .scenario import Scenario
+    from _balder.executor.executor_tree import ExecutorTree
+    from _balder.balder_session import BalderSession
+    from _balder.setup import Setup
+    from _balder.scenario import Scenario
     import argparse
 
 import pathlib

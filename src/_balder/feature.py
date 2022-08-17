@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 from _balder.controllers import FeatureController
 
-from .exceptions import UnclearMethodVariationError
+from _balder.exceptions import UnclearMethodVariationError
 
 
 class Feature:
