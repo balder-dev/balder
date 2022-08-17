@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 import inspect
 from _balder.setup import Setup
 from _balder.scenario import Scenario
-from .controller import Controller
-from .device_controller import DeviceController
+from _balder.controllers.controller import Controller
+from _balder.controllers.device_controller import DeviceController
 from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError
 
 

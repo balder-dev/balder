@@ -27,7 +27,7 @@ class FixtureManager:
     EXECUTION_LEVEL_ORDER = ['session', 'setup', 'scenario', 'variation', 'testcase']
 
     def __init__(self, executor_tree):
-        from .executor.executor_tree import ExecutorTree
+        from _balder.executor.executor_tree import ExecutorTree
         self._executor_tree: ExecutorTree = executor_tree
 
         # contains all active fixtures with their namespace, their func_type, their callable, the generator object
@@ -45,11 +45,11 @@ class FixtureManager:
 
     @property
     def RESOLVE_TYPE_LEVEL(self):
-        from .executor.executor_tree import ExecutorTree
-        from .executor.setup_executor import SetupExecutor
-        from .executor.scenario_executor import ScenarioExecutor
-        from .executor.variation_executor import VariationExecutor
-        from .executor.testcase_executor import TestcaseExecutor
+        from _balder.executor.executor_tree import ExecutorTree
+        from _balder.executor.setup_executor import SetupExecutor
+        from _balder.executor.scenario_executor import ScenarioExecutor
+        from _balder.executor.variation_executor import VariationExecutor
+        from _balder.executor.testcase_executor import TestcaseExecutor
 
         return {
             ExecutorTree: 'session',
@@ -64,7 +64,7 @@ class FixtureManager:
         """
         returns a list with the definition scope objects in the priority order (ExecutorTree stands for global fixtures)
         """
-        from .executor.executor_tree import ExecutorTree
+        from _balder.executor.executor_tree import ExecutorTree
         return [ExecutorTree, Setup, Scenario]
 
     @property
@@ -107,11 +107,11 @@ class FixtureManager:
 
         :return: the method returns a dictionary with the attribute name as key and the return value as value
         """
-        from .executor.executor_tree import ExecutorTree
-        from .executor.setup_executor import SetupExecutor
-        from .executor.scenario_executor import ScenarioExecutor
-        from .executor.variation_executor import VariationExecutor
-        from .executor.testcase_executor import TestcaseExecutor
+        from _balder.executor.executor_tree import ExecutorTree
+        from _balder.executor.setup_executor import SetupExecutor
+        from _balder.executor.scenario_executor import ScenarioExecutor
+        from _balder.executor.variation_executor import VariationExecutor
+        from _balder.executor.testcase_executor import TestcaseExecutor
 
         arguments = inspect.getfullargspec(callable_func).args
         result_dict = {}

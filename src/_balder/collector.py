@@ -289,7 +289,7 @@ class Collector:
         """
         This method resolves all raw fixtures and sets the resolved attribute `ExecutorTree.fixtures`
         """
-        from .executor.executor_tree import ExecutorTree
+        from _balder.executor.executor_tree import ExecutorTree
         resolved_dict = {}
         for cur_level, cur_module_fixture_dict in ExecutorTree.raw_fixtures.items():
             resolved_dict[cur_level] = {}

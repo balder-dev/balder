@@ -3,7 +3,7 @@ from _balder.testresult import FixturePartResult, ResultState
 from typing import List, Dict, Union, Type, TYPE_CHECKING
 import types
 from _balder.previous_executor_mark import PreviousExecutorMark
-from ..testresult import TestcaseResult
+from _balder.testresult import TestcaseResult
 
 if TYPE_CHECKING:
     from _balder.setup import Setup

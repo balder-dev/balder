@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from _balder.feature import Feature
 
 import inspect
-from .base_device_controller import BaseDeviceController
+from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError
 
 

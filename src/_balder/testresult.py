@@ -89,7 +89,7 @@ class BranchBodyResult(_Result):
     """
 
     def __init__(self, executor: BasicExecutor):
-        from .executor.testcase_executor import TestcaseExecutor
+        from _balder.executor.testcase_executor import TestcaseExecutor
 
         if isinstance(executor, TestcaseExecutor):
             raise TypeError("testcase executors are not allowed to use in `BranchBodyResult`")

@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 import sys
 import traceback
-from .setup_executor import SetupExecutor
-from .basic_executor import BasicExecutor
-from ..fixture_manager import FixtureManager
+from _balder.executor.setup_executor import SetupExecutor
+from _balder.executor.basic_executor import BasicExecutor
+from _balder.fixture_manager import FixtureManager
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.previous_executor_mark import PreviousExecutorMark
 

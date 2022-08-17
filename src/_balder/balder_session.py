@@ -2,10 +2,10 @@ from __future__ import annotations
 from typing import Union, List, Tuple, Dict, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .setup import Setup
-    from .device import Device
-    from .scenario import Scenario
-    from .connection import Connection
+    from _balder.setup import Setup
+    from _balder.device import Device
+    from _balder.scenario import Scenario
+    from _balder.connection import Connection
 
 import os
 import sys
@@ -13,13 +13,13 @@ import balder
 import inspect
 import pathlib
 import argparse
-from .balder_plugin import BalderPlugin
-from .plugin_manager import PluginManager
-from .executor.executor_tree import ExecutorTree
-from .collector import Collector
-from .solver import Solver
-from .exceptions import DuplicateBalderSettingError
-from .balder_settings import BalderSettings
+from _balder.balder_plugin import BalderPlugin
+from _balder.plugin_manager import PluginManager
+from _balder.executor.executor_tree import ExecutorTree
+from _balder.collector import Collector
+from _balder.solver import Solver
+from _balder.exceptions import DuplicateBalderSettingError
+from _balder.balder_settings import BalderSettings
 
 
 class BalderSession:

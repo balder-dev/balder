@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from _balder.feature import Feature
 
 import inspect
-from .controller import Controller
+from _balder.controllers.controller import Controller
 
 logger = logging.getLogger(__file__)
 

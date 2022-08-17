@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 import inspect
 from _balder.device import Device
-from .base_device_controller import BaseDeviceController
+from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError, DeviceResolvingException
 
 logger = logging.getLogger(__file__)

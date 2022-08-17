@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .device import Device
+from _balder.device import Device
 
 
 class VDevice(Device):
