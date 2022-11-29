@@ -272,7 +272,7 @@ class DeviceController(BaseDeviceController, ABC):
         automatically.
         """
 
-        self_node_name = "n{}".format(self._node_cnt)
+        self_node_name = f"n{self._node_cnt}"
         self._node_cnt += 1
         return self_node_name
 

@@ -1247,13 +1247,12 @@ class Connection:
             cur_connection = args[cur_idx]
             if isinstance(cur_connection, type):
                 if not issubclass(cur_connection, Connection):
-                    raise TypeError(
-                        "illegal type `{}` for parameter number {}".format(cur_connection.__name__, cur_idx))
+                    raise TypeError(f"illegal type `{cur_connection.__name__}` for parameter number {cur_idx}")
                 if self.__class__ != Connection:
                     if not cur_connection.is_parent_of(self.__class__):
                         raise IllegalConnectionTypeError(
-                            "the given connection `{}` (parameter pos {}) is no parent class of the `{}`".format(
-                                cur_connection.__name__, cur_idx, self.__class__.__name__))
+                            f"the given connection `{cur_connection.__name__}` (parameter pos {cur_idx}) is no parent "
+                            f"class of the `{self.__class__.__name__}`")
                 # this is a simple Connection type object -> simply add an instance of it to the full list
                 new_conn = cur_connection()
                 self._based_on_connections.append(new_conn)
@@ -1266,8 +1265,8 @@ class Connection:
                 if self.__class__ != Connection:
                     if not cur_connection.__class__.is_parent_of(self.__class__):
                         raise IllegalConnectionTypeError(
-                            "the given connection `{}` (parameter pos {}) is no parent class of the `{}`".format(
-                                cur_connection.__class__.__name__, cur_idx, self.__class__.__name__))
+                            f"the given connection `{cur_connection.__class__.__name__}` (parameter pos {cur_idx}) is "
+                            f"no parent class of the `{self.__class__.__name__}`")
                 self._based_on_connections.append(cur_connection)
 
             elif isinstance(cur_connection, tuple):
@@ -1276,15 +1275,14 @@ class Connection:
                     cur_tuple_elem = cur_connection[cur_tuple_idx]
                     if isinstance(cur_tuple_elem, type):
                         if not issubclass(cur_tuple_elem, Connection):
-                            raise TypeError(
-                                "illegal type `{}` for tuple element {} for parameter number {}".format(
-                                    cur_tuple_elem.__name__, cur_tuple_idx, cur_idx))
+                            raise TypeError(f"illegal type `{cur_tuple_elem.__name__}` for tuple element "
+                                            f"{cur_tuple_idx} for parameter number {cur_idx}")
                         if self.__class__ != Connection:
                             if not cur_tuple_elem.is_parent_of(self.__class__):
                                 raise IllegalConnectionTypeError(
-                                    "the given connection `{}` (tuple element {} for parameter at pos {}) is no parent "
-                                    "class of the `{}`".format(
-                                        cur_tuple_elem.__name__, cur_tuple_idx, cur_idx, self.__class__.__name__))
+                                    f"the given connection `{cur_tuple_elem.__name__}` (tuple element {cur_tuple_idx} "
+                                    f"for parameter at pos {cur_idx}) is no parent class of the "
+                                    f"`{self.__class__.__name__}`")
                         # this is a simple Connection type object -> simply add the instance of connection to result
                         # tuple
                         result_tuple += (cur_tuple_elem(), )

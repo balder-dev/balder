@@ -50,11 +50,11 @@ class NodeGateway:
         """
         device_controller = DeviceController.get_for(self.device)
         if self.from_node_name not in device_controller.get_all_connections().keys():
-            raise NodeNotExistsError("the from_node `{}` mentioned by the `@gateway` decorator does not exist "
-                                     "as a node in device `{}`".format(self.from_node_name, self.__class__.__name__))
+            raise NodeNotExistsError(f"the from_node `{self.from_node_name}` mentioned by the `@gateway` decorator "
+                                     f"does not exist as a node in device `{self.__class__.__name__}`")
         if self.to_node_name not in device_controller.get_all_connections().keys():
-            raise NodeNotExistsError("the to_node `{}` mentioned by the `@gateway` decorator does not exist "
-                                     "as a node in device `{}`".format(self.to_node_name, self.__class__.__name__))
+            raise NodeNotExistsError(f"the to_node `{self.to_node_name}` mentioned by the `@gateway` decorator does "
+                                     f"not exist as a node in device `{self.__class__.__name__}`")
 
     def get_conn_partner_of(self, node) -> str:
         """

@@ -87,7 +87,7 @@ class Collector:
         """
         filepath = self.working_dir.joinpath('balderglob.py')
 
-        module_name = "{}.balderglob".format(self.working_dir.stem)
+        module_name = f"{self.working_dir.stem}.balderglob"
 
         if self.balderglob_was_loaded:
             return sys.modules[module_name]
@@ -135,8 +135,10 @@ class Collector:
         for cur_path in py_file_paths:
             #: only use files that match the filter
             if cur_path.parts[-1].startswith('scenario_'):
-                module_name = "{}.{}.{}".format(
-                    self.working_dir.stem, ".".join(cur_path.parent.relative_to(self.working_dir).parts), cur_path.stem)
+                module_name = \
+                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                    f"{ cur_path.stem}"
+
                 if module_name not in sys.modules.keys():
                     spec = importlib.util.spec_from_file_location(module_name, cur_path)
                     cur_module = importlib.util.module_from_spec(spec)
@@ -167,8 +169,10 @@ class Collector:
         for cur_path in py_file_paths:
             #: only use files that match the filter
             if 'connections' in cur_path.parts[-2] or 'connections.py' == cur_path.parts[-1]:
-                module_name = "{}.{}.{}".format(
-                    self.working_dir.stem, ".".join(cur_path.parent.relative_to(self.working_dir).parts), cur_path.stem)
+                module_name = \
+                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                    f"{cur_path.stem}"
+
                 spec = importlib.util.spec_from_file_location(module_name, cur_path)
                 cur_module = importlib.util.module_from_spec(spec)
                 sys.modules[module_name] = cur_module
@@ -212,8 +216,9 @@ class Collector:
         for cur_path in py_file_paths:
             #: only use files that match the filter
             if cur_path.parts[-1].startswith('setup_'):
-                module_name = "{}.{}.{}".format(
-                    self.working_dir.stem, ".".join(cur_path.parent.relative_to(self.working_dir).parts), cur_path.stem)
+                module_name = \
+                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                    f"{cur_path.stem}"
                 if module_name not in sys.modules.keys():
                     spec = importlib.util.spec_from_file_location(module_name, cur_path)
                     cur_module = importlib.util.module_from_spec(spec)
@@ -318,92 +323,84 @@ class Collector:
                 if "IGNORE" in cur_class.__dict__.keys():
                     # IGNORE is mentioned in this specific class
                     if not isinstance(cur_class.IGNORE, list):
-                        raise TypeError(
-                            "the class attribute `{}.IGNORE` has to be from type list".format(cur_class.__name__))
+                        raise TypeError(f"the class attribute `{cur_class.__name__}.IGNORE` has to be from type list")
                     # check that all elements that are mentioned here exists in the parent's RUN, SKIP or IGNORE class
                     # variable or are defined in this class
                     for cur_ignore_method in cur_class.IGNORE:
                         if not inspect.ismethod(cur_ignore_method) or \
                                 not cur_ignore_method.__name__.startswith('test_'):
-                            raise TypeError(
-                                "the given element {} for class attribute `{}.IGNORE` is no valid test method".format(
-                                    cur_ignore_method.__name__, cur_class.__name__))
+                            raise TypeError(f"the given element {cur_ignore_method.__name__} for class attribute "
+                                            f"`{cur_class.__name__}.IGNORE` is no valid test method")
                         if cur_ignore_method not in cur_class.__dict__.values() and next_parent is None or \
                                 cur_ignore_method not in cur_class.__dict__.values() and next_parent is not None \
                                 and cur_ignore_method not in next_parent.RUN \
                                 and cur_ignore_method not in next_parent.SKIP \
                                 and cur_ignore_method not in next_parent.IGNORE:
-                            raise ValueError(
-                                "the element `{}` given at class attribute `{}.IGNORE` is not a test method of this "
-                                "scenario".format(cur_ignore_method.__name__, cur_class.__name__))
+                            raise ValueError(f"the element `{cur_ignore_method.__name__}` given at class attribute "
+                                             f"`{cur_class.__name__}.IGNORE` is not a test method of this scenario")
                 else:
                     # IGNORE is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.IGNORE = []
                 if "SKIP" in cur_class.__dict__.keys():
                     # SKIP is mentioned in this specific class
                     if not isinstance(cur_class.SKIP, list):
-                        raise TypeError(
-                            "the class attribute `{}.SKIP` has to be from type list".format(cur_class.__name__))
+                        raise TypeError(f"the class attribute `{cur_class.__name__}.SKIP` has to be from type list")
                     # check that all elements that are mentioned here exist in the parent's RUN or SKIP class variable
                     # or are defined in this class
                     for cur_skip_method in cur_class.SKIP:
                         if not inspect.ismethod(cur_skip_method) or \
                                 not cur_skip_method.__name__.startswith('test_'):
-                            raise TypeError(
-                                "the given element {} for class attribute `{}.IGNORE` is no valid test method".format(
-                                    cur_skip_method.__name__, cur_class.__name__))
+                            raise TypeError(f"the given element {cur_skip_method.__name__} for class attribute "
+                                            f"`{cur_class.__name__}.IGNORE` is no valid test method")
                         if cur_skip_method not in cur_class.__dict__.values():
                             if next_parent is None:
-                                raise ValueError(
-                                    "the element `{}` given at class attribute `{}.SKIP` is not a test method of this "
-                                    "scenario".format(cur_skip_method.__name__, cur_class.__name__))
+                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class attribute "
+                                                 f"`{cur_class.__name__}.SKIP` is not a test method of this scenario")
                             else:
                                 if cur_skip_method in next_parent.IGNORE:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.SKIP` was already added to "
-                                        "IGNORE in a higher parent class - not possible to add it now to SKIP".format(
-                                            cur_skip_method.__name__, cur_class.__name__))
+                                    raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                                     f"attribute `{cur_class.__name__}.SKIP` was already added to "
+                                                     f"IGNORE in a higher parent class - not possible to add it now to "
+                                                     f"SKIP")
                                 elif cur_skip_method not in next_parent.SKIP \
                                         and cur_skip_method not in next_parent.IGNORE:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.SKIP` is not a test method of "
-                                        "this scenario".format(cur_skip_method.__name__, cur_class.__name__))
+                                    raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                                     f"attribute `{cur_class.__name__}.SKIP` is not a test method of "
+                                                     f"this scenario")
                 else:
                     # SKIP is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.SKIP = []
                 if "RUN" in cur_class.__dict__.keys():
                     # RUN is mentioned in this specific class
                     if not isinstance(cur_class.RUN, list):
-                        raise TypeError(
-                            "the class attribute `{}.RUN` has to be from type list".format(cur_class.__name__))
+                        raise TypeError(f"the class attribute `{cur_class.__name__}.RUN` has to be from type list")
                     # check that all elements that are mentioned here exists in the parent's RUN class variable or are
                     # defined in this class
                     for cur_run_method in cur_class.RUN:
                         if not inspect.ismethod(cur_run_method) or \
                                 not cur_run_method.__name__.startswith('test_'):
-                            raise TypeError(
-                                "the given element {} for class attribute `{}.RUN` is no valid test method".format(
-                                    cur_run_method.__name__, cur_class.__name__))
+                            raise TypeError(f"the given element {cur_run_method.__name__} for class attribute "
+                                            f"`{cur_class.__name__}.RUN` is no valid test method")
                         if cur_run_method not in cur_class.__dict__.values():
                             if next_parent is None:
                                 raise ValueError(
-                                    "the element `{}` given at class attribute `{}.RUN` is not a test method of this "
-                                    "scenario".format(cur_run_method.__name__, cur_class.__name__))
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
                             else:
                                 if cur_run_method in next_parent.IGNORE:
                                     raise ValueError(
-                                        "the element `{}` given at class attribute `{}.RUN` was already added to "
-                                        "IGNORE in a higher parent class - not possible to add it now to RUN".format(
-                                            cur_run_method.__name__, cur_class.__name__))
+                                        f"the element `{cur_run_method.__name__}` given at class attribute "
+                                        f"`{cur_class.__name__}.RUN` was already added to IGNORE in a higher parent "
+                                        f"class - not possible to add it now to RUN")
                                 elif cur_run_method in next_parent.SKIP:
                                     raise ValueError(
-                                        "the element `{}` given at class attribute `{}.RUN` was already added to "
-                                        "SKIP in a higher parent class - not possible to add it now to RUN".format(
-                                            cur_run_method.__name__, cur_class.__name__))
+                                        f"the element `{cur_run_method.__name__}` given at class attribute "
+                                        f"`{cur_class.__name__}.RUN` was already added to SKIP in a higher parent "
+                                        f"class - not possible to add it now to RUN")
                                 elif cur_run_method not in next_parent.RUN:
                                     raise ValueError(
-                                        "the element `{}` given at class attribute `{}.RUN` is not a test method of "
-                                        "this scenario".format(cur_run_method.__name__, cur_class.__name__))
+                                        f"the element `{cur_run_method.__name__}` given at class attribute "
+                                        f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
                 else:
                     # RUN is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.RUN = []
@@ -676,19 +673,19 @@ class Collector:
                             # the current match is the current feature itself -> not allowed to reference itself
                             if cur_potential_candidate_feature == cur_feature:
                                 raise InnerFeatureResolvingError(
-                                    "can not reference the same feature from itself (done in feature `{}` with "
-                                    "`{}`)".format(cur_feature.__class__.__name__, cur_ref_feature_name))
+                                    f"can not reference the same feature from itself (done in feature "
+                                    f"`{cur_feature.__class__.__name__}` with `{cur_ref_feature_name}`)")
                             potential_candidates.append(cur_potential_candidate_feature)
                     if len(potential_candidates) == 0:
                         raise InnerFeatureResolvingError(
-                            "can not find a matching feature in the device `{}` that could be assigned to the "
-                            "inner feature reference `{}` of the feature `{}`".format(
-                                cur_outer_device.__name__, cur_ref_feature_name, cur_feature.__class__.__name__))
+                            f"can not find a matching feature in the device `{cur_outer_device.__name__}` that could "
+                            f"be assigned to the inner feature reference `{cur_ref_feature_name}` of the feature "
+                            f"`{cur_feature.__class__.__name__}`")
                     elif len(potential_candidates) > 1:
                         raise InnerFeatureResolvingError(
-                            "found more than one matching feature in the device `{}` that could be assigned to "
-                            "the inner feature reference `{}` of the feature `{}`".format(
-                                cur_outer_device.__name__, cur_ref_feature_name, cur_feature.__class__.__name__))
+                            f"found more than one matching feature in the device `{cur_outer_device.__name__}` that "
+                            f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
+                            f"feature `{cur_feature.__class__.__name__}`")
 
     @staticmethod
     def set_original_device_features_for_all_vdevices_of(features: List[Type[Feature]]):

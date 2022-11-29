@@ -313,16 +313,14 @@ class BalderSession:
 
         print("+" + "-" * (LINE_LENGTH - 2) + "+")
         print_rect_row("BALDER Testsystem")
-        print_rect_row(
-            " python version {} | balder version {}".format(sys.version.replace('\n', ''), balder.__version__))
+        sys_version = sys.version.replace('\n', '')
+        print_rect_row(f" python version {sys_version} | balder version {balder.__version__}")
         print("+" + "-" * (LINE_LENGTH - 2) + "+")
-        print("Collect {} Setups and {} Scenarios".format(
-            len(self.all_collected_setups), len(self.all_collected_scenarios)))
+        print(f"Collect {len(self.all_collected_setups)} Setups and {len(self.all_collected_scenarios)} Scenarios")
         if not self.collect_only:
             self.solve()
             self.create_executor_tree()
-            print("  resolve them to {} mapping candidates".format(
-                len(self.executor_tree.get_all_variation_executors())))
+            print(f"  resolve them to {len(self.executor_tree.get_all_variation_executors())} mapping candidates")
             print("")
             if not self.resolve_only:
                 self.execute_executor_tree()

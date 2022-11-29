@@ -176,7 +176,7 @@ class ExecutorTree(BasicExecutor):
                 is_first = False
             else:
                 print(" | ", end="")
-            print("TOTAL {}: {}".format(cur_key.value, cur_val), end="")
+            print(f"TOTAL {cur_key.value}: {cur_val}", end="")
         print("")
 
     def print_tree(self) -> None:
@@ -185,15 +185,13 @@ class ExecutorTree(BasicExecutor):
         for cur_setup_executor in self.setup_executors:
             for cur_scenario_executor in cur_setup_executor.scenario_executors:
                 for cur_variation_executor in cur_scenario_executor.variation_executors:
-                    print("Scenario `{}` <-> Setup `{}`".format(
-                        cur_scenario_executor.base_scenario_class.__class__.__qualname__,
-                        cur_setup_executor.base_setup_class.__class__.__qualname__))
+                    print(f"Scenario `{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
+                          f"Setup `{cur_setup_executor.base_setup_class.__class__.__qualname__}`")
                     mapping_printings = {}
                     for cur_scenario_device, cur_setup_device in cur_variation_executor.base_device_mapping.items():
-                        mapping_printings["   {}".format(cur_scenario_device.__qualname__)] = \
-                            "{}".format(cur_setup_device.__qualname__)
+                        mapping_printings[f"   {cur_scenario_device.__qualname__}"] = str(cur_setup_device.__qualname__)
                     max_len = max([len(cur_elem) for cur_elem in mapping_printings.keys()])
                     for cur_key, cur_val in mapping_printings.items():
                         print(("{:<" + str(max_len) + "} = {}").format(cur_key, cur_val))
                     for cur_testcase_excutor in cur_variation_executor.testcase_executors:
-                        print("   -> Testcase<{}>".format(cur_testcase_excutor.base_testcase_callable.__qualname__))
+                        print(f"   -> Testcase<{cur_testcase_excutor.base_testcase_callable.__qualname__}>")
