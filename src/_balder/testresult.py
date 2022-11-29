@@ -93,7 +93,7 @@ class BranchBodyResult(_Result):
 
         if isinstance(executor, TestcaseExecutor):
             raise TypeError("testcase executors are not allowed to use in `BranchBodyResult`")
-        super(BranchBodyResult, self).__init__(executor=executor)
+        super().__init__(executor=executor)
 
     @property
     def result(self):

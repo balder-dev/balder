@@ -21,7 +21,7 @@ class ScenarioExecutor(BasicExecutor):
     """
 
     def __init__(self, scenario: Type[Scenario], parent: SetupExecutor):
-        super(ScenarioExecutor, self).__init__()
+        super().__init__()
         self._variation_executors: List[VariationExecutor] = []
         # check if instance already exists
         if hasattr(scenario, "_instance") and scenario._instance is not None and \

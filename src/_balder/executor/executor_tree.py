@@ -28,7 +28,7 @@ class ExecutorTree(BasicExecutor):
     fixtures = {}
 
     def __init__(self):
-        super(ExecutorTree, self).__init__()
+        super().__init__()
         self._setup_executors: List[SetupExecutor] = []
         self._fixture_manager = FixtureManager(executor_tree=self)
 

@@ -24,7 +24,7 @@ class VDeviceController(BaseDeviceController):
     _items: Dict[Type[VDevice], VDeviceController] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
-        super(VDeviceController, self).__init__()
+        super().__init__()
 
         from _balder.vdevice import VDevice
         # this helps to make this constructor only possible inside the controller object

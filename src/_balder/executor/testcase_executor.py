@@ -21,7 +21,7 @@ class TestcaseExecutor(BasicExecutor):
     """
 
     def __init__(self, testcase: callable, parent: VariationExecutor):
-        super(TestcaseExecutor, self).__init__()
+        super().__init__()
         from _balder.fixture_manager import FixtureManager
 
         self._base_testcase_callable = testcase

@@ -30,7 +30,7 @@ class DeviceController(BaseDeviceController, ABC):
     _items: Dict[Type[Device], DeviceController] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
-        super(DeviceController, self).__init__()
+        super().__init__()
         from _balder.device import Device
         from _balder.vdevice import VDevice
 

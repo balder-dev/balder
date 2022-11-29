@@ -33,7 +33,7 @@ class VariationExecutor(BasicExecutor):
     """
 
     def __init__(self, device_mapping: Dict[Type[Device], Type[Device]], parent: ScenarioExecutor):
-        super(VariationExecutor, self).__init__()
+        super().__init__()
         self._testcase_executors = []
         self._base_device_mapping = device_mapping
         self._parent_executor = parent

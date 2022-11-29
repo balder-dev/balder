@@ -22,7 +22,7 @@ class SetupExecutor(BasicExecutor):
     """
 
     def __init__(self, setup: Type[Setup], parent: ExecutorTree):
-        super(SetupExecutor, self).__init__()
+        super().__init__()
         self._scenario_executors: List[ScenarioExecutor] = []
         # check if instance already exists
         if hasattr(setup, "_instance") and setup._instance is not None and isinstance(setup._instance, setup):
