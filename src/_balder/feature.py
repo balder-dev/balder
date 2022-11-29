@@ -1,13 +1,11 @@
 from __future__ import annotations
 from typing import Type, Dict, Tuple, Union, TYPE_CHECKING
+from _balder.controllers import FeatureController
+from _balder.exceptions import UnclearMethodVariationError
 
 if TYPE_CHECKING:
     from _balder.device import Device
     from _balder.vdevice import VDevice
-
-from _balder.controllers import FeatureController
-
-from _balder.exceptions import UnclearMethodVariationError
 
 
 class Feature:

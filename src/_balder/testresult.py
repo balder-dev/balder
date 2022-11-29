@@ -1,7 +1,7 @@
 from __future__ import annotations
-from enum import Enum
-
 from typing import TYPE_CHECKING, List, Union
+
+from enum import Enum
 
 if TYPE_CHECKING:
     from _balder.executor.basic_executor import BasicExecutor

@@ -1,11 +1,6 @@
 from __future__ import annotations
 from typing import Type, Union, List, Dict, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.scenario import Scenario
-    from _balder.executor.setup_executor import SetupExecutor
-    from _balder.fixture_manager import FixtureManager
-
 import sys
 import traceback
 from _balder.testresult import ResultState, BranchBodyResult
@@ -13,6 +8,11 @@ from _balder.utils import get_class_that_defines_method
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.variation_executor import VariationExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
+
+if TYPE_CHECKING:
+    from _balder.scenario import Scenario
+    from _balder.executor.setup_executor import SetupExecutor
+    from _balder.fixture_manager import FixtureManager
 
 
 class ScenarioExecutor(BasicExecutor):

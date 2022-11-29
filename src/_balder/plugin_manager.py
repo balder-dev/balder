@@ -1,17 +1,16 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING, List, Type, Tuple
 
 import argparse
-from typing import TYPE_CHECKING, List, Type, Tuple
+import pathlib
 from _balder.balder_plugin import BalderPlugin
+from _balder.exceptions import UnexpectedPluginMethodReturnValue
 
 if TYPE_CHECKING:
     from _balder.balder_session import BalderSession
     from _balder.executor.executor_tree import ExecutorTree
     from _balder.scenario import Scenario
     from _balder.setup import Setup
-
-import pathlib
-from _balder.exceptions import UnexpectedPluginMethodReturnValue
 
 
 class PluginManager:

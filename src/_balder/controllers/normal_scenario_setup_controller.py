@@ -1,22 +1,20 @@
 from __future__ import annotations
-
-import logging
-from abc import ABC
 from typing import Type, List, Union, Optional, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.device import Device
-    from _balder.connection import Connection
-    from _balder.controllers import ScenarioController
-    from _balder.controllers import SetupController
-
+import logging
 import inspect
+from abc import ABC
 from _balder.setup import Setup
 from _balder.scenario import Scenario
 from _balder.controllers.controller import Controller
 from _balder.controllers.device_controller import DeviceController
 from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError
 
+if TYPE_CHECKING:
+    from _balder.device import Device
+    from _balder.connection import Connection
+    from _balder.controllers import ScenarioController
+    from _balder.controllers import SetupController
 
 logger = logging.getLogger(__file__)
 

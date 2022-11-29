@@ -1,9 +1,13 @@
 from __future__ import annotations
+from typing import Dict, List, Type, Tuple, Union, TYPE_CHECKING
 
 import sys
 import logging
+import inspect
 from abc import ABC
-from typing import Dict, List, Type, Tuple, Union, TYPE_CHECKING
+from _balder.device import Device
+from _balder.controllers.base_device_controller import BaseDeviceController
+from _balder.exceptions import DeviceScopeError, DeviceResolvingException
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
@@ -11,11 +15,6 @@ if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.vdevice import VDevice
     from _balder.controllers import ScenarioController, SetupController
-
-import inspect
-from _balder.device import Device
-from _balder.controllers.base_device_controller import BaseDeviceController
-from _balder.exceptions import DeviceScopeError, DeviceResolvingException
 
 logger = logging.getLogger(__file__)
 

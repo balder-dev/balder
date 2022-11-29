@@ -1,10 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.executor.variation_executor import VariationExecutor
-    from _balder.scenario import Scenario
-
 import sys
 import time
 import traceback
@@ -12,6 +8,10 @@ from _balder.utils import inspect_method
 from _balder.testresult import ResultState, TestcaseResult
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
+
+if TYPE_CHECKING:
+    from _balder.executor.variation_executor import VariationExecutor
+    from _balder.scenario import Scenario
 
 
 class TestcaseExecutor(BasicExecutor):

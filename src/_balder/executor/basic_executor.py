@@ -1,7 +1,8 @@
 from __future__ import annotations
-from _balder.testresult import FixturePartResult, ResultState
 from typing import List, Dict, Union, Type, TYPE_CHECKING
+
 import types
+from _balder.testresult import FixturePartResult, ResultState
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import TestcaseResult
 

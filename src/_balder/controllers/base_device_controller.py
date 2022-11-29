@@ -1,16 +1,15 @@
 from __future__ import annotations
+from typing import Dict, Type, Union, TYPE_CHECKING
 
 import logging
+import inspect
 from abc import ABC, abstractmethod
-from typing import Dict, Type, Union, TYPE_CHECKING
+from _balder.controllers.controller import Controller
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
     from _balder.setup import Setup
     from _balder.feature import Feature
-
-import inspect
-from _balder.controllers.controller import Controller
 
 logger = logging.getLogger(__file__)
 

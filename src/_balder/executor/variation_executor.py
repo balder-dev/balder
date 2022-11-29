@@ -1,18 +1,9 @@
 from __future__ import annotations
-
-import logging
 from typing import Type, Union, List, Dict, Tuple, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.setup import Setup
-    from _balder.feature import Feature
-    from _balder.scenario import Scenario
-    from _balder.vdevice import VDevice
-    from _balder.executor.scenario_executor import ScenarioExecutor
-    from _balder.fixture_manager import FixtureManager
 
 import sys
 import inspect
+import logging
 import traceback
 from _balder.device import Device
 from _balder.connection import Connection
@@ -23,6 +14,15 @@ from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.routing_path import RoutingPath
 from _balder.controllers import DeviceController, VDeviceController, FeatureController
 from _balder.exceptions import NotApplicableVariationError, UnclearAssignableFeatureConnectionError
+
+if TYPE_CHECKING:
+    from _balder.setup import Setup
+    from _balder.feature import Feature
+    from _balder.scenario import Scenario
+    from _balder.vdevice import VDevice
+    from _balder.executor.scenario_executor import ScenarioExecutor
+    from _balder.fixture_manager import FixtureManager
+
 
 logger = logging.getLogger(__file__)
 

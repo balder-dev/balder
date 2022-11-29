@@ -1,16 +1,14 @@
 from __future__ import annotations
-
-import logging
 from typing import Type, Dict, Union, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.vdevice import VDevice
-    from _balder.feature import Feature
-
+import logging
 import inspect
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError
 
+if TYPE_CHECKING:
+    from _balder.vdevice import VDevice
+    from _balder.feature import Feature
 
 logger = logging.getLogger(__file__)
 

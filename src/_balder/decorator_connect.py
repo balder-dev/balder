@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import Type, Union
 
-from _balder.device import Device
-
 import re
+from _balder.device import Device
 from _balder.connection import Connection
 from _balder.controllers import DeviceController
 

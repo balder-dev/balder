@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import Type, Union
 
-from _balder.scenario import Scenario
-
 import inspect
+from _balder.scenario import Scenario
 from _balder.utils import get_class_that_defines_method
 
 

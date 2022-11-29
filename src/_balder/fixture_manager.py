@@ -1,12 +1,6 @@
 from __future__ import annotations
 from typing import List, Tuple, Generator, Dict, Union, Type, Callable, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.executor.executor_tree import ExecutorTree
-    from _balder.executor.setup_executor import SetupExecutor
-    from _balder.executor.scenario_executor import ScenarioExecutor
-    from _balder.executor.variation_executor import VariationExecutor
-
 import sys
 import inspect
 import traceback
@@ -17,6 +11,12 @@ from _balder.setup import Setup
 from _balder.testresult import ResultState
 from _balder.exceptions import LostInExecutorTreeException, FixtureReferenceError, UnclearSetupScopedFixtureReference, \
     UnclearUniqueClassReference
+
+if TYPE_CHECKING:
+    from _balder.executor.executor_tree import ExecutorTree
+    from _balder.executor.setup_executor import SetupExecutor
+    from _balder.executor.scenario_executor import ScenarioExecutor
+    from _balder.executor.variation_executor import VariationExecutor
 
 
 class FixtureManager:

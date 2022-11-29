@@ -1,14 +1,12 @@
 from __future__ import annotations
+from typing import Type, Dict, List, TYPE_CHECKING
 
 import logging
 import inspect
-from typing import Type, Dict, List, TYPE_CHECKING
+from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
-
-from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
-
 
 logger = logging.getLogger(__file__)
 

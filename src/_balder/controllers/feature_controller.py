@@ -1,16 +1,15 @@
 from __future__ import annotations
+from typing import Type, Dict, Union, List, Callable, Tuple, TYPE_CHECKING
 
 import logging
-from typing import Type, Dict, Union, List, Callable, Tuple, TYPE_CHECKING
+import inspect
+from _balder.controllers import Controller
+from _balder.exceptions import UnclearMethodVariationError
 
 if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.vdevice import VDevice
     from _balder.feature import Feature
-
-import inspect
-from _balder.controllers import Controller
-from _balder.exceptions import UnclearMethodVariationError
 
 
 logger = logging.getLogger(__file__)

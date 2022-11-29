@@ -1,14 +1,10 @@
 from __future__ import annotations
-
-import logging
 from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.plugin_manager import PluginManager
 
 import os
 import sys
 import types
+import logging
 import inspect
 import pathlib
 import functools
@@ -26,6 +22,9 @@ from _balder.exceptions import InnerFeatureResolvingError, VDeviceResolvingError
     UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, DuplicateForVDeviceError, \
     UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError, VDeviceOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
+
+if TYPE_CHECKING:
+    from _balder.plugin_manager import PluginManager
 
 logger = logging.getLogger(__file__)
 

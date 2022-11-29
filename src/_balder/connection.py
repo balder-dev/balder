@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import List, Tuple, Union, Type, Dict, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.device import Device
-
 import copy
 import itertools
-
 from _balder.exceptions import IllegalConnectionTypeError
+
+
+if TYPE_CHECKING:
+    from _balder.device import Device
 
 
 class Connection:

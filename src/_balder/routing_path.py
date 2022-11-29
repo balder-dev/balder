@@ -1,14 +1,14 @@
 from __future__ import annotations
 from typing import List, Union, Dict, Type, Tuple, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.device import Device
-
 import copy
 from _balder.connection import Connection
 from _balder.node_gateway import NodeGateway
 from _balder.controllers import DeviceController
 from _balder.exceptions import RoutingBrokenChainError
+
+if TYPE_CHECKING:
+    from _balder.device import Device
 
 
 class RoutingPath:
