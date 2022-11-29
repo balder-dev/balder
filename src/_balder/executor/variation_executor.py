@@ -339,7 +339,6 @@ class VariationExecutor(BasicExecutor):
 
         This method implementation of the :class:`VariationExecutor` does nothing.
         """
-        pass
 
     def has_vdevice_feature_implementation_matching(self) -> bool:
         """

@@ -39,7 +39,6 @@ class BaseDeviceController(Controller, ABC):
         """
         This method delivers the outer class of this device. This has to be a :meth:`Setup` or a :meth:`Scenario`.
         """
-        pass
 
     def get_all_instantiated_feature_objects(self) -> Dict[str, Feature]:
         """

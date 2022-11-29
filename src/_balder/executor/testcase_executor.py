@@ -103,7 +103,6 @@ class TestcaseExecutor(BasicExecutor):
 
         This method implementation of the :class:`TestcaseExecutor` does nothing.
         """
-        pass
 
     def get_covered_by_element(self) -> List[Union[Scenario, callable]]:
         """
