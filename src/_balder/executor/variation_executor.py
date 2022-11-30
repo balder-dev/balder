@@ -294,7 +294,7 @@ class VariationExecutor(BasicExecutor):
                 f"the given scenario device `{setup_device.__name__}` is no part of the mapping of this "
                 f"VariationExecutor object")
         if list(self.base_device_mapping.values()).count(setup_device) > 1:
-            raise KeyError(f"the requested setup device exists more than one time in `base_device_mapping`")
+            raise KeyError("the requested setup device exists more than one time in `base_device_mapping`")
         return [cur_key for cur_key, cur_value in self.base_device_mapping.items() if cur_value == setup_device][0]
 
     def get_executor_for_testcase(self, testcase: callable) -> Union[TestcaseExecutor, None]:
@@ -786,7 +786,7 @@ class VariationExecutor(BasicExecutor):
         This method executes this branch of the tree
         """
 
-        print(f"    VARIATION ", end='')
+        print("    VARIATION ", end='')
         device_map_str = [f"{scenario_device.__qualname__}:{setup_device.__qualname__}"
                           for scenario_device, setup_device in self._base_device_mapping.items()]
         print(' | '.join(device_map_str))

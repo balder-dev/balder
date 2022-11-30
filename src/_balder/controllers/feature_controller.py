@@ -161,7 +161,7 @@ class FeatureController(Controller):
             with_connection = Connection.based_on(with_connection)
 
         if all_vdevice_method_variations is None:
-            raise ValueError(f"the current feature has no method variations")
+            raise ValueError("the current feature has no method variations")
         if of_method_name not in all_vdevice_method_variations.keys():
             raise ValueError(f"can not find the method `{of_method_name}` in method variation data dictionary")
 
