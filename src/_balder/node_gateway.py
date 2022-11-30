@@ -60,7 +60,7 @@ class NodeGateway:
         """
         This method returns the partner node of this gateway - it always returns the other not given side
         """
-        if node != self.from_node_name and node != self.to_node_name:
+        if node not in (self.from_node_name, self.to_node_name):
             raise ValueError(f"the given node `{node}` is no component of this connection")
 
         return self.to_node_name if node == self.from_node_name else self.from_node_name
@@ -80,11 +80,11 @@ class NodeGateway:
 
         :return: returns true if the given direction is possible
         """
-        if start_node != self.from_node_name and start_node != self.to_node_name:
+        if start_node not in (self.from_node_name, self.to_node_name):
             raise ValueError(
                 f"the given start_node `{start_node.__qualname__}` is no component of this connection")
         if end_node is not None:
-            if end_node != self.from_node_name and end_node != self.to_node_name:
+            if end_node not in (self.from_node_name, self.to_node_name):
                 raise ValueError(
                     f"the given end_node `{end_node.__qualname__}` is no component of this connection")
         else:

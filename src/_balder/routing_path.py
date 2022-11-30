@@ -42,11 +42,10 @@ class RoutingPath:
 
         first_elem = routing_elems[0]
         if isinstance(first_elem, Connection):
-            if first_elem.from_device != self._start_device and first_elem.to_device != self._start_device:
+            if self._start_device not in (first_elem.from_device, first_elem.to_device):
                 raise ValueError(f"the given `start_device={self._start_device.__name__}` does not match with one of "
                                  f"the available devices of the first routing element")
-            if first_elem.from_node_name != self._start_node_name and \
-                    first_elem.to_node_name != self._start_node_name:
+            if self._start_node_name not in (first_elem.from_node_name, first_elem.to_node_name):
                 raise ValueError(f"the given `start_node_name={self._start_node_name}` does not match with one of the "
                                  f"available node names of the first routing element")
         else:

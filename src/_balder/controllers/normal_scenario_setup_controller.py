@@ -146,7 +146,7 @@ class NormalScenarioSetupController(Controller, ABC):
                         f"found more than one Scenario/Setup parent classes for `{self.related_cls.__name__}` "
                         f"- multi inheritance is not allowed for Scenario/Setup classes")
                 parent_scenario_or_setup = cur_base_class
-        if parent_scenario_or_setup == Scenario or parent_scenario_or_setup == Setup:
+        if parent_scenario_or_setup in (Scenario, Setup):
             # done, because the parent class is direct Scenario/Setup class
             return
 

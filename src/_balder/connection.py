@@ -890,7 +890,7 @@ class Connection:
         :param node: the node name of the device itself (only required if the connection starts and ends with the same
                      device)
         """
-        if device != self.from_device and device != self.to_device:
+        if device not in (self.from_device, self.to_device):
             raise ValueError(f"the given device `{device.__qualname__}` is no component of this connection")
         if node is None:
             # check that the from_device and to_device are not the same
@@ -902,7 +902,7 @@ class Connection:
             else:
                 return self.from_device, self.from_node_name
         else:
-            if node != self.from_node_name and node != self.to_node_name:
+            if node not in (self.from_node_name, self.to_node_name):
                 raise ValueError(f"the given node `{node}` is no component of this connection")
 
             if device == self.from_device and node == self.from_node_name:
@@ -932,7 +932,7 @@ class Connection:
         if end_device is None:
 
             if self.is_bidirectional():
-                return start_device == self.from_device or start_device == self.to_device
+                return start_device in (self.from_device, self.to_device)
             else:
                 return start_device == self.from_device
         else:
@@ -965,7 +965,7 @@ class Connection:
 
         :return: returns True if both elements are same
         """
-        if self.__class__ != Connection and self.__class__ != other_conn.__class__:
+        if self.__class__ not in (Connection, other_conn.__class__):
             return False
 
         if not ignore_metadata:

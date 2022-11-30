@@ -76,7 +76,7 @@ class BasicExecutor:
 
     def set_result_for_whole_branch(self, value: ResultState):
 
-        if value != ResultState.SKIP and value != ResultState.COVERED_BY and value != ResultState.NOT_RUN:
+        if value not in (ResultState.SKIP, ResultState.COVERED_BY, ResultState.NOT_RUN):
             raise ValueError("can not set a state that is not NOT_RUN, SKIP or COVERED_BY for a whole branch")
         for cur_child_executor in self.all_child_executors:
             if isinstance(cur_child_executor.body_result, TestcaseResult):

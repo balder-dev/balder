@@ -1082,7 +1082,7 @@ class Collector:
                     next_base_class = cur_base
             all_related_next_base_classes[cur_scenario_or_setup] = next_base_class
             # executed this method for all parents too
-            if next_base_class != Scenario and next_base_class != Setup:
+            if next_base_class not in (Scenario, Setup):
                 self.determine_raw_absolute_device_connections_for([next_base_class])
 
         all_relevant_cnns = []
@@ -1112,7 +1112,7 @@ class Collector:
                 # the current item has defined devices, but no own `@connect()` decorator -> use absolute data from
                 #  next parent
 
-                if next_base_class != Scenario and next_base_class != Setup:
+                if next_base_class not in (Scenario, Setup):
                     next_base_class_controller = None
                     if issubclass(next_base_class, Scenario):
                         next_base_class_controller = ScenarioController.get_for(next_base_class)
