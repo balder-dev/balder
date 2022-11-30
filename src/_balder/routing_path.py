@@ -120,7 +120,8 @@ class RoutingPath:
                     if cur_next_conn == cur_routing.elements[-1]:
                         # is the same connection as the last of routing -> SKIP
                         continue
-                    elif cur_next_conn.has_connection_from_to(start_device=cur_routing.end_device):
+
+                    if cur_next_conn.has_connection_from_to(start_device=cur_routing.end_device):
                         # the connection allows the direction the routing needs - only then add it
                         copied_routing = cur_routing.copy()
                         copied_routing.append_element(cur_next_conn)
