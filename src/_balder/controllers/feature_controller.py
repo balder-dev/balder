@@ -94,8 +94,8 @@ class FeatureController(Controller):
                     else:
                         result[cur_device].append(cur_cnn)
             return result
-        else:
-            return None
+
+        return None
 
     def set_class_based_for_vdevice(
             self, data: Union[Dict[Type[VDevice], List[Union[Connection, Type[Connection]]]], None]):

@@ -499,9 +499,10 @@ class Collector:
                                                  f'`{the_owner_of_this_method.__name__}` or its parent classes')
                     if len(args) == 0:
                         return func(self=this, **kwargs)
-                    else:
-                        new_args = [this, *args]
-                        return func(*new_args)
+
+                    new_args = [this, *args]
+                    return func(*new_args)
+
                 return method_variation_multiplexer
 
             new_callback = owner_wrapper(owner, name)
@@ -1108,7 +1109,8 @@ class Collector:
                 # only the parent class has defined scenarios -> use absolute data from next parent
                 #  NOTHING TO DO, because we also use these devices in child setup/scenario
                 return
-            elif len(all_devices) > 0 and not has_connect_decorator:
+
+            if len(all_devices) > 0 and not has_connect_decorator:
                 # the current item has defined devices, but no own `@connect()` decorator -> use absolute data from
                 #  next parent
 

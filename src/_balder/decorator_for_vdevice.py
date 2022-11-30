@@ -116,10 +116,9 @@ def for_vdevice(
                 fn_feature_controller.set_class_based_for_vdevice(cls_for_vdevice)
                 # directly return the class -> we do not want to manipulate it
                 return func
-            else:
-                # work will done in `__init__`
 
-                # return this decorator object to work with
-                return super().__new__(ForConnectionDecorator)
+            # otherwise, work will be done in `__init__`
+            # return this decorator object to work with
+            return super().__new__(ForConnectionDecorator)
 
     return ForConnectionDecorator

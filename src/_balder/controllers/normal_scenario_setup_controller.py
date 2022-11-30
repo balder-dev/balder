@@ -49,10 +49,10 @@ class NormalScenarioSetupController(Controller, ABC):
         from _balder.controllers import ScenarioController, SetupController
         if issubclass(related_cls, Scenario):
             return ScenarioController.get_for(related_cls)
-        elif issubclass(related_cls, Setup):
+        if issubclass(related_cls, Setup):
             return SetupController.get_for(related_cls)
-        else:
-            raise TypeError(f"illegal non supported type `{related_cls.__name__}` given for `related_cls`")
+
+        raise TypeError(f"illegal non supported type `{related_cls.__name__}` given for `related_cls`")
 
     def get_all_inner_device_classes(self) -> List[Type[Device]]:
         """
@@ -95,8 +95,8 @@ class NormalScenarioSetupController(Controller, ABC):
                 # if the class type is the original `Setup` or `Scenario` type -> no inner devices exists
                 return []
             return self.__class__.get_for(base_class).get_all_abs_inner_device_classes()
-        else:
-            return cls_devices
+
+        return cls_devices
 
     def get_all_connections(self) -> List[Connection]:
         """
@@ -159,58 +159,58 @@ class NormalScenarioSetupController(Controller, ABC):
         if len(devices) == 0:
             # ignore it because cur item has no own device definitions
             return
-        else:
-            # check that a device is newly defined or has the same name as the parent device
-            for cur_item_device in devices:
-                # check if name exists in parent
-                relevant_parent_according_naming = None
-                if cur_item_device.__name__ in abs_parent_devices_as_names:
-                    relevant_parent_according_naming = \
-                        abs_parent_devices[abs_parent_devices_as_names.index(cur_item_device.__name__)]
 
-                # check if device is inherited from a parent
-                relevant_parent_device_according_inheritance = None
-                for cur_parent in abs_parent_devices:
-                    if issubclass(cur_item_device, cur_parent):
-                        if relevant_parent_device_according_inheritance is not None:
-                            # multi inheritance is not allowed
-                            raise MultiInheritanceError(
-                                f"found more than one {self._related_type.__name__}-Device parent classes for the "
-                                f"class `{cur_item_device.__name__}` - multi inheritance is not allowed for device "
-                                f"classes")
-                        relevant_parent_device_according_inheritance = cur_parent
+        # check that a device is newly defined or has the same name as the parent device
+        for cur_item_device in devices:
+            # check if name exists in parent
+            relevant_parent_according_naming = None
+            if cur_item_device.__name__ in abs_parent_devices_as_names:
+                relevant_parent_according_naming = \
+                    abs_parent_devices[abs_parent_devices_as_names.index(cur_item_device.__name__)]
 
-                # now check if both is fulfilled
-                if relevant_parent_according_naming == relevant_parent_device_according_inheritance and \
-                        relevant_parent_device_according_inheritance is not None:
-                    # device is inherited AND has the same name as used in parent -> ALLOWED
-                    pass
-                elif relevant_parent_according_naming is None and relevant_parent_device_according_inheritance is None:
-                    # both are none -> it is a new device -> ALLOWED
-                    pass
-                elif relevant_parent_according_naming is None:
-                    # reused a naming but does not inherit from it -> NOT ALLOWED
-                    raise DeviceOverwritingError(
-                        f"the inner device class `{cur_item_device.__qualname__}` which inherits from another "
-                        f"device `{relevant_parent_device_according_inheritance.__qualname__}` - it should also have "
-                        f"the same name")
-                elif relevant_parent_device_according_inheritance is None:
-                    # inherit from a parent device, but it doesn't have the same naming -> NOT ALLOWED
-                    raise DeviceOverwritingError(
-                        f"the inner device class `{cur_item_device.__qualname__}` has the same name than the "
-                        f"device `{relevant_parent_according_naming.__qualname__}` - it should also inherit from it")
-
-            # secure that all parent devices are implemented here too
+            # check if device is inherited from a parent
+            relevant_parent_device_according_inheritance = None
             for cur_parent in abs_parent_devices:
-                found_parent = False
-                for cur_item_device in devices:
-                    if issubclass(cur_item_device, cur_parent):
-                        found_parent = True
-                        break
-                if not found_parent:
-                    raise DeviceOverwritingError(
-                        f"found a device `{cur_parent.__qualname__}` which is part of a parent class, but it is "
-                        f"not implemented in child class `{self.related_cls.__name__}`")
+                if issubclass(cur_item_device, cur_parent):
+                    if relevant_parent_device_according_inheritance is not None:
+                        # multi inheritance is not allowed
+                        raise MultiInheritanceError(
+                            f"found more than one {self._related_type.__name__}-Device parent classes for the "
+                            f"class `{cur_item_device.__name__}` - multi inheritance is not allowed for device "
+                            f"classes")
+                    relevant_parent_device_according_inheritance = cur_parent
+
+            # now check if both is fulfilled
+            if relevant_parent_according_naming == relevant_parent_device_according_inheritance and \
+                    relevant_parent_device_according_inheritance is not None:
+                # device is inherited AND has the same name as used in parent -> ALLOWED
+                pass
+            elif relevant_parent_according_naming is None and relevant_parent_device_according_inheritance is None:
+                # both are none -> it is a new device -> ALLOWED
+                pass
+            elif relevant_parent_according_naming is None:
+                # reused a naming but does not inherit from it -> NOT ALLOWED
+                raise DeviceOverwritingError(
+                    f"the inner device class `{cur_item_device.__qualname__}` which inherits from another "
+                    f"device `{relevant_parent_device_according_inheritance.__qualname__}` - it should also have "
+                    f"the same name")
+            elif relevant_parent_device_according_inheritance is None:
+                # inherit from a parent device, but it doesn't have the same naming -> NOT ALLOWED
+                raise DeviceOverwritingError(
+                    f"the inner device class `{cur_item_device.__qualname__}` has the same name than the "
+                    f"device `{relevant_parent_according_naming.__qualname__}` - it should also inherit from it")
+
+        # secure that all parent devices are implemented here too
+        for cur_parent in abs_parent_devices:
+            found_parent = False
+            for cur_item_device in devices:
+                if issubclass(cur_item_device, cur_parent):
+                    found_parent = True
+                    break
+            if not found_parent:
+                raise DeviceOverwritingError(
+                    f"found a device `{cur_parent.__qualname__}` which is part of a parent class, but it is "
+                    f"not implemented in child class `{self.related_cls.__name__}`")
 
         # also check the parent class here
         self.__class__.get_for(parent_scenario_or_setup).validate_inheritance()

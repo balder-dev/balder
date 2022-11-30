@@ -92,10 +92,11 @@ class NodeGateway:
 
         if self.is_bidirectional():
             return True
+
         if start_node == self.from_node_name and end_node == self.to_node_name:
             return True
-        else:
-            return False
+
+        return False
 
     def is_bidirectional(self):
         return self._bidirectional

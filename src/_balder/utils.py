@@ -67,9 +67,11 @@ def inspect_method(func) -> Tuple[Union[type, None], str]:
 
     if type(fn_type) == classmethod:
         return cls, 'classmethod'
-    elif type(fn_type) == staticmethod:
+
+    if type(fn_type) == staticmethod:
         return cls, 'staticmethod',
-    elif fn_type.__class__.__name__ == 'function':
+
+    if fn_type.__class__.__name__ == 'function':
         return cls, 'instancemethod'
-    else:
-        raise TypeError(f'unknown element type `{func}`')
+
+    raise TypeError(f'unknown element type `{func}`')

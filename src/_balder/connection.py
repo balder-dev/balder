@@ -82,8 +82,8 @@ class Connection:
     def __eq__(self, other):
         if isinstance(other, Connection):
             return self.equal_with(other)
-        else:
-            return False
+
+        return False
 
     def __hash__(self):
         all_hashes = hash(self.from_device) + hash(self.to_device) + hash(self.from_node_name) + \
@@ -457,11 +457,12 @@ class Connection:
             self.to_device == of_connection.from_device and self.to_node_name == of_connection.from_node_name
         if self.is_bidirectional() and of_connection.is_bidirectional():
             return check_same or check_opposite
-        elif self.is_bidirectional() and not of_connection.is_bidirectional() or \
+
+        if self.is_bidirectional() and not of_connection.is_bidirectional() or \
                 not self.is_bidirectional() and of_connection.is_bidirectional():
             return check_same or check_opposite
-        else:
-            return check_same
+
+        return check_same
 
     def _metadata_equal_with(self, of_connection: Connection) -> bool:
         """
@@ -484,8 +485,8 @@ class Connection:
         if self.is_bidirectional() and of_connection.is_bidirectional() or \
                 not self.is_bidirectional() and not of_connection.is_bidirectional():
             return check_same or check_opposite
-        else:
-            return False
+
+        return False
 
     def _get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
             -> List[Connection, Tuple[Connection]]:
@@ -681,16 +682,16 @@ class Connection:
         """
         if len(self.based_on_elements) == 0:
             return f"{self.__class__.__name__}()"
-        else:
-            based_on_strings = []
-            for cur_elem in self.based_on_elements:
-                if isinstance(cur_elem, tuple):
-                    based_on_strings.append(
-                        f"({', '.join([cur_tuple_elem.get_tree_str() for cur_tuple_elem in cur_elem])})")
-                else:
-                    based_on_strings.append(cur_elem.get_tree_str())
 
-            return f"{self.__class__.__name__}.based_on({', '.join(based_on_strings)})"
+        based_on_strings = []
+        for cur_elem in self.based_on_elements:
+            if isinstance(cur_elem, tuple):
+                based_on_strings.append(
+                    f"({', '.join([cur_tuple_elem.get_tree_str() for cur_tuple_elem in cur_elem])})")
+            else:
+                based_on_strings.append(cur_elem.get_tree_str())
+
+        return f"{self.__class__.__name__}.based_on({', '.join(based_on_strings)})"
 
     def is_bidirectional(self):
         """
@@ -750,7 +751,8 @@ class Connection:
         if len(self.based_on_elements) == 0:
             # tree ends here
             return True
-        elif len(self.based_on_elements) > 1:
+
+        if len(self.based_on_elements) > 1:
             # more than one element -> not single
             return False
 
@@ -764,8 +766,8 @@ class Connection:
                     return False
             # all elements are single
             return True
-        else:
-            return self.based_on_elements[0].is_single()
+
+        return self.based_on_elements[0].is_single()
 
     def get_resolved(self) -> Connection:
         """
@@ -831,8 +833,8 @@ class Connection:
         if copied_base.__class__ == Connection and len(copied_base.based_on_elements) == 1 and not \
                 isinstance(copied_base.based_on_elements[0], tuple):
             return copied_base.based_on_elements[0]
-        else:
-            return copied_base
+
+        return copied_base
 
     def get_singles(self) -> List[Connection]:
         """
@@ -899,18 +901,19 @@ class Connection:
                                  "have to provide the `node` string too")
             if device == self.from_device:
                 return self.to_device, self.to_node_name
-            else:
-                return self.from_device, self.from_node_name
-        else:
-            if node not in (self.from_node_name, self.to_node_name):
-                raise ValueError(f"the given node `{node}` is no component of this connection")
 
-            if device == self.from_device and node == self.from_node_name:
-                return self.to_device, self.to_node_name
-            elif device == self.to_device and node == self.to_node_name:
-                return self.from_device, self.from_node_name
-            else:
-                raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
+            return self.from_device, self.from_node_name
+
+        if node not in (self.from_node_name, self.to_node_name):
+            raise ValueError(f"the given node `{node}` is no component of this connection")
+
+        if device == self.from_device and node == self.from_node_name:
+            return self.to_device, self.to_node_name
+
+        if device == self.to_device and node == self.to_node_name:
+            return self.from_device, self.from_node_name
+
+        raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
 
     def has_connection_from_to(self, start_device, end_device=None):
         """
@@ -933,14 +936,14 @@ class Connection:
 
             if self.is_bidirectional():
                 return start_device in (self.from_device, self.to_device)
-            else:
-                return start_device == self.from_device
-        else:
-            if self.is_bidirectional():
-                return start_device == self.from_device and end_device == self.to_device or \
-                       start_device == self.to_device and end_device == self.from_device
-            else:
-                return start_device == self.from_device and end_device == self.to_device
+
+            return start_device == self.from_device
+
+        if self.is_bidirectional():
+            return start_device == self.from_device and end_device == self.to_device or \
+                   start_device == self.to_device and end_device == self.from_device
+
+        return start_device == self.from_device and end_device == self.to_device
 
     def equal_with(self, other_conn: Connection, ignore_metadata=False) -> bool:
         """
@@ -1097,10 +1100,12 @@ class Connection:
                         if len(cur_single_self.based_on_elements) == 0:
                             # the cur self single is only one element -> this is contained in the other
                             return True
-                        elif len(cur_single_other.based_on_elements) == 0:
+
+                        if len(cur_single_other.based_on_elements) == 0:
                             # the other element is only one element, but the self element not -> contained_in
                             # for this single definitely false
                             continue
+
                         # note: for both only one `based_on_elements` is possible, because they are singles
                         if isinstance(cur_single_self.based_on_elements[0], tuple) and \
                                 isinstance(cur_single_other.based_on_elements[0], tuple):
@@ -1232,8 +1237,8 @@ class Connection:
             return None
         if len(intersection_filtered) > 1 or isinstance(intersection_filtered[0], tuple):
             return Connection.based_on(*intersection_filtered).clone()
-        else:
-            return intersection_filtered[0].clone()
+
+        return intersection_filtered[0].clone()
 
     def append_to_based_on(self, *args: Union[Tuple[Union[Type[Connection], Connection]]]) -> None:
         """

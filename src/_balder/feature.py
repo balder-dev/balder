@@ -112,24 +112,25 @@ class Feature:
                 of_method_name=method_var_name, for_vdevice=parent_vdevice,
                 with_connection=active_cnn_intersection, ignore_no_findings=True)
             return cur_method_variation
-        elif hasattr(parent_class, method_var_name):
+
+        if hasattr(parent_class, method_var_name):
             # we found one normal method in this object
             return getattr(parent_class, method_var_name)
+
+        # execute this method for all based and check if there is exactly one
+        parent_of_parent_methods = {}
+        for cur_base in parent_class.__bases__:
+            meth = self._get_inherited_method_variation(cur_base, method_var_name)
+            if meth is not None:
+                parent_of_parent_methods[cur_base] = meth
+        if len(parent_of_parent_methods) > 1:
+            raise UnclearMethodVariationError(
+                f"found multiple parent classes of `{parent_class.__name__}`, that provides a method with the "
+                f"name `{method_var_name}` (base classes "
+                f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
+                f"please note, that we do not support multiple inheritance")
+        elif len(parent_of_parent_methods) == 1:
+            return list(parent_of_parent_methods.values())[0]
         else:
-            # execute this method for all based and check if there is exactly one
-            parent_of_parent_methods = {}
-            for cur_base in parent_class.__bases__:
-                meth = self._get_inherited_method_variation(cur_base, method_var_name)
-                if meth is not None:
-                    parent_of_parent_methods[cur_base] = meth
-            if len(parent_of_parent_methods) > 1:
-                raise UnclearMethodVariationError(
-                    f"found multiple parent classes of `{parent_class.__name__}`, that provides a method with the "
-                    f"name `{method_var_name}` (base classes "
-                    f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
-                    f"please note, that we do not support multiple inheritance")
-            elif len(parent_of_parent_methods) == 1:
-                return list(parent_of_parent_methods.values())[0]
-            else:
-                # do not found one of the methods
-                return None
+            # do not found one of the methods
+            return None
