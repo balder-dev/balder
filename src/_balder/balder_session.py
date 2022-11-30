@@ -302,20 +302,20 @@ class BalderSession:
         self.executor_tree.execute()
 
     def run(self):
-        LINE_LENGTH = 120
+        line_length = 120
 
         self.collect()
 
         def print_rect_row(text):
             line = "| " + text
-            line = line + " " * (LINE_LENGTH - len(line) - 1) + "|"
+            line = line + " " * (line_length - len(line) - 1) + "|"
             print(line)
 
-        print("+" + "-" * (LINE_LENGTH - 2) + "+")
+        print("+" + "-" * (line_length - 2) + "+")
         print_rect_row("BALDER Testsystem")
         sys_version = sys.version.replace('\n', '')
         print_rect_row(f" python version {sys_version} | balder version {balder.__version__}")
-        print("+" + "-" * (LINE_LENGTH - 2) + "+")
+        print("+" + "-" * (line_length - 2) + "+")
         print(f"Collect {len(self.all_collected_setups)} Setups and {len(self.all_collected_scenarios)} Scenarios")
         if not self.collect_only:
             self.solve()

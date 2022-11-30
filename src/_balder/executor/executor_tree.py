@@ -132,16 +132,16 @@ class ExecutorTree(BasicExecutor):
         """
         This method executes this branch of the tree
         """
-        START_TEXT = "START TESTSESSION"
-        END_TEXT = "FINISH TESTSESSION"
-        LINE_LENGTH = 120
+        start_text = "START TESTSESSION"
+        end_text = "FINISH TESTSESSION"
+        line_length = 120
 
         def print_line(text):
-            full_text = int((LINE_LENGTH - (len(START_TEXT) + 2)) / 2) * "=" + " " + text + " "
-            full_text += "=" * (LINE_LENGTH - len(full_text))
+            full_text = int((line_length - (len(start_text) + 2)) / 2) * "=" + " " + text + " "
+            full_text += "=" * (line_length - len(full_text))
             print(full_text)
 
-        print_line(START_TEXT)
+        print_line(start_text)
         # check if there exists runnable elements
         runnables = [cur_exec.has_runnable_elements() for cur_exec in self.setup_executors]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
@@ -168,7 +168,7 @@ class ExecutorTree(BasicExecutor):
                 traceback.print_exception(*sys.exc_info())
         else:
             print("NO EXECUTABLE SETUPS/SCENARIOS FOUND")
-        print_line(END_TEXT)
+        print_line(end_text)
         summary = self.testsummary()
         is_first = True
         for cur_key, cur_val in summary.items():

@@ -384,7 +384,7 @@ class Connection:
 
     @metadata.setter
     def metadata(self, data):
-        EMPTY_METADATA = {
+        empty_metadata = {
             "from_device": None, "to_device": None, "from_device_node_name": None, "to_device_node_name": None}
 
         if not isinstance(data, dict):
@@ -394,11 +394,11 @@ class Connection:
                     sorted(list(data.keys())):
                 raise ValueError("if you provide a metadata dictionary you have to provide all elements of it")
         else:
-            data = EMPTY_METADATA.copy()
+            data = empty_metadata.copy()
 
         # only allow to set the metadata dictionary if the old one has the same values or was empty before (no values)
-        if data != EMPTY_METADATA:
-            if self._metadata == EMPTY_METADATA:
+        if data != empty_metadata:
+            if self._metadata == empty_metadata:
                 # it is ok, because the dictionary was empty before
                 pass
             elif self._metadata == data:

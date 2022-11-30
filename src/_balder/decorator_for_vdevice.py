@@ -66,29 +66,29 @@ def for_vdevice(
 
     class ForConnectionDecorator:
 
-        def __init__(self, fn):
+        def __init__(self, func):
             nonlocal vdevice
             nonlocal with_connections
 
-            self.fn = fn
+            self.func = func
 
             # we detect a decorated non-class object -> save it and check it later in collector
-            if fn not in Collector._possible_method_variations.keys():
-                Collector._possible_method_variations[fn] = []
-            Collector._possible_method_variations[fn].append((vdevice, with_connections))
+            if func not in Collector._possible_method_variations.keys():
+                Collector._possible_method_variations[func] = []
+            Collector._possible_method_variations[func].append((vdevice, with_connections))
 
         def __new__(cls, *args, **kwargs):
             nonlocal vdevice
 
-            fn = args[0]
+            func = args[0]
 
-            if inspect.isclass(fn):
+            if inspect.isclass(func):
                 # it must be a class decorator
-                if not issubclass(fn, Feature):
+                if not issubclass(func, Feature):
                     raise TypeError(f"The decorator `@for_vdevice` may only be used for `Feature` objects. This is "
-                                    f"not possible for the applied class `{fn.__name__}`.")
+                                    f"not possible for the applied class `{func.__name__}`.")
 
-                fn_feature_controller = FeatureController.get_for(fn)
+                fn_feature_controller = FeatureController.get_for(func)
 
                 if isinstance(vdevice, str):
                     # vDevice is a string, so we have to convert it to the correct class
@@ -98,7 +98,7 @@ def for_vdevice(
                     if len(relevant_vdevices) == 0:
                         raise ValueError(
                             f"can not find a matching inner VDevice class for the given vDevice string `{vdevice}` in "
-                            f"the feature class `{fn.__name__}`")
+                            f"the feature class `{func.__name__}`")
                     elif len(relevant_vdevices) > 1:
                         raise RuntimeError("found more than one possible vDevices - something unexpected happened")
                     vdevice = relevant_vdevices[0]
@@ -107,15 +107,15 @@ def for_vdevice(
                 if vdevice in cls_for_vdevice.keys():
                     raise DuplicateForVDeviceError(
                         f'there already exists a decorator for the vDevice `{vdevice}` in the Feature class '
-                        f'`{fn.__name__}`')
+                        f'`{func.__name__}`')
                 if vdevice not in fn_feature_controller.get_abs_inner_vdevice_classes():
                     raise UnknownVDeviceException(
-                        f"the given vDevice `{vdevice}` is no usable vDevice in Feature class `{fn.__name__}`")
+                        f"the given vDevice `{vdevice}` is no usable vDevice in Feature class `{func.__name__}`")
 
                 cls_for_vdevice[vdevice] = [cur_cnn for cur_cnn in with_connections]
                 fn_feature_controller.set_class_based_for_vdevice(cls_for_vdevice)
                 # directly return the class -> we do not want to manipulate it
-                return fn
+                return func
             else:
                 # work will done in `__init__`
 

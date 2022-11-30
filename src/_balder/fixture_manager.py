@@ -44,7 +44,7 @@ class FixtureManager:
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
-    def RESOLVE_TYPE_LEVEL(self):
+    def resolve_type_level(self):
         from _balder.executor.executor_tree import ExecutorTree
         from _balder.executor.setup_executor import SetupExecutor
         from _balder.executor.scenario_executor import ScenarioExecutor
@@ -60,7 +60,7 @@ class FixtureManager:
         }
 
     @property
-    def DEFINITION_SCOPE_ORDER(self):
+    def definition_scope_order(self):
         """
         returns a list with the definition scope objects in the priority order (ExecutorTree stands for global fixtures)
         """
@@ -121,7 +121,7 @@ class FixtureManager:
 
         self._validate_for_unclear_setup_scoped_fixture_reference(
             callable_func_namespace, callable_func, arguments,
-            cur_execution_level=self.RESOLVE_TYPE_LEVEL[branch.__class__])
+            cur_execution_level=self.resolve_type_level[branch.__class__])
         all_possible_namespaces = [ExecutorTree]
         # determine namespaces (in the correct order)
         setup_type = None
@@ -290,7 +290,7 @@ class FixtureManager:
         """
         This method return true if the given branch can be entered, otherwise false
         """
-        execution_level = self.RESOLVE_TYPE_LEVEL[branch.__class__]
+        execution_level = self.resolve_type_level[branch.__class__]
         return execution_level not in self.current_tree_fixtures.keys()
 
     def is_allowed_to_leave(
@@ -300,7 +300,7 @@ class FixtureManager:
         This method returns true if the given branch can be left now (there exist entries from earlier run enter()
         for this branch), otherwise false
         """
-        execution_level = self.RESOLVE_TYPE_LEVEL[branch.__class__]
+        execution_level = self.resolve_type_level[branch.__class__]
         return execution_level in self.current_tree_fixtures.keys()
 
     def enter(self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]):
@@ -312,7 +312,7 @@ class FixtureManager:
 
         :raise BalderFixtureException: is thrown if an error occurs while executing a user fixture
         """
-        execution_level = self.RESOLVE_TYPE_LEVEL[branch.__class__]
+        execution_level = self.resolve_type_level[branch.__class__]
 
         if not self.is_allowed_to_enter(branch):
             raise LostInExecutorTreeException(
@@ -322,7 +322,7 @@ class FixtureManager:
             yield None
         # now iterate over all fixtures that should be executed in this enter() call
         #  -> collect them with all different DEFINITION-SCOPES
-        for cur_definition_scope in self.DEFINITION_SCOPE_ORDER:
+        for cur_definition_scope in self.definition_scope_order:
             cur_fixture_list = self.get_all_fixtures_for_current_level(branch=branch).get(cur_definition_scope)
             for cur_scope_namespace_type, cur_fixture_func_type, cur_fixture in cur_fixture_list:
                 try:
@@ -376,7 +376,7 @@ class FixtureManager:
         :param branch: specifies the element of the ExecutorTree that should be left (note that the current position
                        is very important here)
         """
-        execution_level = self.RESOLVE_TYPE_LEVEL[branch.__class__]
+        execution_level = self.resolve_type_level[branch.__class__]
         if execution_level not in self.current_tree_fixtures.keys():
             raise LostInExecutorTreeException("can not leave the current branch, because it was not entered before")
 
@@ -429,7 +429,7 @@ class FixtureManager:
         """
         from _balder.executor.executor_tree import ExecutorTree
         # current relevant EXECUTION LEVEL - all other levels are not relevant for this call
-        cur_execution_level = self.RESOLVE_TYPE_LEVEL[branch.__class__]
+        cur_execution_level = self.resolve_type_level[branch.__class__]
         # get all fixtures of the current relevant level
         fixtures_of_exec_level = ExecutorTree.fixtures.get(cur_execution_level, {})
 
