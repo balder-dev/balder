@@ -289,7 +289,7 @@ class DeviceController(BaseDeviceController, ABC):
         elif self.related_cls.__qualname__.count('.') > 1:
             raise DeviceScopeError("the current device class is no direct inner class (deeper than one)")
 
-        outer_class_name, inner_class_name = self.related_cls.__qualname__.split('.')
+        outer_class_name, _ = self.related_cls.__qualname__.split('.')
 
         outer_class = [cur_class for cur_name, cur_class in inspect.getmembers(
             inspect.getmodule(self.related_cls)) if cur_name == outer_class_name][0]

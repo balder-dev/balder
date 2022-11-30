@@ -67,7 +67,7 @@ class NormalScenarioSetupController(Controller, ABC):
             if not issubclass(cur_class, Device):
                 # filter all classes and make sure that only the child classes of :meth:`Device` remain
                 continue
-            outer_class_name, device_class_name = cur_class.__qualname__.split('.')
+            outer_class_name, _ = cur_class.__qualname__.split('.')
             if outer_class_name != self.related_cls.__name__:
                 # filter all classes that do not match the setup name in __qualname__
                 continue
@@ -119,7 +119,7 @@ class NormalScenarioSetupController(Controller, ABC):
         all_connections = []
         for cur_device in all_device_classes:
             cur_device_controller = DeviceController.get_for(cur_device)
-            for cur_other_device, cur_connections in cur_device_controller.absolute_connections.items():
+            for _, cur_connections in cur_device_controller.absolute_connections.items():
                 for cur_cnn in cur_connections:
                     if cur_cnn not in all_connections:
                         all_connections.append(cur_cnn)

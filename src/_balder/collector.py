@@ -109,7 +109,7 @@ class Collector:
         """
         all_paths: List[pathlib.Path] = []
 
-        for root, dirs, files in os.walk(str(self.working_dir)):
+        for root, _, files in os.walk(str(self.working_dir)):
             for file in files:
                 if file.endswith(".py"):
                     all_paths.append(pathlib.Path(os.path.join(root, file)))
@@ -186,7 +186,7 @@ class Collector:
         """
         result = []
         modules = sys.modules.copy()
-        for cur_module_name, cur_module in modules.items():
+        for _, cur_module in modules.items():
             try:
                 for _, cur_class in inspect.getmembers(cur_module, inspect.isclass):
                     if issubclass(cur_class, Connection) and cur_class not in result:
@@ -974,7 +974,7 @@ class Collector:
             for cur_device in cur_scenario_or_setup_controller.get_all_abs_inner_device_classes():
                 cur_device_instantiated_features = \
                     DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
-                for cur_attr_name, cur_feature in cur_device_instantiated_features.items():
+                for _, cur_feature in cur_device_instantiated_features.items():
                     active_vdevice, related_device = cur_feature.active_vdevice_device_mapping
                     if active_vdevice is not None:
                         # check that all the defined features in the VDevice also exist in the related device ->
@@ -1148,7 +1148,7 @@ class Collector:
                 # the connections from higher classes
                 for cur_device in all_devices:
                     cur_device_controller = DeviceController.get_for(cur_device)
-                    for cur_node, cur_cnn_list in cur_device_controller.connections.items():
+                    for _, cur_cnn_list in cur_device_controller.connections.items():
                         # now add every single connection correctly into the dictionary
                         for cur_cnn in cur_cnn_list:
                             if cur_cnn not in all_relevant_cnns:
@@ -1192,7 +1192,7 @@ class Collector:
                         # search node names that is the relevant connection
                         relevant_cnns: List[Connection] = []
                         mapped_device_abs_cnns = DeviceController.get_for(mapped_device).get_all_absolute_connections()
-                        for cur_node, all_connections in mapped_device_abs_cnns.items():
+                        for _, all_connections in mapped_device_abs_cnns.items():
                             for cur_cnn in all_connections:
                                 if cur_cnn.has_connection_from_to(cur_from_device, mapped_device):
                                     relevant_cnns.append(cur_cnn)

@@ -383,7 +383,7 @@ class FixtureManager:
         current_tree_fixtures_reversed = self.current_tree_fixtures[execution_level]
         current_tree_fixtures_reversed.reverse()
         exception = None
-        for _, _, cur_fixture, cur_generator, _ in current_tree_fixtures_reversed:
+        for _, _, _, cur_generator, _ in current_tree_fixtures_reversed:
             try:
                 next(cur_generator)
             except StopIteration:

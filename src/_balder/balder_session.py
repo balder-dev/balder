@@ -181,7 +181,7 @@ class BalderSession:
         module = self.collector.load_balderglob_py_file()
         class_members = inspect.getmembers(module, inspect.isclass)
         all_classes = []
-        for cur_class_name, cur_class in class_members:
+        for _, cur_class in class_members:
             if issubclass(cur_class, BalderSettings):
                 all_classes.append(cur_class)
         if len(all_classes) == 0:
@@ -198,7 +198,7 @@ class BalderSession:
         module = self.collector.load_balderglob_py_file()
         class_members = inspect.getmembers(module, inspect.isclass)
         all_classes = []
-        for cur_class_name, cur_class in class_members:
+        for _, cur_class in class_members:
             if issubclass(cur_class, BalderPlugin):
                 all_classes.append(cur_class)
         return all_classes

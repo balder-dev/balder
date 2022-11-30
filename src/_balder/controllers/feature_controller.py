@@ -243,7 +243,7 @@ class FeatureController(Controller):
             if not issubclass(cur_class, VDevice):
                 # filter all classes and make sure that only the child classes of :class:`VDevice` remain
                 continue
-            outer_class_name, device_class_name = cur_class.__qualname__.split('.')[-2:]
+            outer_class_name, _ = cur_class.__qualname__.split('.')[-2:]
             if outer_class_name != self.related_cls.__name__:
                 # filter all classes that do not match the setup name in __qualname__
                 continue

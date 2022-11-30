@@ -407,7 +407,7 @@ class VariationExecutor(BasicExecutor):
         if self._routings == {}:
             self.determine_absolute_scenario_device_connections()
             self.create_all_valid_routings()
-        for cur_conn, cur_routings in self._routings.items():
+        for _, cur_routings in self._routings.items():
             if len(cur_routings) == 0:
                 return False
         return True
@@ -419,7 +419,7 @@ class VariationExecutor(BasicExecutor):
         """
         for cur_scenario_device, cur_replacement_dict in self.feature_replacement.items():
             for cur_attr_name, cur_replacement_tuple in cur_replacement_dict.items():
-                old_instantiated_feature_obj, new_feature_obj = cur_replacement_tuple
+                _, new_feature_obj = cur_replacement_tuple
                 setattr(cur_scenario_device, cur_attr_name, new_feature_obj)
 
     def revert_scenario_device_feature_instances(self):
@@ -429,7 +429,7 @@ class VariationExecutor(BasicExecutor):
         """
         for cur_scenario_device, cur_replacement_dict in self.feature_replacement.items():
             for cur_attr_name, cur_replacement_tuple in cur_replacement_dict.items():
-                old_instantiated_feature_obj, new_feature_obj = cur_replacement_tuple
+                old_instantiated_feature_obj, _ = cur_replacement_tuple
                 setattr(cur_scenario_device, cur_attr_name, old_instantiated_feature_obj)
 
     def update_active_vdevice_device_mappings_in_scenario_and_setup_devices(self):
@@ -486,7 +486,7 @@ class VariationExecutor(BasicExecutor):
         This method ensures that the `active_vdevices` property that was changed with
         `update_active_vdevice_device_mappings()` will be reverted correctly.
         """
-        for cur_scenario_or_setup_device, cur_feature_mapping_dict in self._original_active_vdevice_mappings.items():
+        for _, cur_feature_mapping_dict in self._original_active_vdevice_mappings.items():
             for cur_feature, cur_original_mapping in cur_feature_mapping_dict.items():
                 cur_feature.active_vdevices = cur_original_mapping
 
@@ -504,7 +504,7 @@ class VariationExecutor(BasicExecutor):
             # these features are subclasses of the real defined one (because they are already the replaced ones)
             all_device_features = DeviceController.get_for(scenario_device).get_all_instantiated_feature_objects()
             all_instantiated_feature_objs = [cur_feature for _, cur_feature in all_device_features.items()]
-            for cur_feature_name, cur_feature in all_device_features.items():
+            for _, cur_feature in all_device_features.items():
                 cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
                 # now check the inner referenced features of this feature and check if that exists in the device
                 for cur_ref_feature_name, cur_ref_feature in \
@@ -691,7 +691,7 @@ class VariationExecutor(BasicExecutor):
             The method assigns a full report with all valid routings into the local property `_routings`.
         """
         self._routings = {}
-        for scenario_device, setup_device in self._base_device_mapping.items():
+        for scenario_device, _ in self._base_device_mapping.items():
             for cur_scenario_conn in self._abs_variation_scenario_device_connections:
                 if cur_scenario_conn.has_connection_from_to(scenario_device):
                     # only check if the connection object has not yet been investigated
@@ -740,10 +740,10 @@ class VariationExecutor(BasicExecutor):
             It is important to call the method :meth:`VariationExecutor.determine_abs_variation_connections` and
             the method :meth:`VariationExecutor.update_scenario_device_feature_instances` before!
         """
-        for scenario_device, setup_device in self._base_device_mapping.items():
+        for _, setup_device in self._base_device_mapping.items():
             setup_device_instantiated_features = \
                 DeviceController.get_for(setup_device).get_all_instantiated_feature_objects()
-            for cur_attr_name, cur_setup_feature in setup_device_instantiated_features.items():
+            for _, cur_setup_feature in setup_device_instantiated_features.items():
 
                 cur_setup_feature_controller = FeatureController.get_for(cur_setup_feature.__class__)
                 method_var_data_of_feature = cur_setup_feature_controller.get_method_based_for_vdevice()
@@ -753,7 +753,7 @@ class VariationExecutor(BasicExecutor):
 
                 method_var_selection = {}
 
-                for cur_method_name, cur_method in inspect.getmembers(
+                for cur_method_name, _ in inspect.getmembers(
                         cur_setup_feature, lambda o: inspect.isfunction(o) or inspect.ismethod(o)):
 
                     if cur_method_name not in method_var_data_of_feature.keys():
