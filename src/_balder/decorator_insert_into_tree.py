@@ -32,6 +32,7 @@ def insert_into_tree(parents: List[Union[Type[Connection], Tuple[Type[Connection
         idx += 1
 
     class MyDecorator:
+        """decorator class for `@insert_into_tree` decorator"""
         def __new__(cls, *args, **kwargs):
 
             nonlocal parents

@@ -64,7 +64,8 @@ def for_vdevice(
         raise ValueError('the given element for `vdevice` has to be a `str` or has to be a subclass of'
                          '`VDevice`')
 
-    class ForConnectionDecorator:
+    class ForVDeviceDecorator:
+        """decorator class for `@for_vdevice` decorator"""
 
         def __init__(self, func):
             nonlocal vdevice
@@ -122,6 +123,6 @@ def for_vdevice(
 
             # otherwise, work will be done in `__init__`
             # return this decorator object to work with
-            return super().__new__(ForConnectionDecorator)
+            return super().__new__(ForVDeviceDecorator)
 
-    return ForConnectionDecorator
+    return ForVDeviceDecorator

@@ -8,6 +8,9 @@ if TYPE_CHECKING:
 
 
 class ResultState(Enum):
+    """
+    enumeration that describes the possible results of a testcase-/fixture-executor
+    """
     # this state will be assigned if the executor doesn't run yet
     NOT_RUN = 'NOT_RUN'
     # this state will be assigned if the test fails (only assignable to :class:`TestcaseExecutor`)

@@ -8,12 +8,16 @@ from _balder.objects.connections import osi_3_network, osi_4_transport
 
 @insert_into_tree(parents=[osi_4_transport.TcpIPv4Connection, osi_4_transport.TcpIPv6Connection])
 class HttpConnection(Connection):
-    pass
+    """
+    Balder HTTP connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(parents=[osi_4_transport.TcpIPv4Connection, osi_4_transport.TcpIPv6Connection])
 class ImapConnection(Connection):
-    pass
+    """
+    Balder IMAP connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(
@@ -24,12 +28,16 @@ class ImapConnection(Connection):
         osi_3_network.IPv6Connection
     ])
 class LdapConnection(Connection):
-    pass
+    """
+    Balder LDAP connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(parents=[osi_4_transport.UdpIPv4Connection, osi_4_transport.UdpIPv6Connection])
 class NtpConnection(Connection):
-    pass
+    """
+    Balder NTP connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(
@@ -38,22 +46,30 @@ class NtpConnection(Connection):
         (osi_4_transport.UdpIPv6Connection, osi_4_transport.TcpIPv6Connection)
     ])
 class RpcConnection(Connection):
-    pass
+    """
+    Balder RPC connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(parents=[osi_4_transport.TcpIPv4Connection, osi_4_transport.TcpIPv6Connection])
 class SmtpConnection(Connection):
-    pass
+    """
+    Balder SMTP connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(parents=[osi_4_transport.UdpIPv4Connection, osi_4_transport.UdpIPv6Connection])
 class SntpConnection(Connection):
-    pass
+    """
+    Balder SNTP connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(parents=[osi_4_transport.TcpIPv4Connection, osi_4_transport.TcpIPv6Connection])
 class SshConnection(Connection):
-    pass
+    """
+    Balder SSH connection (OSI LAYER 7)
+    """
 
 
 @insert_into_tree(
@@ -62,4 +78,6 @@ class SshConnection(Connection):
         (osi_4_transport.UdpIPv6Connection, osi_4_transport.TcpIPv6Connection)
     ])
 class DnsConnection(Connection):
-    pass
+    """
+    Balder DNS connection (OSI LAYER 7)
+    """

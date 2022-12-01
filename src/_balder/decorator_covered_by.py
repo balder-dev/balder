@@ -26,6 +26,7 @@ def covered_by(item: Union[Type[Scenario], callable, None]):
                         "a scenario class (has to start with `test_`)")
 
     class CoveredByDecorator:
+        """decorator class for `@covered_by` decorator"""
         def __init__(self, func):
             self.func = func
 
