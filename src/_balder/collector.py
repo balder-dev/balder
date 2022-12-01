@@ -16,6 +16,7 @@ from _balder.feature import Feature
 from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.connection import Connection
+from _balder.executor.executor_tree import ExecutorTree
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import InnerFeatureResolvingError, VDeviceResolvingError, IllegalVDeviceMappingError, \
@@ -293,7 +294,6 @@ class Collector:
         """
         This method resolves all raw fixtures and sets the resolved attribute `ExecutorTree.fixtures`
         """
-        from _balder.executor.executor_tree import ExecutorTree
         resolved_dict = {}
         for cur_level, cur_module_fixture_dict in ExecutorTree.raw_fixtures.items():
             resolved_dict[cur_level] = {}

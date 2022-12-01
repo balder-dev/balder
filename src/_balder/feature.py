@@ -1,11 +1,10 @@
 from __future__ import annotations
-from typing import Type, Dict, Tuple, Union, TYPE_CHECKING
+from typing import Type, Dict, Tuple, Union
+
+from _balder.device import Device
+from _balder.vdevice import VDevice
 from _balder.controllers import FeatureController
 from _balder.exceptions import UnclearMethodVariationError
-
-if TYPE_CHECKING:
-    from _balder.device import Device
-    from _balder.vdevice import VDevice
 
 
 class Feature:
@@ -19,8 +18,6 @@ class Feature:
         :param kwargs: contains a dictionary that references all vDevices of the feature and a real
                         scenario :meth:`Device` as value
         """
-        from _balder.device import Device
-        from _balder.vdevice import VDevice
 
         #: this property contains the active mapping for the devices
         self.active_vdevices: Dict[VDevice, Union[Device, str]] = {}

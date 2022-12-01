@@ -5,15 +5,15 @@ import sys
 import logging
 import inspect
 from abc import ABC
+from _balder.setup import Setup
 from _balder.device import Device
+from _balder.vdevice import VDevice
+from _balder.scenario import Scenario
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError, DeviceResolvingException
 
 if TYPE_CHECKING:
-    from _balder.scenario import Scenario
-    from _balder.setup import Setup
     from _balder.connection import Connection
-    from _balder.vdevice import VDevice
     from _balder.controllers import ScenarioController, SetupController
 
 logger = logging.getLogger(__file__)
@@ -31,8 +31,6 @@ class DeviceController(BaseDeviceController, ABC):
 
     def __init__(self, related_cls, _priv_instantiate_key):
         super().__init__()
-        from _balder.device import Device
-        from _balder.vdevice import VDevice
 
         # this helps to make this constructor only possible inside the controller object
         if _priv_instantiate_key != DeviceController.__priv_instantiate_key:
@@ -104,9 +102,8 @@ class DeviceController(BaseDeviceController, ABC):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     def __get_outer_class_controller(self) -> Union[ScenarioController, SetupController]:
-        from _balder.scenario import Scenario
-        from _balder.setup import Setup
-        from _balder.controllers import ScenarioController, SetupController
+        from _balder.controllers.scenario_controller import ScenarioController
+        from _balder.controllers.setup_controller import SetupController
 
         outer_class = self.get_outer_class()
         if issubclass(outer_class, Setup):
@@ -281,8 +278,6 @@ class DeviceController(BaseDeviceController, ABC):
         This method delivers the outer class of the related device. This has to be a :class:`Setup` or a
         :class:`Scenario`.
         """
-        from _balder.scenario import Scenario
-        from _balder.setup import Setup
 
         if self.related_cls.__qualname__.count('.') == 0:
             raise DeviceScopeError("the current device class is no inner class")

@@ -9,14 +9,14 @@ from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.scenario import Scenario
 from _balder.setup import Setup
 from _balder.testresult import ResultState
+from _balder.executor.setup_executor import SetupExecutor
+from _balder.executor.scenario_executor import ScenarioExecutor
+from _balder.executor.variation_executor import VariationExecutor
 from _balder.exceptions import LostInExecutorTreeException, FixtureReferenceError, UnclearSetupScopedFixtureReference, \
     UnclearUniqueClassReference
 
 if TYPE_CHECKING:
     from _balder.executor.executor_tree import ExecutorTree
-    from _balder.executor.setup_executor import SetupExecutor
-    from _balder.executor.scenario_executor import ScenarioExecutor
-    from _balder.executor.variation_executor import VariationExecutor
 
 
 class FixtureManager:
@@ -27,7 +27,6 @@ class FixtureManager:
     EXECUTION_LEVEL_ORDER = ['session', 'setup', 'scenario', 'variation', 'testcase']
 
     def __init__(self, executor_tree):
-        from _balder.executor.executor_tree import ExecutorTree
         self._executor_tree: ExecutorTree = executor_tree
 
         # contains all active fixtures with their namespace, their func_type, their callable, the generator object
@@ -46,10 +45,6 @@ class FixtureManager:
     @property
     def resolve_type_level(self):
         from _balder.executor.executor_tree import ExecutorTree
-        from _balder.executor.setup_executor import SetupExecutor
-        from _balder.executor.scenario_executor import ScenarioExecutor
-        from _balder.executor.variation_executor import VariationExecutor
-        from _balder.executor.testcase_executor import TestcaseExecutor
 
         return {
             ExecutorTree: 'session',
@@ -108,10 +103,6 @@ class FixtureManager:
         :return: the method returns a dictionary with the attribute name as key and the return value as value
         """
         from _balder.executor.executor_tree import ExecutorTree
-        from _balder.executor.setup_executor import SetupExecutor
-        from _balder.executor.scenario_executor import ScenarioExecutor
-        from _balder.executor.variation_executor import VariationExecutor
-        from _balder.executor.testcase_executor import TestcaseExecutor
 
         arguments = inspect.getfullargspec(callable_func).args
         result_dict = {}

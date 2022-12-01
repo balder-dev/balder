@@ -3,12 +3,12 @@ from typing import Type, Dict, Union, List, Callable, Tuple, TYPE_CHECKING
 
 import logging
 import inspect
+from _balder.vdevice import VDevice
 from _balder.controllers import Controller
+from _balder.connection import Connection
 from _balder.exceptions import UnclearMethodVariationError
 
 if TYPE_CHECKING:
-    from _balder.connection import Connection
-    from _balder.vdevice import VDevice
     from _balder.feature import Feature
 
 
@@ -82,7 +82,6 @@ class FeatureController(Controller):
         This method returns the class based data for the `@for_vdevice` decorator or None, if there is no decorator
         given
         """
-        from _balder.connection import Connection
 
         result = {}
         if self._cls_for_vdevice is not None:
@@ -153,7 +152,6 @@ class FeatureController(Controller):
         :return: the method variation callable for the given data (or none, if the method does not exist in this object
                  or in a parent class of it)
         """
-        from _balder.connection import Connection
 
         all_vdevice_method_variations = self.get_method_based_for_vdevice()
 
@@ -234,7 +232,6 @@ class FeatureController(Controller):
 
         If you want to get the absolute VDevices use :meth:`Feature.get_inner_vdevice_classes`.
         """
-        from _balder.vdevice import VDevice
         from _balder.feature import Feature
 
         all_classes = inspect.getmembers(self.related_cls, inspect.isclass)

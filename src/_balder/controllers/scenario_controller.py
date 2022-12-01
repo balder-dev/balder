@@ -1,12 +1,10 @@
 from __future__ import annotations
-from typing import Type, Dict, List, TYPE_CHECKING
+from typing import Type, Dict, List
 
 import logging
 import inspect
+from _balder.scenario import Scenario
 from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
-
-if TYPE_CHECKING:
-    from _balder.scenario import Scenario
 
 logger = logging.getLogger(__file__)
 
@@ -23,7 +21,6 @@ class ScenarioController(NormalScenarioSetupController):
     _items: Dict[Type[Scenario], ScenarioController] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
-        from _balder.scenario import Scenario
 
         # describes if the current controller is for setups or for scenarios (has to be set in child controller)
         self._related_type = Scenario

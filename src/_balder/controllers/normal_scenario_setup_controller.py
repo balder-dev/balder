@@ -5,13 +5,13 @@ import logging
 import inspect
 from abc import ABC
 from _balder.setup import Setup
+from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.controllers.controller import Controller
 from _balder.controllers.device_controller import DeviceController
 from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError
 
 if TYPE_CHECKING:
-    from _balder.device import Device
     from _balder.connection import Connection
     from _balder.controllers import ScenarioController
     from _balder.controllers import SetupController
@@ -46,7 +46,9 @@ class NormalScenarioSetupController(Controller, ABC):
             This method automatically returns the correct controller type, depending on the class you provide with
             `related_cls`.
         """
-        from _balder.controllers import ScenarioController, SetupController
+        from _balder.controllers.setup_controller import SetupController
+        from _balder.controllers.scenario_controller import ScenarioController
+
         if issubclass(related_cls, Scenario):
             return ScenarioController.get_for(related_cls)
         if issubclass(related_cls, Setup):
@@ -59,7 +61,6 @@ class NormalScenarioSetupController(Controller, ABC):
         This method provides a list of all :meth:`Device` classes that have been defined as inner classes in the related
         scenario or setup.
         """
-        from _balder.device import Device
 
         all_classes = inspect.getmembers(self.related_cls, inspect.isclass)
         filtered_classes = []

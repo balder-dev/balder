@@ -11,6 +11,7 @@ from _balder.previous_executor_mark import PreviousExecutorMark
 
 if TYPE_CHECKING:
     from _balder.executor.variation_executor import VariationExecutor
+    from _balder.fixture_manager import FixtureManager
     from _balder.scenario import Scenario
 
 
@@ -22,7 +23,6 @@ class TestcaseExecutor(BasicExecutor):
 
     def __init__(self, testcase: callable, parent: VariationExecutor):
         super().__init__()
-        from _balder.fixture_manager import FixtureManager
 
         self._base_testcase_callable = testcase
         self._parent_executor = parent

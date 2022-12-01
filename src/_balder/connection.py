@@ -1,13 +1,10 @@
 from __future__ import annotations
-from typing import List, Tuple, Union, Type, Dict, TYPE_CHECKING
+from typing import List, Tuple, Union, Type, Dict
 
 import copy
 import itertools
+from _balder.device import Device
 from _balder.exceptions import IllegalConnectionTypeError
-
-
-if TYPE_CHECKING:
-    from _balder.device import Device
 
 
 class Connection:
@@ -36,7 +33,6 @@ class Connection:
 
         :param to_device_node_name: the node name of the device the connection ends
         """
-        from _balder.device import Device
 
         # contains all metadata of this connection object
         self._metadata = {
