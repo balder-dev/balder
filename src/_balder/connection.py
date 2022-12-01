@@ -702,7 +702,7 @@ class Connection:
         Provides the information if the current connection object is a universal connection. This means, that the type
         is the base :class:`Connection` and the based_on_elements are empty.
         """
-        return type(self) == Connection and len(self._based_on_connections) == 0
+        return self.__class__ == Connection and len(self._based_on_connections) == 0
 
     def is_resolved(self):
         """
