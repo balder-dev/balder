@@ -3,10 +3,10 @@ from typing import Union, List, Tuple, Dict, Type, TYPE_CHECKING
 
 import os
 import sys
-import balder
 import inspect
 import pathlib
 import argparse
+import balder
 from _balder.balder_plugin import BalderPlugin
 from _balder.plugin_manager import PluginManager
 from _balder.executor.executor_tree import ExecutorTree
