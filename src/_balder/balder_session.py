@@ -122,8 +122,8 @@ class BalderSession:
         """
         if BalderSession.baldersettings is None:
             raise ValueError("no baldersettings loaded yet")
-        else:
-            return BalderSession.baldersettings.used_global_connection_tree
+
+        return BalderSession.baldersettings.used_global_connection_tree
 
     # ---------------------------------- CLASS METHODS -----------------------------------------------------------------
 
@@ -215,12 +215,12 @@ class BalderSession:
             if found_idx != -1:
                 if len(sys.argv) <= found_idx + 1:
                     raise AttributeError(f"no path given for `{argv_working_dir_key}`")
-                else:
-                    self.working_dir = pathlib.Path(sys.argv[found_idx + 1]).absolute()
-                    if not self.working_dir.is_dir():
-                        raise NotADirectoryError(
-                            f'can not parse the given working directory `{self.working_dir}` correctly or the given '
-                            f'path is no directory..')
+
+                self.working_dir = pathlib.Path(sys.argv[found_idx + 1]).absolute()
+                if not self.working_dir.is_dir():
+                    raise NotADirectoryError(
+                        f'can not parse the given working directory `{self.working_dir}` correctly or the given '
+                        f'path is no directory..')
 
     def parse_args(self):
         """

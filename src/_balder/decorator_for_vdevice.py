@@ -95,12 +95,15 @@ def for_vdevice(
                     relevant_vdevices = [cur_vdevice for cur_vdevice
                                          in fn_feature_controller.get_abs_inner_vdevice_classes()
                                          if cur_vdevice.__name__ == vdevice]
+
                     if len(relevant_vdevices) == 0:
                         raise ValueError(
                             f"can not find a matching inner VDevice class for the given vDevice string `{vdevice}` in "
                             f"the feature class `{func.__name__}`")
-                    elif len(relevant_vdevices) > 1:
+
+                    if len(relevant_vdevices) > 1:
                         raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
                     vdevice = relevant_vdevices[0]
                 cls_for_vdevice = fn_feature_controller.get_class_based_for_vdevice()
                 cls_for_vdevice = {} if cls_for_vdevice is None else cls_for_vdevice

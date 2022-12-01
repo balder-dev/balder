@@ -34,11 +34,11 @@ class Feature:
                         raise TypeError(f"the given value of vDevice mapping for vDevice `{cur_kwargs_key}` has to be "
                                         f"of the type `Device` - it is a subclass of `VDevice` - this is not allowed "
                                         f"here")
-                    elif self.active_vdevices != {}:
+                    if self.active_vdevices != {}:
                         raise AttributeError(
                             "the constructor expects exactly none or one vDevice mapping - found more than one here")
-                    else:
-                        self.active_vdevices = {cur_vdevice: cur_kwargs_val}
+
+                    self.active_vdevices = {cur_vdevice: cur_kwargs_val}
                 else:
                     raise TypeError(f"the given value of vDevice mapping for vDevice `{cur_kwargs_key}` has to be of "
                                     f"the type `Device` or has to be a string with the name of the device class")
@@ -129,8 +129,9 @@ class Feature:
                 f"name `{method_var_name}` (base classes "
                 f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
                 f"please note, that we do not support multiple inheritance")
-        elif len(parent_of_parent_methods) == 1:
+
+        if len(parent_of_parent_methods) == 1:
             return list(parent_of_parent_methods.values())[0]
-        else:
-            # do not found one of the methods
-            return None
+
+        # otherwise do not found one of the methods
+        return None

@@ -356,17 +356,17 @@ class Collector:
                             if next_parent is None:
                                 raise ValueError(f"the element `{cur_skip_method.__name__}` given at class attribute "
                                                  f"`{cur_class.__name__}.SKIP` is not a test method of this scenario")
-                            else:
-                                if cur_skip_method in next_parent.IGNORE:
-                                    raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
-                                                     f"attribute `{cur_class.__name__}.SKIP` was already added to "
-                                                     f"IGNORE in a higher parent class - not possible to add it now to "
-                                                     f"SKIP")
-                                elif cur_skip_method not in next_parent.SKIP \
-                                        and cur_skip_method not in next_parent.IGNORE:
-                                    raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
-                                                     f"attribute `{cur_class.__name__}.SKIP` is not a test method of "
-                                                     f"this scenario")
+
+                            if cur_skip_method in next_parent.IGNORE:
+                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                                 f"attribute `{cur_class.__name__}.SKIP` was already added to "
+                                                 f"IGNORE in a higher parent class - not possible to add it now to "
+                                                 f"SKIP")
+
+                            if cur_skip_method not in next_parent.SKIP and cur_skip_method not in next_parent.IGNORE:
+                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                                 f"attribute `{cur_class.__name__}.SKIP` is not a test method of "
+                                                 f"this scenario")
                 else:
                     # SKIP is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.SKIP = []
@@ -386,21 +386,21 @@ class Collector:
                                 raise ValueError(
                                     f"the element `{cur_run_method.__name__}` given at class attribute "
                                     f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
-                            else:
-                                if cur_run_method in next_parent.IGNORE:
-                                    raise ValueError(
-                                        f"the element `{cur_run_method.__name__}` given at class attribute "
-                                        f"`{cur_class.__name__}.RUN` was already added to IGNORE in a higher parent "
-                                        f"class - not possible to add it now to RUN")
-                                elif cur_run_method in next_parent.SKIP:
-                                    raise ValueError(
-                                        f"the element `{cur_run_method.__name__}` given at class attribute "
-                                        f"`{cur_class.__name__}.RUN` was already added to SKIP in a higher parent "
-                                        f"class - not possible to add it now to RUN")
-                                elif cur_run_method not in next_parent.RUN:
-                                    raise ValueError(
-                                        f"the element `{cur_run_method.__name__}` given at class attribute "
-                                        f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
+
+                            if cur_run_method in next_parent.IGNORE:
+                                raise ValueError(
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` was already added to IGNORE in a higher parent "
+                                    f"class - not possible to add it now to RUN")
+                            if cur_run_method in next_parent.SKIP:
+                                raise ValueError(
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` was already added to SKIP in a higher parent "
+                                    f"class - not possible to add it now to RUN")
+                            if cur_run_method not in next_parent.RUN:
+                                raise ValueError(
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
                 else:
                     # RUN is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.RUN = []
@@ -453,11 +453,14 @@ class Collector:
                     relevant_vdevices = [cur_vdevice for cur_vdevice
                                          in owner_feature_controller.get_abs_inner_vdevice_classes()
                                          if cur_vdevice.__name__ == cur_decorator_vdevice]
+
                     if len(relevant_vdevices) == 0:
                         raise ValueError(f"can not find a matching inner VDevice class for the given vdevice string "
                                          f"`{cur_decorator_vdevice}` in the feature class `{owner.__name__}`")
-                    elif len(relevant_vdevices) > 1:
+
+                    if len(relevant_vdevices) > 1:
                         raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
                     cur_decorator_vdevice = relevant_vdevices[0]
 
                 if cur_decorator_vdevice not in owner_feature_controller.get_abs_inner_vdevice_classes():
@@ -677,12 +680,14 @@ class Collector:
                                     f"can not reference the same feature from itself (done in feature "
                                     f"`{cur_feature.__class__.__name__}` with `{cur_ref_feature_name}`)")
                             potential_candidates.append(cur_potential_candidate_feature)
+
                     if len(potential_candidates) == 0:
                         raise InnerFeatureResolvingError(
                             f"can not find a matching feature in the device `{cur_outer_device.__name__}` that could "
                             f"be assigned to the inner feature reference `{cur_ref_feature_name}` of the feature "
                             f"`{cur_feature.__class__.__name__}`")
-                    elif len(potential_candidates) > 1:
+
+                    if len(potential_candidates) > 1:
                         raise InnerFeatureResolvingError(
                             f"found more than one matching feature in the device `{cur_outer_device.__name__}` that "
                             f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
@@ -787,42 +792,42 @@ class Collector:
                                 f"missing overwriting of parent VDevice class `{cur_parent_vdevice.__qualname__}` in "
                                 f"feature class `{cur_feature.__name__}` - if you overwrite one or more VDevice(s) "
                                 f"you have to overwrite all!")
-                        else:
-                            # otherwise check if inheritance AND feature overwriting is correct
-                            cur_child_idx = direct_namings.index(cur_parent_vdevice.__name__)
-                            related_child_vdevice = all_direct_vdevices_of_this_feature_lvl[cur_child_idx]
-                            if not issubclass(related_child_vdevice, cur_parent_vdevice):
-                                # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
-                                raise VDeviceOverwritingError(
-                                        f"the inner vDevice class `{related_child_vdevice.__qualname__}` has the same "
-                                        f"name than the vDevice `{cur_parent_vdevice.__qualname__}` - it should also "
-                                        f"inherit from it")
-                            # todo check that feature overwriting inside the VDevice is correct
-                            # now check that the vDevice overwrites the existing properties only in a proper manner (to
-                            #  overwrite it, it has to have the same property name as the property in the next parent
-                            #  class)
-                            cur_vdevice_features = \
-                                VDeviceController.get_for(related_child_vdevice).get_all_instantiated_feature_objects()
-                            cur_vdevice_base_features = \
-                                VDeviceController.get_for(cur_parent_vdevice).get_all_instantiated_feature_objects()
-                            for cur_base_property_name, cur_base_feature_instance in cur_vdevice_base_features.items():
-                                # now check that every base property is available in the current vDevice too - check
-                                #  that the instantiated feature is the same or the feature of the child vDevice is a
-                                #  child of it -> ignore it, if the child vDevice has more features than the base -
-                                #   that doesn't matter
-                                if cur_base_property_name not in cur_vdevice_features.keys():
-                                    raise VDeviceResolvingError(
-                                        f"can not find the property `{cur_base_property_name}` of "
-                                        f"parent vDevice `{cur_parent_vdevice.__qualname__}` in the "
-                                        f"current vDevice class `{related_child_vdevice.__qualname__}`")
-                                cur_feature_instance = cur_vdevice_features[cur_base_property_name]
-                                if not isinstance(cur_feature_instance, cur_base_feature_instance.__class__):
-                                    raise FeatureOverwritingError(
-                                        f"you are trying to overwrite an existing vDevice Feature property "
-                                        f"`{cur_base_property_name}` in vDevice `{related_child_vdevice.__qualname__}` "
-                                        f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
-                                        f"only possible with a child (or with the same) feature class the parent "
-                                        f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")
+
+                        # otherwise check if inheritance AND feature overwriting is correct
+                        cur_child_idx = direct_namings.index(cur_parent_vdevice.__name__)
+                        related_child_vdevice = all_direct_vdevices_of_this_feature_lvl[cur_child_idx]
+                        if not issubclass(related_child_vdevice, cur_parent_vdevice):
+                            # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
+                            raise VDeviceOverwritingError(
+                                    f"the inner vDevice class `{related_child_vdevice.__qualname__}` has the same "
+                                    f"name than the vDevice `{cur_parent_vdevice.__qualname__}` - it should also "
+                                    f"inherit from it")
+                        # todo check that feature overwriting inside the VDevice is correct
+                        # now check that the vDevice overwrites the existing properties only in a proper manner (to
+                        #  overwrite it, it has to have the same property name as the property in the next parent
+                        #  class)
+                        cur_vdevice_features = \
+                            VDeviceController.get_for(related_child_vdevice).get_all_instantiated_feature_objects()
+                        cur_vdevice_base_features = \
+                            VDeviceController.get_for(cur_parent_vdevice).get_all_instantiated_feature_objects()
+                        for cur_base_property_name, cur_base_feature_instance in cur_vdevice_base_features.items():
+                            # now check that every base property is available in the current vDevice too - check
+                            #  that the instantiated feature is the same or the feature of the child vDevice is a
+                            #  child of it -> ignore it, if the child vDevice has more features than the base -
+                            #   that doesn't matter
+                            if cur_base_property_name not in cur_vdevice_features.keys():
+                                raise VDeviceResolvingError(
+                                    f"can not find the property `{cur_base_property_name}` of "
+                                    f"parent vDevice `{cur_parent_vdevice.__qualname__}` in the "
+                                    f"current vDevice class `{related_child_vdevice.__qualname__}`")
+                            cur_feature_instance = cur_vdevice_features[cur_base_property_name]
+                            if not isinstance(cur_feature_instance, cur_base_feature_instance.__class__):
+                                raise FeatureOverwritingError(
+                                    f"you are trying to overwrite an existing vDevice Feature property "
+                                    f"`{cur_base_property_name}` in vDevice `{related_child_vdevice.__qualname__}` "
+                                    f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
+                                    f"only possible with a child (or with the same) feature class the parent "
+                                    f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")
 
     @staticmethod
     def feature_determine_class_for_vdevice_values(features: List[Type[Feature]], print_warning=True):
@@ -893,11 +898,13 @@ class Collector:
                         for cur_vdevice_of_interest in cur_vdevice.__bases__:
                             if issubclass(cur_vdevice_of_interest, VDevice) and cur_vdevice_of_interest != VDevice:
                                 possible_vdevices_of_interest.append(cur_vdevice_of_interest)
+
                         if len(possible_vdevices_of_interest) > 1:
                             raise VDeviceResolvingError(
                                 f"the vdevice `{cur_vdevice.__name__}` has more than one parent classes from type "
                                 f"`VDevice` - this is not allowed")
-                        elif len(possible_vdevices_of_interest) == 1:
+
+                        if len(possible_vdevices_of_interest) == 1:
                             # we have found one parent vDevice that has the same name as the cur_vdevice
                             vdevice_of_interest = possible_vdevices_of_interest[0]
                         else:
