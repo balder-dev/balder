@@ -116,7 +116,7 @@ def for_vdevice(
                     raise UnknownVDeviceException(
                         f"the given vDevice `{vdevice}` is no usable vDevice in Feature class `{func.__name__}`")
 
-                cls_for_vdevice[vdevice] = [cur_cnn for cur_cnn in with_connections]
+                cls_for_vdevice[vdevice] = with_connections
                 fn_feature_controller.set_class_based_for_vdevice(cls_for_vdevice)
                 # directly return the class -> we do not want to manipulate it
                 return func

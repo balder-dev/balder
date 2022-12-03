@@ -325,8 +325,7 @@ class DeviceController(BaseDeviceController, ABC):
                 mod = sys.modules[cur_conn.from_device.__module__]
                 parent_cls_from_device = getattr(mod, outer_cls_name_from_device)
 
-                all_inner_classes_of_outer = inspect.getmembers(parent_cls_from_device, inspect.isclass)
-                all_inner_classes_of_outer = {name: value for name, value in all_inner_classes_of_outer}
+                all_inner_classes_of_outer = dict(inspect.getmembers(parent_cls_from_device, inspect.isclass))
                 if cur_conn.to_device in all_inner_classes_of_outer.keys():
                     meta = cur_conn.metadata
 
