@@ -44,6 +44,10 @@ class FixtureManager:
 
     @property
     def resolve_type_level(self):
+        """
+        returns a dictionary that holds the executor class as key and the fixture definition that belongs to this
+        executor class as key
+        """
         from _balder.executor.executor_tree import ExecutorTree
 
         return {

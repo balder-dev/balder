@@ -60,24 +60,28 @@ class Collector:
 
     @property
     def all_pyfiles(self) -> List[Type[pathlib.Path]]:
+        """returns a list of all python files that were be found by the collector"""
         if self._all_py_files is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_py_files
 
     @property
     def all_scenarios(self) -> List[Type[Scenario]]:
+        """returns a list of all scenarios that were found by the collector"""
         if self._all_scenarios is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_scenarios
 
     @property
     def all_setups(self) -> List[Type[Setup]]:
+        """returns a list of all setups that were found by the collector"""
         if self._all_setups is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_setups
 
     @property
     def all_connections(self) -> List[Type[Connection]]:
+        """returns a list of all connections that were found by the collector"""
         if self._all_connections is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_connections

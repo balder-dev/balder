@@ -302,6 +302,9 @@ class BalderSession:
         self.executor_tree.execute()
 
     def run(self):
+        """
+        This method executes the whole session
+        """
         line_length = 120
 
         self.collect()

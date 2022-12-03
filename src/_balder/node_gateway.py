@@ -98,5 +98,6 @@ class NodeGateway:
 
         return False
 
-    def is_bidirectional(self):
+    def is_bidirectional(self) -> bool:
+        """returns true if the gateway works in both directional"""
         return self._bidirectional

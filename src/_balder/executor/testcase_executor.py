@@ -58,6 +58,7 @@ class TestcaseExecutor(BasicExecutor):
 
     @property
     def base_testcase_callable(self) -> callable:
+        """returns the testcase function"""
         return self._base_testcase_callable
 
     @property
@@ -69,6 +70,7 @@ class TestcaseExecutor(BasicExecutor):
 
     @property
     def fixture_manager(self):
+        """returns the current active fixture manager"""
         return self._fixture_manager
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------

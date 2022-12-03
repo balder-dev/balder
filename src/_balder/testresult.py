@@ -59,7 +59,8 @@ class _Result:
         return self.result.name
 
     @property
-    def result(self):
+    def result(self) -> ResultState:
+        """returns the result"""
         return self._result
 
     def get_result_as_char(self):

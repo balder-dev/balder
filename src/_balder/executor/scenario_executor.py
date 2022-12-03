@@ -63,26 +63,32 @@ class ScenarioExecutor(BasicExecutor):
 
     @property
     def base_scenario_class(self) -> Scenario:
+        """returns the :class:`Scenario` class that belongs to this executor"""
         return self._base_scenario_class
 
     @property
     def variation_executors(self) -> List[VariationExecutor]:
+        """returns all variation executors that are child executor of this scenario executor"""
         return self._variation_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
+        """returns the current active fixture manager that belongs to this scenario executor"""
         return self._fixture_manager
 
     @property
     def all_run_tests(self):
+        """returns a list of all test methods that are declared to `RUN` in their base :class:`Scenario` class"""
         return self._base_scenario_class.RUN
 
     @property
     def all_skip_tests(self):
+        """returns a list of all test methods that are declared to `SKIP` in their base :class:`Scenario` class"""
         return self._base_scenario_class.SKIP
 
     @property
     def all_ignore_tests(self):
+        """returns a list of all test methods that are declared to `IGNORE` in their base :class:`Scenario` class"""
         return self._base_scenario_class.IGNORE
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
@@ -90,6 +96,9 @@ class ScenarioExecutor(BasicExecutor):
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def cleanup_empty_executor_branches(self):
+        """
+        This method removes all sub executors that are empty and not relevant anymore.
+        """
         to_remove_executor = []
         for cur_variation_executor in self.variation_executors:
             if len(cur_variation_executor.testcase_executors) == 0:

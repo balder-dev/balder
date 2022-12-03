@@ -57,14 +57,17 @@ class SetupExecutor(BasicExecutor):
 
     @property
     def base_setup_class(self) -> Setup:
+        """returns the base :class:`Setup` that belongs to this executor"""
         return self._base_setup_class
 
     @property
     def scenario_executors(self) -> List[ScenarioExecutor]:
+        """returns a list with all scenario executors that belongs to this setup executor"""
         return self._scenario_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
+        """returns the current active fixture manager for this executor"""
         return self._fixture_manager
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------

@@ -170,22 +170,27 @@ class RoutingPath:
 
     @property
     def elements(self) -> List[Connection, NodeGateway]:
+        """returns all elements that belongs to this routing path"""
         return self._routing_elems
 
     @property
     def start_device(self) -> Type[Device]:
+        """returns the device the route starts from"""
         return self._start_device
 
     @property
     def start_node_name(self) -> str:
+        """returns the node of the `start_device` this route starts from"""
         return self._start_node_name
 
     @property
     def end_device(self) -> Type[Device]:
+        """returns the device the route ends"""
         return self._get_end_device_and_node()[0]
 
     @property
     def end_node_name(self) -> str:
+        """returns the node of the `end_device` this route ends"""
         return self._get_end_device_and_node()[1]
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------

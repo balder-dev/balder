@@ -107,10 +107,12 @@ class VariationExecutor(BasicExecutor):
 
     @property
     def testcase_executors(self) -> List[TestcaseExecutor]:
+        """returns all sub testcase executors that belongs to this variation-executor"""
         return self._testcase_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
+        """returns the active fixture manager"""
         return self._fixture_manager
 
     @property
@@ -126,6 +128,8 @@ class VariationExecutor(BasicExecutor):
     @property
     def abs_setup_feature_vdevice_mappings(self) \
             -> Dict[Type[Device], Dict[Feature, Dict[Type[VDevice], Type[Device]]]]:
+        """returns the feature replacement that was determined with
+        `determine_feature_replacement_and_vdevice_mappings()`"""
         return self._abs_setup_feature_vdevice_mappings
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------

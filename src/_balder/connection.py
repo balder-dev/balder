@@ -375,7 +375,8 @@ class Connection:
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
-    def metadata(self):
+    def metadata(self) -> dict:
+        """returns the connection metadata dictionary"""
         return self._metadata
 
     @metadata.setter

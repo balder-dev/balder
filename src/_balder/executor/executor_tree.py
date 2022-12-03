@@ -51,11 +51,13 @@ class ExecutorTree(BasicExecutor):
         return None
 
     @property
-    def setup_executors(self):
+    def setup_executors(self) -> List[SetupExecutor]:
+        """returns all setup executors of this tree"""
         return self._setup_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
+        """returns the fixture manager of this tree"""
         return self._fixture_manager
 
     @property

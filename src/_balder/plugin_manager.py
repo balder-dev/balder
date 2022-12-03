@@ -22,6 +22,13 @@ class PluginManager:
         self.all_plugins: List[BalderPlugin] = []
 
     def register(self, plugin_class: Type[BalderPlugin], session: BalderSession):
+        """
+        This method registers a new plugin class.
+
+        :param plugin_class: the new class that should be registered
+
+        :param session: the balder session, the new plugin belongs to
+        """
         if plugin_class in [cur_plugin_instance.__class__ for cur_plugin_instance in self.all_plugins]:
             raise ValueError(f"the given plugin class `{plugin_class.__name__}` can not be added twice")
         plugin_instance = plugin_class(session)
