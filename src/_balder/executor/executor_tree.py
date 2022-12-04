@@ -192,7 +192,7 @@ class ExecutorTree(BasicExecutor):
                     mapping_printings = {}
                     for cur_scenario_device, cur_setup_device in cur_variation_executor.base_device_mapping.items():
                         mapping_printings[f"   {cur_scenario_device.__qualname__}"] = str(cur_setup_device.__qualname__)
-                    max_len = max([len(cur_elem) for cur_elem in mapping_printings.keys()])
+                    max_len = max(len(cur_elem) for cur_elem in mapping_printings.keys())
                     for cur_key, cur_val in mapping_printings.items():
                         print(("{:<" + str(max_len) + "} = {}").format(cur_key, cur_val))
                     for cur_testcase_excutor in cur_variation_executor.testcase_executors:
