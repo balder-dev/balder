@@ -1,21 +1,20 @@
 from __future__ import annotations
+from typing import Dict, List, Type, Tuple, Union, TYPE_CHECKING
 
 import sys
 import logging
-from abc import ABC
-from typing import Dict, List, Type, Tuple, Union, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.scenario import Scenario
-    from _balder.setup import Setup
-    from _balder.connection import Connection
-    from _balder.vdevice import VDevice
-    from _balder.controllers import ScenarioController, SetupController
-
 import inspect
+from abc import ABC
+from _balder.setup import Setup
 from _balder.device import Device
+from _balder.vdevice import VDevice
+from _balder.scenario import Scenario
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError, DeviceResolvingException
+
+if TYPE_CHECKING:
+    from _balder.connection import Connection
+    from _balder.controllers import ScenarioController, SetupController
 
 logger = logging.getLogger(__file__)
 
@@ -31,9 +30,7 @@ class DeviceController(BaseDeviceController, ABC):
     _items: Dict[Type[Device], DeviceController] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
-        super(DeviceController, self).__init__()
-        from _balder.device import Device
-        from _balder.vdevice import VDevice
+        super().__init__()
 
         # this helps to make this constructor only possible inside the controller object
         if _priv_instantiate_key != DeviceController.__priv_instantiate_key:
@@ -105,9 +102,8 @@ class DeviceController(BaseDeviceController, ABC):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     def __get_outer_class_controller(self) -> Union[ScenarioController, SetupController]:
-        from _balder.scenario import Scenario
-        from _balder.setup import Setup
-        from _balder.controllers import ScenarioController, SetupController
+        from _balder.controllers.scenario_controller import ScenarioController
+        from _balder.controllers.setup_controller import SetupController
 
         outer_class = self.get_outer_class()
         if issubclass(outer_class, Setup):
@@ -259,9 +255,9 @@ class DeviceController(BaseDeviceController, ABC):
 
         result = {}
         all_connections = self.get_all_connections()
-        for cur_node_name in all_connections.keys():
-            cur_intersection = all_connections[cur_node_name][0]
-            for cur_node_connection in all_connections[cur_node_name][1:]:
+        for cur_node_name, node_connections in all_connections.items():
+            cur_intersection = node_connections[0]
+            for cur_node_connection in node_connections[1:]:
                 cur_intersection = cur_node_connection.intersection_with(cur_intersection)
             result[cur_node_name] = [cur_intersection]
 
@@ -273,7 +269,7 @@ class DeviceController(BaseDeviceController, ABC):
         automatically.
         """
 
-        self_node_name = "n{}".format(self._node_cnt)
+        self_node_name = f"n{self._node_cnt}"
         self._node_cnt += 1
         return self_node_name
 
@@ -282,15 +278,14 @@ class DeviceController(BaseDeviceController, ABC):
         This method delivers the outer class of the related device. This has to be a :class:`Setup` or a
         :class:`Scenario`.
         """
-        from _balder.scenario import Scenario
-        from _balder.setup import Setup
 
         if self.related_cls.__qualname__.count('.') == 0:
             raise DeviceScopeError("the current device class is no inner class")
-        elif self.related_cls.__qualname__.count('.') > 1:
+
+        if self.related_cls.__qualname__.count('.') > 1:
             raise DeviceScopeError("the current device class is no direct inner class (deeper than one)")
 
-        outer_class_name, inner_class_name = self.related_cls.__qualname__.split('.')
+        outer_class_name, _ = self.related_cls.__qualname__.split('.')
 
         outer_class = [cur_class for cur_name, cur_class in inspect.getmembers(
             inspect.getmodule(self.related_cls)) if cur_name == outer_class_name][0]
@@ -316,8 +311,8 @@ class DeviceController(BaseDeviceController, ABC):
             has read all files, all required information are available and this method should be able to resolve the
             device-strings.
         """
-        for cur_node in self.connections.keys():
-            for cur_conn in self.connections[cur_node]:
+        for _, node_connections in self.connections.items():
+            for cur_conn in node_connections:
                 # for every connection applies that the `from_device` must already be a type; also the
                 # `to_device` has to be an inner class of this type
 
@@ -330,8 +325,7 @@ class DeviceController(BaseDeviceController, ABC):
                 mod = sys.modules[cur_conn.from_device.__module__]
                 parent_cls_from_device = getattr(mod, outer_cls_name_from_device)
 
-                all_inner_classes_of_outer = inspect.getmembers(parent_cls_from_device, inspect.isclass)
-                all_inner_classes_of_outer = {name: value for name, value in all_inner_classes_of_outer}
+                all_inner_classes_of_outer = dict(inspect.getmembers(parent_cls_from_device, inspect.isclass))
                 if cur_conn.to_device in all_inner_classes_of_outer.keys():
                     meta = cur_conn.metadata
 

@@ -1,14 +1,10 @@
 from __future__ import annotations
-
-import logging
 from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.plugin_manager import PluginManager
 
 import os
 import sys
 import types
+import logging
 import inspect
 import pathlib
 import functools
@@ -20,12 +16,16 @@ from _balder.feature import Feature
 from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.connection import Connection
+from _balder.executor.executor_tree import ExecutorTree
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import InnerFeatureResolvingError, VDeviceResolvingError, IllegalVDeviceMappingError, \
     UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, DuplicateForVDeviceError, \
     UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError, VDeviceOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
+
+if TYPE_CHECKING:
+    from _balder.plugin_manager import PluginManager
 
 logger = logging.getLogger(__file__)
 
@@ -60,24 +60,28 @@ class Collector:
 
     @property
     def all_pyfiles(self) -> List[Type[pathlib.Path]]:
+        """returns a list of all python files that were be found by the collector"""
         if self._all_py_files is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_py_files
 
     @property
     def all_scenarios(self) -> List[Type[Scenario]]:
+        """returns a list of all scenarios that were found by the collector"""
         if self._all_scenarios is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_scenarios
 
     @property
     def all_setups(self) -> List[Type[Setup]]:
+        """returns a list of all setups that were found by the collector"""
         if self._all_setups is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_setups
 
     @property
     def all_connections(self) -> List[Type[Connection]]:
+        """returns a list of all connections that were found by the collector"""
         if self._all_connections is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_connections
@@ -88,7 +92,7 @@ class Collector:
         """
         filepath = self.working_dir.joinpath('balderglob.py')
 
-        module_name = "{}.balderglob".format(self.working_dir.stem)
+        module_name = f"{self.working_dir.stem}.balderglob"
 
         if self.balderglob_was_loaded:
             return sys.modules[module_name]
@@ -110,7 +114,7 @@ class Collector:
         """
         all_paths: List[pathlib.Path] = []
 
-        for root, dirs, files in os.walk(str(self.working_dir)):
+        for root, _, files in os.walk(str(self.working_dir)):
             for file in files:
                 if file.endswith(".py"):
                     all_paths.append(pathlib.Path(os.path.join(root, file)))
@@ -136,8 +140,10 @@ class Collector:
         for cur_path in py_file_paths:
             #: only use files that match the filter
             if cur_path.parts[-1].startswith('scenario_'):
-                module_name = "{}.{}.{}".format(
-                    self.working_dir.stem, ".".join(cur_path.parent.relative_to(self.working_dir).parts), cur_path.stem)
+                module_name = \
+                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                    f"{ cur_path.stem}"
+
                 if module_name not in sys.modules.keys():
                     spec = importlib.util.spec_from_file_location(module_name, cur_path)
                     cur_module = importlib.util.module_from_spec(spec)
@@ -168,8 +174,10 @@ class Collector:
         for cur_path in py_file_paths:
             #: only use files that match the filter
             if 'connections' in cur_path.parts[-2] or 'connections.py' == cur_path.parts[-1]:
-                module_name = "{}.{}.{}".format(
-                    self.working_dir.stem, ".".join(cur_path.parent.relative_to(self.working_dir).parts), cur_path.stem)
+                module_name = \
+                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                    f"{cur_path.stem}"
+
                 spec = importlib.util.spec_from_file_location(module_name, cur_path)
                 cur_module = importlib.util.module_from_spec(spec)
                 sys.modules[module_name] = cur_module
@@ -183,7 +191,7 @@ class Collector:
         """
         result = []
         modules = sys.modules.copy()
-        for cur_module_name, cur_module in modules.items():
+        for _, cur_module in modules.items():
             try:
                 for _, cur_class in inspect.getmembers(cur_module, inspect.isclass):
                     if issubclass(cur_class, Connection) and cur_class not in result:
@@ -213,8 +221,9 @@ class Collector:
         for cur_path in py_file_paths:
             #: only use files that match the filter
             if cur_path.parts[-1].startswith('setup_'):
-                module_name = "{}.{}.{}".format(
-                    self.working_dir.stem, ".".join(cur_path.parent.relative_to(self.working_dir).parts), cur_path.stem)
+                module_name = \
+                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                    f"{cur_path.stem}"
                 if module_name not in sys.modules.keys():
                     spec = importlib.util.spec_from_file_location(module_name, cur_path)
                     cur_module = importlib.util.module_from_spec(spec)
@@ -289,7 +298,6 @@ class Collector:
         """
         This method resolves all raw fixtures and sets the resolved attribute `ExecutorTree.fixtures`
         """
-        from _balder.executor.executor_tree import ExecutorTree
         resolved_dict = {}
         for cur_level, cur_module_fixture_dict in ExecutorTree.raw_fixtures.items():
             resolved_dict[cur_level] = {}
@@ -313,98 +321,89 @@ class Collector:
             # now determine all RUN, SKIP and IGNORE values if they aren't already mentioned - if there exists a value
             #  for them, check if the value is valid
             base_classes.reverse()
-            for cur_idx in range(0, len(base_classes)):
+            for cur_idx, cur_class in enumerate(base_classes):
                 next_parent = None if cur_idx == 0 else base_classes[cur_idx - 1]
-                cur_class = base_classes[cur_idx]
                 if "IGNORE" in cur_class.__dict__.keys():
                     # IGNORE is mentioned in this specific class
                     if not isinstance(cur_class.IGNORE, list):
-                        raise TypeError(
-                            "the class attribute `{}.IGNORE` has to be from type list".format(cur_class.__name__))
+                        raise TypeError(f"the class attribute `{cur_class.__name__}.IGNORE` has to be from type list")
                     # check that all elements that are mentioned here exists in the parent's RUN, SKIP or IGNORE class
                     # variable or are defined in this class
                     for cur_ignore_method in cur_class.IGNORE:
                         if not inspect.ismethod(cur_ignore_method) or \
                                 not cur_ignore_method.__name__.startswith('test_'):
-                            raise TypeError(
-                                "the given element {} for class attribute `{}.IGNORE` is no valid test method".format(
-                                    cur_ignore_method.__name__, cur_class.__name__))
+                            raise TypeError(f"the given element {cur_ignore_method.__name__} for class attribute "
+                                            f"`{cur_class.__name__}.IGNORE` is no valid test method")
                         if cur_ignore_method not in cur_class.__dict__.values() and next_parent is None or \
                                 cur_ignore_method not in cur_class.__dict__.values() and next_parent is not None \
                                 and cur_ignore_method not in next_parent.RUN \
                                 and cur_ignore_method not in next_parent.SKIP \
                                 and cur_ignore_method not in next_parent.IGNORE:
-                            raise ValueError(
-                                "the element `{}` given at class attribute `{}.IGNORE` is not a test method of this "
-                                "scenario".format(cur_ignore_method.__name__, cur_class.__name__))
+                            raise ValueError(f"the element `{cur_ignore_method.__name__}` given at class attribute "
+                                             f"`{cur_class.__name__}.IGNORE` is not a test method of this scenario")
                 else:
                     # IGNORE is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.IGNORE = []
                 if "SKIP" in cur_class.__dict__.keys():
                     # SKIP is mentioned in this specific class
                     if not isinstance(cur_class.SKIP, list):
-                        raise TypeError(
-                            "the class attribute `{}.SKIP` has to be from type list".format(cur_class.__name__))
+                        raise TypeError(f"the class attribute `{cur_class.__name__}.SKIP` has to be from type list")
                     # check that all elements that are mentioned here exist in the parent's RUN or SKIP class variable
                     # or are defined in this class
                     for cur_skip_method in cur_class.SKIP:
                         if not inspect.ismethod(cur_skip_method) or \
                                 not cur_skip_method.__name__.startswith('test_'):
-                            raise TypeError(
-                                "the given element {} for class attribute `{}.IGNORE` is no valid test method".format(
-                                    cur_skip_method.__name__, cur_class.__name__))
+                            raise TypeError(f"the given element {cur_skip_method.__name__} for class attribute "
+                                            f"`{cur_class.__name__}.IGNORE` is no valid test method")
                         if cur_skip_method not in cur_class.__dict__.values():
                             if next_parent is None:
-                                raise ValueError(
-                                    "the element `{}` given at class attribute `{}.SKIP` is not a test method of this "
-                                    "scenario".format(cur_skip_method.__name__, cur_class.__name__))
-                            else:
-                                if cur_skip_method in next_parent.IGNORE:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.SKIP` was already added to "
-                                        "IGNORE in a higher parent class - not possible to add it now to SKIP".format(
-                                            cur_skip_method.__name__, cur_class.__name__))
-                                elif cur_skip_method not in next_parent.SKIP \
-                                        and cur_skip_method not in next_parent.IGNORE:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.SKIP` is not a test method of "
-                                        "this scenario".format(cur_skip_method.__name__, cur_class.__name__))
+                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class attribute "
+                                                 f"`{cur_class.__name__}.SKIP` is not a test method of this scenario")
+
+                            if cur_skip_method in next_parent.IGNORE:
+                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                                 f"attribute `{cur_class.__name__}.SKIP` was already added to "
+                                                 f"IGNORE in a higher parent class - not possible to add it now to "
+                                                 f"SKIP")
+
+                            if cur_skip_method not in next_parent.SKIP and cur_skip_method not in next_parent.IGNORE:
+                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                                 f"attribute `{cur_class.__name__}.SKIP` is not a test method of "
+                                                 f"this scenario")
                 else:
                     # SKIP is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.SKIP = []
                 if "RUN" in cur_class.__dict__.keys():
                     # RUN is mentioned in this specific class
                     if not isinstance(cur_class.RUN, list):
-                        raise TypeError(
-                            "the class attribute `{}.RUN` has to be from type list".format(cur_class.__name__))
+                        raise TypeError(f"the class attribute `{cur_class.__name__}.RUN` has to be from type list")
                     # check that all elements that are mentioned here exists in the parent's RUN class variable or are
                     # defined in this class
                     for cur_run_method in cur_class.RUN:
                         if not inspect.ismethod(cur_run_method) or \
                                 not cur_run_method.__name__.startswith('test_'):
-                            raise TypeError(
-                                "the given element {} for class attribute `{}.RUN` is no valid test method".format(
-                                    cur_run_method.__name__, cur_class.__name__))
+                            raise TypeError(f"the given element {cur_run_method.__name__} for class attribute "
+                                            f"`{cur_class.__name__}.RUN` is no valid test method")
                         if cur_run_method not in cur_class.__dict__.values():
                             if next_parent is None:
                                 raise ValueError(
-                                    "the element `{}` given at class attribute `{}.RUN` is not a test method of this "
-                                    "scenario".format(cur_run_method.__name__, cur_class.__name__))
-                            else:
-                                if cur_run_method in next_parent.IGNORE:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.RUN` was already added to "
-                                        "IGNORE in a higher parent class - not possible to add it now to RUN".format(
-                                            cur_run_method.__name__, cur_class.__name__))
-                                elif cur_run_method in next_parent.SKIP:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.RUN` was already added to "
-                                        "SKIP in a higher parent class - not possible to add it now to RUN".format(
-                                            cur_run_method.__name__, cur_class.__name__))
-                                elif cur_run_method not in next_parent.RUN:
-                                    raise ValueError(
-                                        "the element `{}` given at class attribute `{}.RUN` is not a test method of "
-                                        "this scenario".format(cur_run_method.__name__, cur_class.__name__))
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
+
+                            if cur_run_method in next_parent.IGNORE:
+                                raise ValueError(
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` was already added to IGNORE in a higher parent "
+                                    f"class - not possible to add it now to RUN")
+                            if cur_run_method in next_parent.SKIP:
+                                raise ValueError(
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` was already added to SKIP in a higher parent "
+                                    f"class - not possible to add it now to RUN")
+                            if cur_run_method not in next_parent.RUN:
+                                raise ValueError(
+                                    f"the element `{cur_run_method.__name__}` given at class attribute "
+                                    f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
                 else:
                     # RUN is not mentioned in this specific class -> so add an empty list for further access
                     cur_class.RUN = []
@@ -457,11 +456,14 @@ class Collector:
                     relevant_vdevices = [cur_vdevice for cur_vdevice
                                          in owner_feature_controller.get_abs_inner_vdevice_classes()
                                          if cur_vdevice.__name__ == cur_decorator_vdevice]
+
                     if len(relevant_vdevices) == 0:
                         raise ValueError(f"can not find a matching inner VDevice class for the given vdevice string "
                                          f"`{cur_decorator_vdevice}` in the feature class `{owner.__name__}`")
-                    elif len(relevant_vdevices) > 1:
+
+                    if len(relevant_vdevices) > 1:
                         raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
                     cur_decorator_vdevice = relevant_vdevices[0]
 
                 if cur_decorator_vdevice not in owner_feature_controller.get_abs_inner_vdevice_classes():
@@ -503,9 +505,10 @@ class Collector:
                                                  f'`{the_owner_of_this_method.__name__}` or its parent classes')
                     if len(args) == 0:
                         return func(self=this, **kwargs)
-                    else:
-                        new_args = [this, *args]
-                        return func(*new_args)
+
+                    new_args = [this, *args]
+                    return func(*new_args)
+
                 return method_variation_multiplexer
 
             new_callback = owner_wrapper(owner, name)
@@ -677,19 +680,21 @@ class Collector:
                             # the current match is the current feature itself -> not allowed to reference itself
                             if cur_potential_candidate_feature == cur_feature:
                                 raise InnerFeatureResolvingError(
-                                    "can not reference the same feature from itself (done in feature `{}` with "
-                                    "`{}`)".format(cur_feature.__class__.__name__, cur_ref_feature_name))
+                                    f"can not reference the same feature from itself (done in feature "
+                                    f"`{cur_feature.__class__.__name__}` with `{cur_ref_feature_name}`)")
                             potential_candidates.append(cur_potential_candidate_feature)
+
                     if len(potential_candidates) == 0:
                         raise InnerFeatureResolvingError(
-                            "can not find a matching feature in the device `{}` that could be assigned to the "
-                            "inner feature reference `{}` of the feature `{}`".format(
-                                cur_outer_device.__name__, cur_ref_feature_name, cur_feature.__class__.__name__))
-                    elif len(potential_candidates) > 1:
+                            f"can not find a matching feature in the device `{cur_outer_device.__name__}` that could "
+                            f"be assigned to the inner feature reference `{cur_ref_feature_name}` of the feature "
+                            f"`{cur_feature.__class__.__name__}`")
+
+                    if len(potential_candidates) > 1:
                         raise InnerFeatureResolvingError(
-                            "found more than one matching feature in the device `{}` that could be assigned to "
-                            "the inner feature reference `{}` of the feature `{}`".format(
-                                cur_outer_device.__name__, cur_ref_feature_name, cur_feature.__class__.__name__))
+                            f"found more than one matching feature in the device `{cur_outer_device.__name__}` that "
+                            f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
+                            f"feature `{cur_feature.__class__.__name__}`")
 
     @staticmethod
     def set_original_device_features_for_all_vdevices_of(features: List[Type[Feature]]):
@@ -790,42 +795,42 @@ class Collector:
                                 f"missing overwriting of parent VDevice class `{cur_parent_vdevice.__qualname__}` in "
                                 f"feature class `{cur_feature.__name__}` - if you overwrite one or more VDevice(s) "
                                 f"you have to overwrite all!")
-                        else:
-                            # otherwise check if inheritance AND feature overwriting is correct
-                            cur_child_idx = direct_namings.index(cur_parent_vdevice.__name__)
-                            related_child_vdevice = all_direct_vdevices_of_this_feature_lvl[cur_child_idx]
-                            if not issubclass(related_child_vdevice, cur_parent_vdevice):
-                                # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
-                                raise VDeviceOverwritingError(
-                                        f"the inner vDevice class `{related_child_vdevice.__qualname__}` has the same "
-                                        f"name than the vDevice `{cur_parent_vdevice.__qualname__}` - it should also "
-                                        f"inherit from it")
-                            # todo check that feature overwriting inside the VDevice is correct
-                            # now check that the vDevice overwrites the existing properties only in a proper manner (to
-                            #  overwrite it, it has to have the same property name as the property in the next parent
-                            #  class)
-                            cur_vdevice_features = \
-                                VDeviceController.get_for(related_child_vdevice).get_all_instantiated_feature_objects()
-                            cur_vdevice_base_features = \
-                                VDeviceController.get_for(cur_parent_vdevice).get_all_instantiated_feature_objects()
-                            for cur_base_property_name, cur_base_feature_instance in cur_vdevice_base_features.items():
-                                # now check that every base property is available in the current vDevice too - check
-                                #  that the instantiated feature is the same or the feature of the child vDevice is a
-                                #  child of it -> ignore it, if the child vDevice has more features than the base -
-                                #   that doesn't matter
-                                if cur_base_property_name not in cur_vdevice_features.keys():
-                                    raise VDeviceResolvingError(
-                                        f"can not find the property `{cur_base_property_name}` of "
-                                        f"parent vDevice `{cur_parent_vdevice.__qualname__}` in the "
-                                        f"current vDevice class `{related_child_vdevice.__qualname__}`")
-                                cur_feature_instance = cur_vdevice_features[cur_base_property_name]
-                                if not isinstance(cur_feature_instance, cur_base_feature_instance.__class__):
-                                    raise FeatureOverwritingError(
-                                        f"you are trying to overwrite an existing vDevice Feature property "
-                                        f"`{cur_base_property_name}` in vDevice `{related_child_vdevice.__qualname__}` "
-                                        f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
-                                        f"only possible with a child (or with the same) feature class the parent "
-                                        f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")
+
+                        # otherwise check if inheritance AND feature overwriting is correct
+                        cur_child_idx = direct_namings.index(cur_parent_vdevice.__name__)
+                        related_child_vdevice = all_direct_vdevices_of_this_feature_lvl[cur_child_idx]
+                        if not issubclass(related_child_vdevice, cur_parent_vdevice):
+                            # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
+                            raise VDeviceOverwritingError(
+                                    f"the inner vDevice class `{related_child_vdevice.__qualname__}` has the same "
+                                    f"name than the vDevice `{cur_parent_vdevice.__qualname__}` - it should also "
+                                    f"inherit from it")
+                        # todo check that feature overwriting inside the VDevice is correct
+                        # now check that the vDevice overwrites the existing properties only in a proper manner (to
+                        #  overwrite it, it has to have the same property name as the property in the next parent
+                        #  class)
+                        cur_vdevice_features = \
+                            VDeviceController.get_for(related_child_vdevice).get_all_instantiated_feature_objects()
+                        cur_vdevice_base_features = \
+                            VDeviceController.get_for(cur_parent_vdevice).get_all_instantiated_feature_objects()
+                        for cur_base_property_name, cur_base_feature_instance in cur_vdevice_base_features.items():
+                            # now check that every base property is available in the current vDevice too - check
+                            #  that the instantiated feature is the same or the feature of the child vDevice is a
+                            #  child of it -> ignore it, if the child vDevice has more features than the base -
+                            #   that doesn't matter
+                            if cur_base_property_name not in cur_vdevice_features.keys():
+                                raise VDeviceResolvingError(
+                                    f"can not find the property `{cur_base_property_name}` of "
+                                    f"parent vDevice `{cur_parent_vdevice.__qualname__}` in the "
+                                    f"current vDevice class `{related_child_vdevice.__qualname__}`")
+                            cur_feature_instance = cur_vdevice_features[cur_base_property_name]
+                            if not isinstance(cur_feature_instance, cur_base_feature_instance.__class__):
+                                raise FeatureOverwritingError(
+                                    f"you are trying to overwrite an existing vDevice Feature property "
+                                    f"`{cur_base_property_name}` in vDevice `{related_child_vdevice.__qualname__}` "
+                                    f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
+                                    f"only possible with a child (or with the same) feature class the parent "
+                                    f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")
 
     @staticmethod
     def feature_determine_class_for_vdevice_values(features: List[Type[Feature]], print_warning=True):
@@ -896,11 +901,13 @@ class Collector:
                         for cur_vdevice_of_interest in cur_vdevice.__bases__:
                             if issubclass(cur_vdevice_of_interest, VDevice) and cur_vdevice_of_interest != VDevice:
                                 possible_vdevices_of_interest.append(cur_vdevice_of_interest)
+
                         if len(possible_vdevices_of_interest) > 1:
                             raise VDeviceResolvingError(
                                 f"the vdevice `{cur_vdevice.__name__}` has more than one parent classes from type "
                                 f"`VDevice` - this is not allowed")
-                        elif len(possible_vdevices_of_interest) == 1:
+
+                        if len(possible_vdevices_of_interest) == 1:
                             # we have found one parent vDevice that has the same name as the cur_vdevice
                             vdevice_of_interest = possible_vdevices_of_interest[0]
                         else:
@@ -978,7 +985,7 @@ class Collector:
             for cur_device in cur_scenario_or_setup_controller.get_all_abs_inner_device_classes():
                 cur_device_instantiated_features = \
                     DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
-                for cur_attr_name, cur_feature in cur_device_instantiated_features.items():
+                for _, cur_feature in cur_device_instantiated_features.items():
                     active_vdevice, related_device = cur_feature.active_vdevice_device_mapping
                     if active_vdevice is not None:
                         # check that all the defined features in the VDevice also exist in the related device ->
@@ -1086,7 +1093,7 @@ class Collector:
                     next_base_class = cur_base
             all_related_next_base_classes[cur_scenario_or_setup] = next_base_class
             # executed this method for all parents too
-            if next_base_class != Scenario and next_base_class != Setup:
+            if next_base_class not in (Scenario, Setup):
                 self.determine_raw_absolute_device_connections_for([next_base_class])
 
         all_relevant_cnns = []
@@ -1112,11 +1119,12 @@ class Collector:
                 # only the parent class has defined scenarios -> use absolute data from next parent
                 #  NOTHING TO DO, because we also use these devices in child setup/scenario
                 return
-            elif len(all_devices) > 0 and not has_connect_decorator:
+
+            if len(all_devices) > 0 and not has_connect_decorator:
                 # the current item has defined devices, but no own `@connect()` decorator -> use absolute data from
                 #  next parent
 
-                if next_base_class != Scenario and next_base_class != Setup:
+                if next_base_class not in (Scenario, Setup):
                     next_base_class_controller = None
                     if issubclass(next_base_class, Scenario):
                         next_base_class_controller = ScenarioController.get_for(next_base_class)
@@ -1152,7 +1160,7 @@ class Collector:
                 # the connections from higher classes
                 for cur_device in all_devices:
                     cur_device_controller = DeviceController.get_for(cur_device)
-                    for cur_node, cur_cnn_list in cur_device_controller.connections.items():
+                    for _, cur_cnn_list in cur_device_controller.connections.items():
                         # now add every single connection correctly into the dictionary
                         for cur_cnn in cur_cnn_list:
                             if cur_cnn not in all_relevant_cnns:
@@ -1184,44 +1192,44 @@ class Collector:
                     if mapped_device is None:
                         # ignore this, because we have no vDevices here
                         continue
-                    else:
-                        # now check if one or more single of the classbased connection are CONTAINED IN the possible
-                        # parallel connection (only if there exists more than one parallel)
-                        cur_feature_class_based = \
-                            FeatureController.get_for(
-                                cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
-                        feature_cnn = Connection.based_on(*cur_feature_class_based)
-                        feature_cnns_singles = feature_cnn.get_singles()
 
-                        # search node names that is the relevant connection
-                        relevant_cnns: List[Connection] = []
-                        mapped_device_abs_cnns = DeviceController.get_for(mapped_device).get_all_absolute_connections()
-                        for cur_node, all_connections in mapped_device_abs_cnns.items():
-                            for cur_cnn in all_connections:
-                                if cur_cnn.has_connection_from_to(cur_from_device, mapped_device):
-                                    relevant_cnns.append(cur_cnn)
+                    # now check if one or more single of the classbased connection are CONTAINED IN the possible
+                    # parallel connection (only if there exists more than one parallel)
+                    cur_feature_class_based = \
+                        FeatureController.get_for(
+                            cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
+                    feature_cnn = Connection.based_on(*cur_feature_class_based)
+                    feature_cnns_singles = feature_cnn.get_singles()
 
-                        if len(relevant_cnns) > 1:
-                            # there are some parallel connections -> check that only one fits with the feature
-                            matched_relevant_cnns = []
-                            for cur_relevant_cnn in relevant_cnns:
-                                cur_relevant_cnn_singles = cur_relevant_cnn.get_singles()
-                                matched = False
-                                for cur_relevant_single in cur_relevant_cnn_singles:
-                                    for cur_feature_cnn in feature_cnns_singles:
-                                        if cur_feature_cnn.contained_in(cur_relevant_single):
-                                            matched = True
-                                            break
-                                    if matched:
-                                        matched_relevant_cnns.append(True)
+                    # search node names that is the relevant connection
+                    relevant_cnns: List[Connection] = []
+                    mapped_device_abs_cnns = DeviceController.get_for(mapped_device).get_all_absolute_connections()
+                    for _, all_connections in mapped_device_abs_cnns.items():
+                        for cur_cnn in all_connections:
+                            if cur_cnn.has_connection_from_to(cur_from_device, mapped_device):
+                                relevant_cnns.append(cur_cnn)
+
+                    if len(relevant_cnns) > 1:
+                        # there are some parallel connections -> check that only one fits with the feature
+                        matched_relevant_cnns = []
+                        for cur_relevant_cnn in relevant_cnns:
+                            cur_relevant_cnn_singles = cur_relevant_cnn.get_singles()
+                            matched = False
+                            for cur_relevant_single in cur_relevant_cnn_singles:
+                                for cur_feature_cnn in feature_cnns_singles:
+                                    if cur_feature_cnn.contained_in(cur_relevant_single):
+                                        matched = True
                                         break
-                            if sum(matched_relevant_cnns) > 1:
-                                raise UnclearAssignableFeatureConnectionError(
-                                    f"the devices {cur_from_device.__name__} and {mapped_device.__name__} have "
-                                    f"multiple parallel connections - the device `{cur_from_device.__name__}` uses a "
-                                    f"feature `{cur_feature.__class__.__name__}` that matches with the device "
-                                    f"`{mapped_device.__name__}`, but it is not clear which of the parallel connection "
-                                    f"could be used")
+                                if matched:
+                                    matched_relevant_cnns.append(True)
+                                    break
+                        if sum(matched_relevant_cnns) > 1:
+                            raise UnclearAssignableFeatureConnectionError(
+                                f"the devices {cur_from_device.__name__} and {mapped_device.__name__} have "
+                                f"multiple parallel connections - the device `{cur_from_device.__name__}` uses a "
+                                f"feature `{cur_feature.__class__.__name__}` that matches with the device "
+                                f"`{mapped_device.__name__}`, but it is not clear which of the parallel connection "
+                                f"could be used")
 
     def determine_absolute_device_connections_for_scenarios(self, items: List[Type[Scenario]]):
         """
@@ -1294,82 +1302,82 @@ class Collector:
                     if mapped_device is None:
                         # ignore this, because we have no vDevices here
                         continue
-                    else:
-                        # now try to reduce the scenario connections according to the requirements of the feature class
-                        cur_feature_class_based_for_vdevice = \
-                            FeatureController.get_for(
-                                cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
-                        feature_cnn = Connection.based_on(*cur_feature_class_based_for_vdevice)
-                        # search node names that is the relevant connection
-                        relevant_cnns: List[List[Connection]] = []
-                        for _, cur_node_data in all_abs_single_connections[cur_scenario][cur_from_device].items():
-                            for cur_to_device, cur_other_device_data in cur_node_data.items():
-                                if cur_to_device == mapped_device:
-                                    for _, cur_cnns in cur_other_device_data.items():
-                                        relevant_cnns.append(cur_cnns)
-                        device_cnn_singles = None
-                        if len(relevant_cnns) > 1:
-                            # there exists parallel connections - filter only the relevant one
-                            for cur_single_cnns in relevant_cnns:
-                                for cur_single_cnn in cur_single_cnns:
-                                    if feature_cnn.contained_in(cur_single_cnn):
-                                        # this is the relevant connection (all other can not fit, because we have
-                                        # already checked this with method
-                                        # `validate_feature_clearance_for_parallel_connections_for_scenarios`)
-                                        device_cnn_singles = cur_single_cnns
-                                        break
-                                if device_cnn_singles is not None:
+
+                    # now try to reduce the scenario connections according to the requirements of the feature class
+                    cur_feature_class_based_for_vdevice = \
+                        FeatureController.get_for(
+                            cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
+                    feature_cnn = Connection.based_on(*cur_feature_class_based_for_vdevice)
+                    # search node names that is the relevant connection
+                    relevant_cnns: List[List[Connection]] = []
+                    for _, cur_node_data in all_abs_single_connections[cur_scenario][cur_from_device].items():
+                        for cur_to_device, cur_other_device_data in cur_node_data.items():
+                            if cur_to_device == mapped_device:
+                                for _, cur_cnns in cur_other_device_data.items():
+                                    relevant_cnns.append(cur_cnns)
+                    device_cnn_singles = None
+                    if len(relevant_cnns) > 1:
+                        # there exists parallel connections - filter only the relevant one
+                        for cur_single_cnns in relevant_cnns:
+                            for cur_single_cnn in cur_single_cnns:
+                                if feature_cnn.contained_in(cur_single_cnn):
+                                    # this is the relevant connection (all other can not fit, because we have
+                                    # already checked this with method
+                                    # `validate_feature_clearance_for_parallel_connections_for_scenarios`)
+                                    device_cnn_singles = cur_single_cnns
                                     break
-                        elif len(relevant_cnns) == 1:
-                            device_cnn_singles = relevant_cnns[0]
-                        if device_cnn_singles is None:
-                            raise ValueError("can not find relevant connection of all parallel connections")
+                            if device_cnn_singles is not None:
+                                break
+                    elif len(relevant_cnns) == 1:
+                        device_cnn_singles = relevant_cnns[0]
+                    if device_cnn_singles is None:
+                        raise ValueError("can not find relevant connection of all parallel connections")
 
-                        if device_cnn_singles[0].from_device == cur_from_device:
-                            device_node_name = device_cnn_singles[0].from_node_name
-                            mapped_node_name = device_cnn_singles[0].to_node_name
-                        else:
-                            device_node_name = device_cnn_singles[0].to_node_name
-                            mapped_node_name = device_cnn_singles[0].from_node_name
+                    if device_cnn_singles[0].from_device == cur_from_device:
+                        device_node_name = device_cnn_singles[0].from_node_name
+                        mapped_node_name = device_cnn_singles[0].to_node_name
+                    else:
+                        device_node_name = device_cnn_singles[0].to_node_name
+                        mapped_node_name = device_cnn_singles[0].from_node_name
 
-                        # execute further process only if there is exactly one relevant connection
-                        start_length_before_reduction = \
+                    # execute further process only if there is exactly one relevant connection
+                    start_length_before_reduction = \
+                        len(all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
+                                mapped_device][mapped_node_name])
+                    for cur_abs_connection in \
+                            all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
+                                mapped_device][mapped_node_name].copy():
+                        if not feature_cnn.contained_in(cur_abs_connection, ignore_metadata=True):
+                            # this abs single connection is not fulfilled by the current feature -> remove it
+                            all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
+                                mapped_device][mapped_node_name].remove(cur_abs_connection)
+                            add_reduction_candidate(cur_scenario, cur_from_device, mapped_device)
+                    if start_length_before_reduction > 0 and \
                             len(all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
-                                    mapped_device][mapped_node_name])
-                        for cur_abs_connection in \
-                                all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
-                                    mapped_device][mapped_node_name].copy():
-                            if not feature_cnn.contained_in(cur_abs_connection, ignore_metadata=True):
-                                # this abs single connection is not fulfilled by the current feature -> remove it
-                                all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
-                                    mapped_device][mapped_node_name].remove(cur_abs_connection)
-                                add_reduction_candidate(cur_scenario, cur_from_device, mapped_device)
-                        if start_length_before_reduction > 0 and \
-                                len(all_abs_single_connections[cur_scenario][cur_from_device][device_node_name][
-                                        mapped_device][mapped_node_name]) == 0:
-                            raise ConnectionIntersectionError(
-                                f"the `{cur_scenario.__name__}` has a connection from device "
-                                f"`{cur_from_device.__name__}` to `{mapped_device.__name__}` - some mapped VDevices of "
-                                f"their feature classes define mismatched connections")
-                        # do the same for the opposite direction (features are always bidirectional)
-                        start_length_before_reduction = \
+                                    mapped_device][mapped_node_name]) == 0:
+                        raise ConnectionIntersectionError(
+                            f"the `{cur_scenario.__name__}` has a connection from device "
+                            f"`{cur_from_device.__name__}` to `{mapped_device.__name__}` - some mapped VDevices of "
+                            f"their feature classes define mismatched connections")
+                    # do the same for the opposite direction (features are always bidirectional)
+                    start_length_before_reduction = \
+                        len(all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
+                                cur_from_device][device_node_name])
+                    for cur_abs_connection in \
+                            all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
+                                cur_from_device][device_node_name].copy():
+                        if not feature_cnn.contained_in(cur_abs_connection, ignore_metadata=True):
+                            # this abs single connection is not being fulfilled by the current feature -> remove it
+                            all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
+                                cur_from_device][device_node_name].remove(cur_abs_connection)
+                            add_reduction_candidate(cur_scenario, cur_from_device, mapped_device)
+                    if start_length_before_reduction > 0 and \
                             len(all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
-                                    cur_from_device][device_node_name])
-                        for cur_abs_connection in \
-                                all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
-                                    cur_from_device][device_node_name].copy():
-                            if not feature_cnn.contained_in(cur_abs_connection, ignore_metadata=True):
-                                # this abs single connection is not being fulfilled by the current feature -> remove it
-                                all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
-                                    cur_from_device][device_node_name].remove(cur_abs_connection)
-                                add_reduction_candidate(cur_scenario, cur_from_device, mapped_device)
-                        if start_length_before_reduction > 0 and \
-                                len(all_abs_single_connections[cur_scenario][mapped_device][mapped_node_name][
-                                        cur_from_device][device_node_name]) == 0:
-                            raise ConnectionIntersectionError(
-                                f"the `{cur_scenario.__name__}` has a connection from device "
-                                f"`{cur_from_device.__name__}` to `{mapped_device.__name__}` - some mapped VDevices of "
-                                f"their feature classes define mismatched connections")
+                                    cur_from_device][device_node_name]) == 0:
+                        raise ConnectionIntersectionError(
+                            f"the `{cur_scenario.__name__}` has a connection from device "
+                            f"`{cur_from_device.__name__}` to `{mapped_device.__name__}` - some mapped VDevices of "
+                            f"their feature classes define mismatched connections")
 
         # generate all required warnings
         for cur_scenario, scenario_warning_list in reduction_candidates.items():
@@ -1421,29 +1429,29 @@ class Collector:
                     if mapped_device is None:
                         # ignore this, because we have no vDevice mapping on setup level
                         continue
-                    else:
-                        cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
-                        if cur_feature_controller.get_class_based_for_vdevice() and mapped_vdevice in \
-                                cur_feature_controller.get_class_based_for_vdevice().keys():
-                            # there exists a class based requirement for this vDevice
-                            class_based_cnns = cur_feature_controller.get_class_based_for_vdevice()[mapped_vdevice]
-                            class_based_cnn = Connection.based_on(*class_based_cnns)
-                            # search relevant connection
-                            cur_device_controller = DeviceController.get_for(cur_device)
-                            for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
-                                for cur_cnn in cur_cnn_list:
-                                    if cur_cnn.has_connection_from_to(cur_device, mapped_device):
-                                        # check if the class-based feature connection is CONTAINED-IN this
-                                        # absolute-connection
-                                        if not class_based_cnn.contained_in(cur_cnn, ignore_metadata=True):
 
-                                            raise IllegalVDeviceMappingError(
-                                                f"the @for_vdevice connection for vDevice `{mapped_vdevice.__name__}` "
-                                                f"of feature `{cur_feature.__class__.__name__}` (used in "
-                                                f"`{cur_device.__qualname__}`) uses a connection that does not fit "
-                                                f"with the connection defined in setup class "
-                                                f"`{cur_device_controller.get_outer_class().__name__}` to related "
-                                                f"device `{mapped_device.__name__}`")
+                    cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
+                    if cur_feature_controller.get_class_based_for_vdevice() and mapped_vdevice in \
+                            cur_feature_controller.get_class_based_for_vdevice().keys():
+                        # there exists a class based requirement for this vDevice
+                        class_based_cnns = cur_feature_controller.get_class_based_for_vdevice()[mapped_vdevice]
+                        class_based_cnn = Connection.based_on(*class_based_cnns)
+                        # search relevant connection
+                        cur_device_controller = DeviceController.get_for(cur_device)
+                        for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
+                            for cur_cnn in cur_cnn_list:
+                                if cur_cnn.has_connection_from_to(cur_device, mapped_device):
+                                    # check if the class-based feature connection is CONTAINED-IN this
+                                    # absolute-connection
+                                    if not class_based_cnn.contained_in(cur_cnn, ignore_metadata=True):
+
+                                        raise IllegalVDeviceMappingError(
+                                            f"the @for_vdevice connection for vDevice `{mapped_vdevice.__name__}` "
+                                            f"of feature `{cur_feature.__class__.__name__}` (used in "
+                                            f"`{cur_device.__qualname__}`) uses a connection that does not fit "
+                                            f"with the connection defined in setup class "
+                                            f"`{cur_device_controller.get_outer_class().__name__}` to related "
+                                            f"device `{mapped_device.__name__}`")
 
     def collect(self, plugin_manager: PluginManager):
         """

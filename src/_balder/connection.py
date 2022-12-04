@@ -1,12 +1,9 @@
 from __future__ import annotations
-from typing import List, Tuple, Union, Type, Dict, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.device import Device
+from typing import List, Tuple, Union, Type, Dict
 
 import copy
 import itertools
-
+from _balder.device import Device
 from _balder.exceptions import IllegalConnectionTypeError
 
 
@@ -36,7 +33,6 @@ class Connection:
 
         :param to_device_node_name: the node name of the device the connection ends
         """
-        from _balder.device import Device
 
         # contains all metadata of this connection object
         self._metadata = {
@@ -82,8 +78,8 @@ class Connection:
     def __eq__(self, other):
         if isinstance(other, Connection):
             return self.equal_with(other)
-        else:
-            return False
+
+        return False
 
     def __hash__(self):
         all_hashes = hash(self.from_device) + hash(self.to_device) + hash(self.from_node_name) + \
@@ -199,8 +195,7 @@ class Connection:
         def tuple_is_contained_in_other(inner_tuple, contained_in_tuple):
             # check if every tuple elem fits in one of `contained_in_tuple` (allow to use a position in
             # `contained_in_tuple` multiple times)
-            for cur_idx in range(0, len(inner_tuple)):
-                cur_tuple_element = inner_tuple[cur_idx]
+            for cur_tuple_element in inner_tuple:
                 found_match_for_this_elem = False
                 for cur_contained_in_elem in contained_in_tuple:
                     if cur_tuple_element.contained_in(cur_contained_in_elem, ignore_metadata=True):
@@ -335,9 +330,9 @@ class Connection:
                 if not isinstance(cur_higher_other_child, tuple):
                     if cls.is_parent_of(other_conn=cur_higher_other_child):
                         return True
-        else:
-            # the other connection has no parents, so this can not be the parent class
             return False
+        # the other connection has no parents, so this can not be the parent class
+        return False
 
     @classmethod
     def based_on(cls, *args: Union[Tuple[Union[Type[Connection], Connection], ...], Type[Connection], Connection]) \
@@ -379,12 +374,13 @@ class Connection:
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
-    def metadata(self):
+    def metadata(self) -> dict:
+        """returns the connection metadata dictionary"""
         return self._metadata
 
     @metadata.setter
     def metadata(self, data):
-        EMPTY_METADATA = {
+        empty_metadata = {
             "from_device": None, "to_device": None, "from_device_node_name": None, "to_device_node_name": None}
 
         if not isinstance(data, dict):
@@ -394,11 +390,11 @@ class Connection:
                     sorted(list(data.keys())):
                 raise ValueError("if you provide a metadata dictionary you have to provide all elements of it")
         else:
-            data = EMPTY_METADATA.copy()
+            data = empty_metadata.copy()
 
         # only allow to set the metadata dictionary if the old one has the same values or was empty before (no values)
-        if data != EMPTY_METADATA:
-            if self._metadata == EMPTY_METADATA:
+        if data != empty_metadata:
+            if self._metadata == empty_metadata:
                 # it is ok, because the dictionary was empty before
                 pass
             elif self._metadata == data:
@@ -457,11 +453,12 @@ class Connection:
             self.to_device == of_connection.from_device and self.to_node_name == of_connection.from_node_name
         if self.is_bidirectional() and of_connection.is_bidirectional():
             return check_same or check_opposite
-        elif self.is_bidirectional() and not of_connection.is_bidirectional() or \
+
+        if self.is_bidirectional() and not of_connection.is_bidirectional() or \
                 not self.is_bidirectional() and of_connection.is_bidirectional():
             return check_same or check_opposite
-        else:
-            return check_same
+
+        return check_same
 
     def _metadata_equal_with(self, of_connection: Connection) -> bool:
         """
@@ -484,8 +481,8 @@ class Connection:
         if self.is_bidirectional() and of_connection.is_bidirectional() or \
                 not self.is_bidirectional() and not of_connection.is_bidirectional():
             return check_same or check_opposite
-        else:
-            return False
+
+        return False
 
     def _get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
             -> List[Connection, Tuple[Connection]]:
@@ -681,16 +678,16 @@ class Connection:
         """
         if len(self.based_on_elements) == 0:
             return f"{self.__class__.__name__}()"
-        else:
-            based_on_strings = []
-            for cur_elem in self.based_on_elements:
-                if isinstance(cur_elem, tuple):
-                    based_on_strings.append(
-                        f"({', '.join([cur_tuple_elem.get_tree_str() for cur_tuple_elem in cur_elem])})")
-                else:
-                    based_on_strings.append(cur_elem.get_tree_str())
 
-            return f"{self.__class__.__name__}.based_on({', '.join(based_on_strings)})"
+        based_on_strings = []
+        for cur_elem in self.based_on_elements:
+            if isinstance(cur_elem, tuple):
+                based_on_strings.append(
+                    f"({', '.join([cur_tuple_elem.get_tree_str() for cur_tuple_elem in cur_elem])})")
+            else:
+                based_on_strings.append(cur_elem.get_tree_str())
+
+        return f"{self.__class__.__name__}.based_on({', '.join(based_on_strings)})"
 
     def is_bidirectional(self):
         """
@@ -705,7 +702,7 @@ class Connection:
         Provides the information if the current connection object is a universal connection. This means, that the type
         is the base :class:`Connection` and the based_on_elements are empty.
         """
-        return type(self) == Connection and len(self._based_on_connections) == 0
+        return self.__class__ == Connection and len(self._based_on_connections) == 0
 
     def is_resolved(self):
         """
@@ -750,7 +747,8 @@ class Connection:
         if len(self.based_on_elements) == 0:
             # tree ends here
             return True
-        elif len(self.based_on_elements) > 1:
+
+        if len(self.based_on_elements) > 1:
             # more than one element -> not single
             return False
 
@@ -764,8 +762,8 @@ class Connection:
                     return False
             # all elements are single
             return True
-        else:
-            return self.based_on_elements[0].is_single()
+
+        return self.based_on_elements[0].is_single()
 
     def get_resolved(self) -> Connection:
         """
@@ -831,8 +829,8 @@ class Connection:
         if copied_base.__class__ == Connection and len(copied_base.based_on_elements) == 1 and not \
                 isinstance(copied_base.based_on_elements[0], tuple):
             return copied_base.based_on_elements[0]
-        else:
-            return copied_base
+
+        return copied_base
 
     def get_singles(self) -> List[Connection]:
         """
@@ -890,7 +888,7 @@ class Connection:
         :param node: the node name of the device itself (only required if the connection starts and ends with the same
                      device)
         """
-        if device != self.from_device and device != self.to_device:
+        if device not in (self.from_device, self.to_device):
             raise ValueError(f"the given device `{device.__qualname__}` is no component of this connection")
         if node is None:
             # check that the from_device and to_device are not the same
@@ -899,18 +897,19 @@ class Connection:
                                  "have to provide the `node` string too")
             if device == self.from_device:
                 return self.to_device, self.to_node_name
-            else:
-                return self.from_device, self.from_node_name
-        else:
-            if node != self.from_node_name and node != self.to_node_name:
-                raise ValueError(f"the given node `{node}` is no component of this connection")
 
-            if device == self.from_device and node == self.from_node_name:
-                return self.to_device, self.to_node_name
-            elif device == self.to_device and node == self.to_node_name:
-                return self.from_device, self.from_node_name
-            else:
-                raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
+            return self.from_device, self.from_node_name
+
+        if node not in (self.from_node_name, self.to_node_name):
+            raise ValueError(f"the given node `{node}` is no component of this connection")
+
+        if device == self.from_device and node == self.from_node_name:
+            return self.to_device, self.to_node_name
+
+        if device == self.to_device and node == self.to_node_name:
+            return self.from_device, self.from_node_name
+
+        raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
 
     def has_connection_from_to(self, start_device, end_device=None):
         """
@@ -932,15 +931,15 @@ class Connection:
         if end_device is None:
 
             if self.is_bidirectional():
-                return start_device == self.from_device or start_device == self.to_device
-            else:
-                return start_device == self.from_device
-        else:
-            if self.is_bidirectional():
-                return start_device == self.from_device and end_device == self.to_device or \
-                       start_device == self.to_device and end_device == self.from_device
-            else:
-                return start_device == self.from_device and end_device == self.to_device
+                return start_device in (self.from_device, self.to_device)
+
+            return start_device == self.from_device
+
+        if self.is_bidirectional():
+            return start_device == self.from_device and end_device == self.to_device or \
+                   start_device == self.to_device and end_device == self.from_device
+
+        return start_device == self.from_device and end_device == self.to_device
 
     def equal_with(self, other_conn: Connection, ignore_metadata=False) -> bool:
         """
@@ -965,7 +964,7 @@ class Connection:
 
         :return: returns True if both elements are same
         """
-        if self.__class__ != Connection and self.__class__ != other_conn.__class__:
+        if self.__class__ not in (Connection, other_conn.__class__):
             return False
 
         if not ignore_metadata:
@@ -1097,10 +1096,12 @@ class Connection:
                         if len(cur_single_self.based_on_elements) == 0:
                             # the cur self single is only one element -> this is contained in the other
                             return True
-                        elif len(cur_single_other.based_on_elements) == 0:
+
+                        if len(cur_single_other.based_on_elements) == 0:
                             # the other element is only one element, but the self element not -> contained_in
                             # for this single definitely false
                             continue
+
                         # note: for both only one `based_on_elements` is possible, because they are singles
                         if isinstance(cur_single_self.based_on_elements[0], tuple) and \
                                 isinstance(cur_single_other.based_on_elements[0], tuple):
@@ -1232,8 +1233,8 @@ class Connection:
             return None
         if len(intersection_filtered) > 1 or isinstance(intersection_filtered[0], tuple):
             return Connection.based_on(*intersection_filtered).clone()
-        else:
-            return intersection_filtered[0].clone()
+
+        return intersection_filtered[0].clone()
 
     def append_to_based_on(self, *args: Union[Tuple[Union[Type[Connection], Connection]]]) -> None:
         """
@@ -1243,17 +1244,15 @@ class Connection:
         :param args: all connection items that should be added here
         """
 
-        for cur_idx in range(len(args)):
-            cur_connection = args[cur_idx]
+        for cur_idx, cur_connection in enumerate(args):
             if isinstance(cur_connection, type):
                 if not issubclass(cur_connection, Connection):
-                    raise TypeError(
-                        "illegal type `{}` for parameter number {}".format(cur_connection.__name__, cur_idx))
+                    raise TypeError(f"illegal type `{cur_connection.__name__}` for parameter number {cur_idx}")
                 if self.__class__ != Connection:
                     if not cur_connection.is_parent_of(self.__class__):
                         raise IllegalConnectionTypeError(
-                            "the given connection `{}` (parameter pos {}) is no parent class of the `{}`".format(
-                                cur_connection.__name__, cur_idx, self.__class__.__name__))
+                            f"the given connection `{cur_connection.__name__}` (parameter pos {cur_idx}) is no parent "
+                            f"class of the `{self.__class__.__name__}`")
                 # this is a simple Connection type object -> simply add an instance of it to the full list
                 new_conn = cur_connection()
                 self._based_on_connections.append(new_conn)
@@ -1266,25 +1265,23 @@ class Connection:
                 if self.__class__ != Connection:
                     if not cur_connection.__class__.is_parent_of(self.__class__):
                         raise IllegalConnectionTypeError(
-                            "the given connection `{}` (parameter pos {}) is no parent class of the `{}`".format(
-                                cur_connection.__class__.__name__, cur_idx, self.__class__.__name__))
+                            f"the given connection `{cur_connection.__class__.__name__}` (parameter pos {cur_idx}) is "
+                            f"no parent class of the `{self.__class__.__name__}`")
                 self._based_on_connections.append(cur_connection)
 
             elif isinstance(cur_connection, tuple):
                 result_tuple = ()
-                for cur_tuple_idx in range(len(cur_connection)):
-                    cur_tuple_elem = cur_connection[cur_tuple_idx]
+                for cur_tuple_idx, cur_tuple_elem in enumerate(cur_connection):
                     if isinstance(cur_tuple_elem, type):
                         if not issubclass(cur_tuple_elem, Connection):
-                            raise TypeError(
-                                "illegal type `{}` for tuple element {} for parameter number {}".format(
-                                    cur_tuple_elem.__name__, cur_tuple_idx, cur_idx))
+                            raise TypeError(f"illegal type `{cur_tuple_elem.__name__}` for tuple element "
+                                            f"{cur_tuple_idx} for parameter number {cur_idx}")
                         if self.__class__ != Connection:
                             if not cur_tuple_elem.is_parent_of(self.__class__):
                                 raise IllegalConnectionTypeError(
-                                    "the given connection `{}` (tuple element {} for parameter at pos {}) is no parent "
-                                    "class of the `{}`".format(
-                                        cur_tuple_elem.__name__, cur_tuple_idx, cur_idx, self.__class__.__name__))
+                                    f"the given connection `{cur_tuple_elem.__name__}` (tuple element {cur_tuple_idx} "
+                                    f"for parameter at pos {cur_idx}) is no parent class of the "
+                                    f"`{self.__class__.__name__}`")
                         # this is a simple Connection type object -> simply add the instance of connection to result
                         # tuple
                         result_tuple += (cur_tuple_elem(), )

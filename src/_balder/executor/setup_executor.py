@@ -1,18 +1,18 @@
 from __future__ import annotations
 from typing import Type, Union, List, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.setup import Setup
-    from _balder.scenario import Scenario
-    from _balder.fixture_manager import FixtureManager
-    from _balder.executor.executor_tree import ExecutorTree
-
 import sys
 import traceback
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
+
+if TYPE_CHECKING:
+    from _balder.setup import Setup
+    from _balder.scenario import Scenario
+    from _balder.fixture_manager import FixtureManager
+    from _balder.executor.executor_tree import ExecutorTree
 
 
 class SetupExecutor(BasicExecutor):
@@ -22,7 +22,7 @@ class SetupExecutor(BasicExecutor):
     """
 
     def __init__(self, setup: Type[Setup], parent: ExecutorTree):
-        super(SetupExecutor, self).__init__()
+        super().__init__()
         self._scenario_executors: List[ScenarioExecutor] = []
         # check if instance already exists
         if hasattr(setup, "_instance") and setup._instance is not None and isinstance(setup._instance, setup):
@@ -57,14 +57,17 @@ class SetupExecutor(BasicExecutor):
 
     @property
     def base_setup_class(self) -> Setup:
+        """returns the base :class:`Setup` that belongs to this executor"""
         return self._base_setup_class
 
     @property
     def scenario_executors(self) -> List[ScenarioExecutor]:
+        """returns a list with all scenario executors that belongs to this setup executor"""
         return self._scenario_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
+        """returns the current active fixture manager for this executor"""
         return self._fixture_manager
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------

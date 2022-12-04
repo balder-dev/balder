@@ -1,16 +1,15 @@
 from __future__ import annotations
+from typing import Dict, Type, Union, TYPE_CHECKING
 
 import logging
+import inspect
 from abc import ABC, abstractmethod
-from typing import Dict, Type, Union, TYPE_CHECKING
+from _balder.controllers.controller import Controller
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
     from _balder.setup import Setup
     from _balder.feature import Feature
-
-import inspect
-from _balder.controllers.controller import Controller
 
 logger = logging.getLogger(__file__)
 
@@ -40,7 +39,6 @@ class BaseDeviceController(Controller, ABC):
         """
         This method delivers the outer class of this device. This has to be a :meth:`Setup` or a :meth:`Scenario`.
         """
-        pass
 
     def get_all_instantiated_feature_objects(self) -> Dict[str, Feature]:
         """

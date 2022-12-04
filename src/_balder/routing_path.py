@@ -1,14 +1,14 @@
 from __future__ import annotations
 from typing import List, Union, Dict, Type, Tuple, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.device import Device
-
 import copy
 from _balder.connection import Connection
 from _balder.node_gateway import NodeGateway
 from _balder.controllers import DeviceController
 from _balder.exceptions import RoutingBrokenChainError
+
+if TYPE_CHECKING:
+    from _balder.device import Device
 
 
 class RoutingPath:
@@ -42,11 +42,10 @@ class RoutingPath:
 
         first_elem = routing_elems[0]
         if isinstance(first_elem, Connection):
-            if first_elem.from_device != self._start_device and first_elem.to_device != self._start_device:
+            if self._start_device not in (first_elem.from_device, first_elem.to_device):
                 raise ValueError(f"the given `start_device={self._start_device.__name__}` does not match with one of "
                                  f"the available devices of the first routing element")
-            if first_elem.from_node_name != self._start_node_name and \
-                    first_elem.to_node_name != self._start_node_name:
+            if self._start_node_name not in (first_elem.from_node_name, first_elem.to_node_name):
                 raise ValueError(f"the given `start_node_name={self._start_node_name}` does not match with one of the "
                                  f"available node names of the first routing element")
         else:
@@ -121,7 +120,8 @@ class RoutingPath:
                     if cur_next_conn == cur_routing.elements[-1]:
                         # is the same connection as the last of routing -> SKIP
                         continue
-                    elif cur_next_conn.has_connection_from_to(start_device=cur_routing.end_device):
+
+                    if cur_next_conn.has_connection_from_to(start_device=cur_routing.end_device):
                         # the connection allows the direction the routing needs - only then add it
                         copied_routing = cur_routing.copy()
                         copied_routing.append_element(cur_next_conn)
@@ -170,22 +170,27 @@ class RoutingPath:
 
     @property
     def elements(self) -> List[Connection, NodeGateway]:
+        """returns all elements that belongs to this routing path"""
         return self._routing_elems
 
     @property
     def start_device(self) -> Type[Device]:
+        """returns the device the route starts from"""
         return self._start_device
 
     @property
     def start_node_name(self) -> str:
+        """returns the node of the `start_device` this route starts from"""
         return self._start_node_name
 
     @property
     def end_device(self) -> Type[Device]:
+        """returns the device the route ends"""
         return self._get_end_device_and_node()[0]
 
     @property
     def end_node_name(self) -> str:
+        """returns the node of the `end_device` this route ends"""
         return self._get_end_device_and_node()[1]
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------

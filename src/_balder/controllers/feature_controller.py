@@ -1,16 +1,15 @@
 from __future__ import annotations
-
-import logging
 from typing import Type, Dict, Union, List, Callable, Tuple, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.connection import Connection
-    from _balder.vdevice import VDevice
-    from _balder.feature import Feature
-
+import logging
 import inspect
+from _balder.vdevice import VDevice
 from _balder.controllers import Controller
+from _balder.connection import Connection
 from _balder.exceptions import UnclearMethodVariationError
+
+if TYPE_CHECKING:
+    from _balder.feature import Feature
 
 
 logger = logging.getLogger(__file__)
@@ -83,7 +82,6 @@ class FeatureController(Controller):
         This method returns the class based data for the `@for_vdevice` decorator or None, if there is no decorator
         given
         """
-        from _balder.connection import Connection
 
         result = {}
         if self._cls_for_vdevice is not None:
@@ -95,8 +93,8 @@ class FeatureController(Controller):
                     else:
                         result[cur_device].append(cur_cnn)
             return result
-        else:
-            return None
+
+        return None
 
     def set_class_based_for_vdevice(
             self, data: Union[Dict[Type[VDevice], List[Union[Connection, Type[Connection]]]], None]):
@@ -154,7 +152,6 @@ class FeatureController(Controller):
         :return: the method variation callable for the given data (or none, if the method does not exist in this object
                  or in a parent class of it)
         """
-        from _balder.connection import Connection
 
         all_vdevice_method_variations = self.get_method_based_for_vdevice()
 
@@ -162,7 +159,7 @@ class FeatureController(Controller):
             with_connection = Connection.based_on(with_connection)
 
         if all_vdevice_method_variations is None:
-            raise ValueError(f"the current feature has no method variations")
+            raise ValueError("the current feature has no method variations")
         if of_method_name not in all_vdevice_method_variations.keys():
             raise ValueError(f"can not find the method `{of_method_name}` in method variation data dictionary")
 
@@ -199,33 +196,35 @@ class FeatureController(Controller):
                     f"found no possible method variation for method "
                     f"`{self.related_cls.__name__}.{of_method_name}` with vDevice `{for_vdevice.__name__}` "
                     f"and usable connection `{with_connection.get_tree_str()}´")
-        elif len(all_possible_method_variations) == 1:
-            return list(all_possible_method_variations.keys())[0]
-        else:
-            # we have to determine the outer one
-            length_before = None
-            while length_before is None or length_before != len(all_possible_method_variations):
-                length_before = len(all_possible_method_variations)
-                for cur_meth, cur_cnn in all_possible_method_variations.items():
-                    can_be_deleted = True
-                    for _, cur_other_cnn in all_possible_method_variations.items():
-                        if cur_cnn == cur_other_cnn:
-                            continue
-                        if not cur_cnn.contained_in(cur_other_cnn):
-                            can_be_deleted = False
-                    if can_be_deleted:
-                        del all_possible_method_variations[cur_meth]
-                        break
-                if len(all_possible_method_variations) == 1:
-                    # done
-                    break
+            return None
 
-            if len(all_possible_method_variations) > 1:
-                raise UnclearMethodVariationError(
-                    f"found more than one possible method variation for method "
-                    f"`{self.related_cls.__name__}.{of_method_name}` with vDevice `{for_vdevice.__name__}` "
-                    f"and usable connection `{with_connection.get_tree_str()}´")
+        if len(all_possible_method_variations) == 1:
             return list(all_possible_method_variations.keys())[0]
+
+        # we have to determine the outer one
+        length_before = None
+        while length_before is None or length_before != len(all_possible_method_variations):
+            length_before = len(all_possible_method_variations)
+            for cur_meth, cur_cnn in all_possible_method_variations.items():
+                can_be_deleted = True
+                for _, cur_other_cnn in all_possible_method_variations.items():
+                    if cur_cnn == cur_other_cnn:
+                        continue
+                    if not cur_cnn.contained_in(cur_other_cnn):
+                        can_be_deleted = False
+                if can_be_deleted:
+                    del all_possible_method_variations[cur_meth]
+                    break
+            if len(all_possible_method_variations) == 1:
+                # done
+                break
+
+        if len(all_possible_method_variations) > 1:
+            raise UnclearMethodVariationError(
+                f"found more than one possible method variation for method "
+                f"`{self.related_cls.__name__}.{of_method_name}` with vDevice `{for_vdevice.__name__}` "
+                f"and usable connection `{with_connection.get_tree_str()}´")
+        return list(all_possible_method_variations.keys())[0]
 
     def get_inner_vdevice_classes(self) -> List[Type[VDevice]]:
         """
@@ -235,7 +234,6 @@ class FeatureController(Controller):
 
         If you want to get the absolute VDevices use :meth:`Feature.get_inner_vdevice_classes`.
         """
-        from _balder.vdevice import VDevice
         from _balder.feature import Feature
 
         all_classes = inspect.getmembers(self.related_cls, inspect.isclass)
@@ -244,7 +242,7 @@ class FeatureController(Controller):
             if not issubclass(cur_class, VDevice):
                 # filter all classes and make sure that only the child classes of :class:`VDevice` remain
                 continue
-            outer_class_name, device_class_name = cur_class.__qualname__.split('.')[-2:]
+            outer_class_name, _ = cur_class.__qualname__.split('.')[-2:]
             if outer_class_name != self.related_cls.__name__:
                 # filter all classes that do not match the setup name in __qualname__
                 continue

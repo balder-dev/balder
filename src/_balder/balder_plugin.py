@@ -1,14 +1,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Type, Tuple, List
 
+import pathlib
+
 if TYPE_CHECKING:
     from _balder.executor.executor_tree import ExecutorTree
     from _balder.balder_session import BalderSession
     from _balder.setup import Setup
     from _balder.scenario import Scenario
     import argparse
-
-import pathlib
 
 
 class BalderPlugin:
@@ -26,7 +26,6 @@ class BalderPlugin:
 
         :param argument_parser: the argument parser object
         """
-        pass
 
     def modify_collected_pyfiles(self, pyfiles: List[pathlib.Path]) -> List[pathlib.Path]:
         """
@@ -40,7 +39,6 @@ class BalderPlugin:
 
         :return: the new list of all filepaths
         """
-        pass
 
     def modify_collected_classes(self, scenarios: List[Type[Scenario]], setups: List[Type[Setup]]) \
             -> Tuple[List[Type[Scenario]], List[Type[Setup]]]:
@@ -55,7 +53,6 @@ class BalderPlugin:
         :return: a tuple of lists, where the first list is the new list with all :class:`Scenario` classes, the second
                  element is a list with all :class:`Setup` classes
         """
-        pass
 
     def filter_executor_tree(self, executor_tree: ExecutorTree) -> None:
         """
@@ -66,4 +63,3 @@ class BalderPlugin:
 
         :param executor_tree: the reference to the main :class:`ExecutorTree` object balder uses for this session
         """
-        pass

@@ -1,13 +1,6 @@
 from __future__ import annotations
 from typing import Union, List, Type, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.setup import Setup
-    from _balder.executor.scenario_executor import ScenarioExecutor
-    from _balder.executor.variation_executor import VariationExecutor
-    from _balder.executor.testcase_executor import TestcaseExecutor
-
-
 import sys
 import traceback
 from _balder.executor.setup_executor import SetupExecutor
@@ -15,6 +8,12 @@ from _balder.executor.basic_executor import BasicExecutor
 from _balder.fixture_manager import FixtureManager
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.previous_executor_mark import PreviousExecutorMark
+
+if TYPE_CHECKING:
+    from _balder.setup import Setup
+    from _balder.executor.scenario_executor import ScenarioExecutor
+    from _balder.executor.variation_executor import VariationExecutor
+    from _balder.executor.testcase_executor import TestcaseExecutor
 
 
 class ExecutorTree(BasicExecutor):
@@ -29,7 +28,7 @@ class ExecutorTree(BasicExecutor):
     fixtures = {}
 
     def __init__(self):
-        super(ExecutorTree, self).__init__()
+        super().__init__()
         self._setup_executors: List[SetupExecutor] = []
         self._fixture_manager = FixtureManager(executor_tree=self)
 
@@ -52,11 +51,13 @@ class ExecutorTree(BasicExecutor):
         return None
 
     @property
-    def setup_executors(self):
+    def setup_executors(self) -> List[SetupExecutor]:
+        """returns all setup executors of this tree"""
         return self._setup_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
+        """returns the fixture manager of this tree"""
         return self._fixture_manager
 
     @property
@@ -133,16 +134,16 @@ class ExecutorTree(BasicExecutor):
         """
         This method executes this branch of the tree
         """
-        START_TEXT = "START TESTSESSION"
-        END_TEXT = "FINISH TESTSESSION"
-        LINE_LENGTH = 120
+        start_text = "START TESTSESSION"
+        end_text = "FINISH TESTSESSION"
+        line_length = 120
 
         def print_line(text):
-            full_text = int((LINE_LENGTH - (len(START_TEXT) + 2)) / 2) * "=" + " " + text + " "
-            full_text += "=" * (LINE_LENGTH - len(full_text))
+            full_text = int((line_length - (len(start_text) + 2)) / 2) * "=" + " " + text + " "
+            full_text += "=" * (line_length - len(full_text))
             print(full_text)
 
-        print_line(START_TEXT)
+        print_line(start_text)
         # check if there exists runnable elements
         runnables = [cur_exec.has_runnable_elements() for cur_exec in self.setup_executors]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
@@ -169,7 +170,7 @@ class ExecutorTree(BasicExecutor):
                 traceback.print_exception(*sys.exc_info())
         else:
             print("NO EXECUTABLE SETUPS/SCENARIOS FOUND")
-        print_line(END_TEXT)
+        print_line(end_text)
         summary = self.testsummary()
         is_first = True
         for cur_key, cur_val in summary.items():
@@ -177,7 +178,7 @@ class ExecutorTree(BasicExecutor):
                 is_first = False
             else:
                 print(" | ", end="")
-            print("TOTAL {}: {}".format(cur_key.value, cur_val), end="")
+            print(f"TOTAL {cur_key.value}: {cur_val}", end="")
         print("")
 
     def print_tree(self) -> None:
@@ -186,15 +187,13 @@ class ExecutorTree(BasicExecutor):
         for cur_setup_executor in self.setup_executors:
             for cur_scenario_executor in cur_setup_executor.scenario_executors:
                 for cur_variation_executor in cur_scenario_executor.variation_executors:
-                    print("Scenario `{}` <-> Setup `{}`".format(
-                        cur_scenario_executor.base_scenario_class.__class__.__qualname__,
-                        cur_setup_executor.base_setup_class.__class__.__qualname__))
+                    print(f"Scenario `{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
+                          f"Setup `{cur_setup_executor.base_setup_class.__class__.__qualname__}`")
                     mapping_printings = {}
                     for cur_scenario_device, cur_setup_device in cur_variation_executor.base_device_mapping.items():
-                        mapping_printings["   {}".format(cur_scenario_device.__qualname__)] = \
-                            "{}".format(cur_setup_device.__qualname__)
-                    max_len = max([len(cur_elem) for cur_elem in mapping_printings.keys()])
+                        mapping_printings[f"   {cur_scenario_device.__qualname__}"] = str(cur_setup_device.__qualname__)
+                    max_len = max(len(cur_elem) for cur_elem in mapping_printings.keys())
                     for cur_key, cur_val in mapping_printings.items():
                         print(("{:<" + str(max_len) + "} = {}").format(cur_key, cur_val))
                     for cur_testcase_excutor in cur_variation_executor.testcase_executors:
-                        print("   -> Testcase<{}>".format(cur_testcase_excutor.base_testcase_callable.__qualname__))
+                        print(f"   -> Testcase<{cur_testcase_excutor.base_testcase_callable.__qualname__}>")

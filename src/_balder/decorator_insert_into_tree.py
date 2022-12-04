@@ -4,7 +4,7 @@ from typing import Type, Union, List, Tuple
 from _balder.connection import Connection
 
 
-def insert_into_tree(parents: List[Union[Type[Connection], Tuple[Type[Connection]]]] = [], tree_name: str = ""):
+def insert_into_tree(parents: List[Union[Type[Connection], Tuple[Type[Connection]]]] = None, tree_name: str = ""):
     """
     This decorator inserts a :meth:`Connection` object into the global connection tree.
 
@@ -12,6 +12,8 @@ def insert_into_tree(parents: List[Union[Type[Connection], Tuple[Type[Connection
 
     :param tree_name: the tree name the connection should be inserted in
     """
+    if parents is None:
+        parents = []
     if not isinstance(parents, list):
         raise ValueError("the value of `parents` must be a `list`")
 
@@ -32,6 +34,7 @@ def insert_into_tree(parents: List[Union[Type[Connection], Tuple[Type[Connection
         idx += 1
 
     class MyDecorator:
+        """decorator class for `@insert_into_tree` decorator"""
         def __new__(cls, *args, **kwargs):
 
             nonlocal parents

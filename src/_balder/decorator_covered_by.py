@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import Type, Union
 
-from _balder.scenario import Scenario
-
 import inspect
+from _balder.scenario import Scenario
 from _balder.utils import get_class_that_defines_method
 
 
@@ -27,35 +26,36 @@ def covered_by(item: Union[Type[Scenario], callable, None]):
                         "a scenario class (has to start with `test_`)")
 
     class CoveredByDecorator:
-        def __init__(self, fn):
-            self.fn = fn
+        """decorator class for `@covered_by` decorator"""
+        def __init__(self, func):
+            self.func = func
 
-            if inspect.isclass(fn):
+            if inspect.isclass(func):
                 # it must be a class decorator
-                if not issubclass(fn, Scenario):
+                if not issubclass(func, Scenario):
                     raise TypeError(f"The decorator `@covered_by` may only be used for `Scenario` objects or for test "
                                     f"methods of one `Scenario` object. This is not possible for the applied class "
-                                    f"`{fn.__name__}`.")
-                if not hasattr(fn, '_covered_by'):
-                    fn._covered_by = {}
-                if fn not in fn._covered_by.keys():
-                    fn._covered_by[fn] = []
+                                    f"`{func.__name__}`.")
+                if not hasattr(func, '_covered_by'):
+                    func._covered_by = {}
+                if func not in func._covered_by.keys():
+                    func._covered_by[func] = []
                 if item is None:
                     # reset it
-                    fn._covered_by[fn] = []
-                elif item not in fn._covered_by[fn]:
-                    fn._covered_by[fn].append(item)
-            elif inspect.isfunction(fn):
+                    func._covered_by[func] = []
+                elif item not in func._covered_by[func]:
+                    func._covered_by[func].append(item)
+            elif inspect.isfunction(func):
                 # work will done in `__set_name__`
                 pass
             else:
-                raise TypeError(f"The use of the `@covered_by` decorator is not allowed for the `{str(fn)}` element. "
+                raise TypeError(f"The use of the `@covered_by` decorator is not allowed for the `{str(func)}` element. "
                                 f"You should only use this decorator for `Scenario` elements or test method elements "
                                 f"of a `Scenario` object")
 
         def __set_name__(self, owner, name):
             if issubclass(owner, Scenario):
-                if not inspect.isfunction(self.fn):
+                if not inspect.isfunction(self.func):
                     raise TypeError("the use of the `@covered_by` decorator is only allowed for `Scenario` objects and "
                                     "test methods of `Scenario` objects")
                 if not name.startswith('test_'):
@@ -65,18 +65,18 @@ def covered_by(item: Union[Type[Scenario], callable, None]):
 
                 if not hasattr(owner, '_covered_by'):
                     owner._covered_by = {}
-                if self.fn not in owner._covered_by.keys():
-                    owner._covered_by[self.fn] = []
+                if self.func not in owner._covered_by.keys():
+                    owner._covered_by[self.func] = []
                 if item is None:
                     # reset it
-                    owner._covered_by[self.fn] = []
-                elif item not in owner._covered_by[self.fn]:
-                    owner._covered_by[self.fn].append(item)
+                    owner._covered_by[self.func] = []
+                elif item not in owner._covered_by[self.func]:
+                    owner._covered_by[self.func].append(item)
             else:
                 raise TypeError(f"The use of the `@covered_by` decorator is not allowed for methods of a "
                                 f"`{owner.__name__}`. You should only use this decorator for `Scenario` objects or "
                                 f"valid test methods of a `Scenario` object")
 
-            setattr(owner, name, self.fn)
+            setattr(owner, name, self.func)
 
     return CoveredByDecorator

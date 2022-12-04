@@ -1,12 +1,9 @@
 from __future__ import annotations
-from typing import Type, Dict, Tuple, Union, TYPE_CHECKING
+from typing import Type, Dict, Tuple, Union
 
-if TYPE_CHECKING:
-    from _balder.device import Device
-    from _balder.vdevice import VDevice
-
+from _balder.device import Device
+from _balder.vdevice import VDevice
 from _balder.controllers import FeatureController
-
 from _balder.exceptions import UnclearMethodVariationError
 
 
@@ -21,8 +18,6 @@ class Feature:
         :param kwargs: contains a dictionary that references all vDevices of the feature and a real
                         scenario :meth:`Device` as value
         """
-        from _balder.device import Device
-        from _balder.vdevice import VDevice
 
         #: this property contains the active mapping for the devices
         self.active_vdevices: Dict[VDevice, Union[Device, str]] = {}
@@ -36,11 +31,11 @@ class Feature:
                         raise TypeError(f"the given value of vDevice mapping for vDevice `{cur_kwargs_key}` has to be "
                                         f"of the type `Device` - it is a subclass of `VDevice` - this is not allowed "
                                         f"here")
-                    elif self.active_vdevices != {}:
+                    if self.active_vdevices:
                         raise AttributeError(
                             "the constructor expects exactly none or one vDevice mapping - found more than one here")
-                    else:
-                        self.active_vdevices = {cur_vdevice: cur_kwargs_val}
+
+                    self.active_vdevices = {cur_vdevice: cur_kwargs_val}
                 else:
                     raise TypeError(f"the given value of vDevice mapping for vDevice `{cur_kwargs_key}` has to be of "
                                     f"the type `Device` or has to be a string with the name of the device class")
@@ -114,24 +109,26 @@ class Feature:
                 of_method_name=method_var_name, for_vdevice=parent_vdevice,
                 with_connection=active_cnn_intersection, ignore_no_findings=True)
             return cur_method_variation
-        elif hasattr(parent_class, method_var_name):
+
+        if hasattr(parent_class, method_var_name):
             # we found one normal method in this object
             return getattr(parent_class, method_var_name)
-        else:
-            # execute this method for all based and check if there is exactly one
-            parent_of_parent_methods = {}
-            for cur_base in parent_class.__bases__:
-                meth = self._get_inherited_method_variation(cur_base, method_var_name)
-                if meth is not None:
-                    parent_of_parent_methods[cur_base] = meth
-            if len(parent_of_parent_methods) > 1:
-                raise UnclearMethodVariationError(
-                    f"found multiple parent classes of `{parent_class.__name__}`, that provides a method with the "
-                    f"name `{method_var_name}` (base classes "
-                    f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
-                    f"please note, that we do not support multiple inheritance")
-            elif len(parent_of_parent_methods) == 1:
-                return list(parent_of_parent_methods.values())[0]
-            else:
-                # do not found one of the methods
-                return None
+
+        # execute this method for all based and check if there is exactly one
+        parent_of_parent_methods = {}
+        for cur_base in parent_class.__bases__:
+            meth = self._get_inherited_method_variation(cur_base, method_var_name)
+            if meth is not None:
+                parent_of_parent_methods[cur_base] = meth
+        if len(parent_of_parent_methods) > 1:
+            raise UnclearMethodVariationError(
+                f"found multiple parent classes of `{parent_class.__name__}`, that provides a method with the "
+                f"name `{method_var_name}` (base classes "
+                f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
+                f"please note, that we do not support multiple inheritance")
+
+        if len(parent_of_parent_methods) == 1:
+            return list(parent_of_parent_methods.values())[0]
+
+        # otherwise do not found one of the methods
+        return None

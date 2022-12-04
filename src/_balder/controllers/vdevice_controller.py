@@ -1,16 +1,14 @@
 from __future__ import annotations
-
-import logging
 from typing import Type, Dict, Union, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.vdevice import VDevice
-    from _balder.feature import Feature
-
+import logging
 import inspect
+from _balder.vdevice import VDevice
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError
 
+if TYPE_CHECKING:
+    from _balder.feature import Feature
 
 logger = logging.getLogger(__file__)
 
@@ -26,9 +24,8 @@ class VDeviceController(BaseDeviceController):
     _items: Dict[Type[VDevice], VDeviceController] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
-        super(VDeviceController, self).__init__()
+        super().__init__()
 
-        from _balder.vdevice import VDevice
         # this helps to make this constructor only possible inside the controller object
         if _priv_instantiate_key != VDeviceController.__priv_instantiate_key:
             raise RuntimeError('it is not allowed to instantiate a controller manually -> use the static method '

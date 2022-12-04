@@ -8,12 +8,16 @@ from _balder.objects.connections import osi_3_network
 
 @insert_into_tree(parents=[osi_3_network.IPv4Connection])
 class TcpIPv4Connection(Connection):
-    pass
+    """
+    Balder TCP IPv4 connection (OSI LAYER 4)
+    """
 
 
 @insert_into_tree(parents=[osi_3_network.IPv6Connection])
 class TcpIPv6Connection(Connection):
-    pass
+    """
+    Balder TCP IPv6 connection (OSI LAYER 4)
+    """
 
 
 TcpConnection = Connection.based_on(TcpIPv4Connection, TcpIPv6Connection)
@@ -21,12 +25,16 @@ TcpConnection = Connection.based_on(TcpIPv4Connection, TcpIPv6Connection)
 
 @insert_into_tree(parents=[osi_3_network.IPv4Connection])
 class UdpIPv4Connection(Connection):
-    pass
+    """
+    Balder UDP IPv4 connection (OSI LAYER 4)
+    """
 
 
 @insert_into_tree(parents=[osi_3_network.IPv6Connection])
 class UdpIPv6Connection(Connection):
-    pass
+    """
+    Balder UDP IPv6 connection (OSI LAYER 4)
+    """
 
 
 UdpConnection = Connection.based_on(UdpIPv4Connection, UdpIPv6Connection)

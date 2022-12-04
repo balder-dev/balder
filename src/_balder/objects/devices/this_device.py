@@ -10,4 +10,3 @@ class ThisDevice(Device):
 
     Note that this is the parent class for the :class:`Setup` inner class :class:`Setup.DeviceThis`.
     """
-    pass

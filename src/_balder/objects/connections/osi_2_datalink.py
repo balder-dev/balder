@@ -9,19 +9,27 @@ from _balder.objects.connections import osi_1_physical
 @insert_into_tree(parents=[osi_1_physical.OpticalFiberConnection, osi_1_physical.DslConnection,
                            osi_1_physical.IsdnConnection])
 class EthernetConnection(Connection):
-    pass
+    """
+    Balder Ethernet connection (OSI LAYER 2)
+    """
 
 
 @insert_into_tree(parents=[osi_1_physical.WifiConnection])
 class WirelessLanConnection(Connection):
-    pass
+    """
+    Balder Wireless LAN connection (OSI LAYER 2)
+    """
 
 
 @insert_into_tree(parents=[])
 class LLDPConnection(Connection):
-    pass
+    """
+    Balder LLDP connection (OSI LAYER 2)
+    """
 
 
 @insert_into_tree(parents=[])
 class ProfibusConnection(Connection):
-    pass
+    """
+    Balder Profibus connection (OSI LAYER 2)
+    """

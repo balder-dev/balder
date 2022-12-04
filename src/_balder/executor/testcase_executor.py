@@ -1,9 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Union, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.executor.variation_executor import VariationExecutor
-    from _balder.scenario import Scenario
+from typing import List, Union, TYPE_CHECKING
 
 import sys
 import time
@@ -13,6 +9,11 @@ from _balder.testresult import ResultState, TestcaseResult
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 
+if TYPE_CHECKING:
+    from _balder.executor.variation_executor import VariationExecutor
+    from _balder.fixture_manager import FixtureManager
+    from _balder.scenario import Scenario
+
 
 class TestcaseExecutor(BasicExecutor):
     """
@@ -21,8 +22,7 @@ class TestcaseExecutor(BasicExecutor):
     """
 
     def __init__(self, testcase: callable, parent: VariationExecutor):
-        super(TestcaseExecutor, self).__init__()
-        from _balder.fixture_manager import FixtureManager
+        super().__init__()
 
         self._base_testcase_callable = testcase
         self._parent_executor = parent
@@ -58,6 +58,7 @@ class TestcaseExecutor(BasicExecutor):
 
     @property
     def base_testcase_callable(self) -> callable:
+        """returns the testcase function"""
         return self._base_testcase_callable
 
     @property
@@ -69,6 +70,7 @@ class TestcaseExecutor(BasicExecutor):
 
     @property
     def fixture_manager(self):
+        """returns the current active fixture manager"""
         return self._fixture_manager
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
@@ -103,7 +105,6 @@ class TestcaseExecutor(BasicExecutor):
 
         This method implementation of the :class:`TestcaseExecutor` does nothing.
         """
-        pass
 
     def get_covered_by_element(self) -> List[Union[Scenario, callable]]:
         """

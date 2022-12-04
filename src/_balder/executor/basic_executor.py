@@ -1,7 +1,8 @@
 from __future__ import annotations
-from _balder.testresult import FixturePartResult, ResultState
 from typing import List, Dict, Union, Type, TYPE_CHECKING
+
 import types
+from _balder.testresult import FixturePartResult, ResultState
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import TestcaseResult
 
@@ -74,8 +75,12 @@ class BasicExecutor:
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def set_result_for_whole_branch(self, value: ResultState):
+        """
+        This method sets the executor result for all sub executors.
 
-        if value != ResultState.SKIP and value != ResultState.COVERED_BY and value != ResultState.NOT_RUN:
+        :param value: the new value that should be set for this branch
+        """
+        if value not in (ResultState.SKIP, ResultState.COVERED_BY, ResultState.NOT_RUN):
             raise ValueError("can not set a state that is not NOT_RUN, SKIP or COVERED_BY for a whole branch")
         for cur_child_executor in self.all_child_executors:
             if isinstance(cur_child_executor.body_result, TestcaseResult):

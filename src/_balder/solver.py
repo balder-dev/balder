@@ -1,13 +1,5 @@
 from __future__ import annotations
-
 from typing import List, Dict, Tuple, Type, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from _balder.setup import Setup
-    from _balder.device import Device
-    from _balder.scenario import Scenario
-    from _balder.connection import Connection
-    from _balder.plugin_manager import PluginManager
 
 import itertools
 from _balder.executor.executor_tree import ExecutorTree
@@ -17,6 +9,13 @@ from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.executor.variation_executor import VariationExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.controllers import ScenarioController, SetupController
+
+if TYPE_CHECKING:
+    from _balder.setup import Setup
+    from _balder.device import Device
+    from _balder.scenario import Scenario
+    from _balder.connection import Connection
+    from _balder.plugin_manager import PluginManager
 
 
 class Solver:
@@ -86,6 +85,9 @@ class Solver:
 
     @property
     def all_mappings(self) -> List[Tuple[Type[Setup], Type[Scenario], Dict[Type[Device], Type[Device]]]]:
+        """
+        returns all still active mappings between :meth:`Scenario`'s and :meth:`Setup`'s.
+        """
         if self._mapping is None or self._mapping == [] or self._resolving_was_executed is False:
             raise AttributeError("please call the `resolve()` method before omitting this value")
         return self._mapping

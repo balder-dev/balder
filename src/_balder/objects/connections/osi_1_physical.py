@@ -6,79 +6,111 @@ from _balder.decorator_insert_into_tree import insert_into_tree
 
 @insert_into_tree(parents=[])
 class BluetoothConnection(Connection):
-    pass
+    """
+    Balder Bluetooth connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class CanBusConnection(Connection):
-    pass
+    """
+    Balder CAN-Bus connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class CoaxialCableConnection(Connection):
-    pass
+    """
+    Balder Coaxial-Cable connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class DslConnection(Connection):
-    pass
+    """
+    Balder DSL connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class RS232Connection(Connection):
-    pass
+    """
+    Balder RS232 connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class RS422Connection(Connection):
-    pass
+    """
+    Balder RS422 connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class RS485Connection(Connection):
-    pass
+    """
+    Balder RS485 connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class IsdnConnection(Connection):
-    pass
+    """
+    Balder ISDN connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class I2CConnection(Connection):
-    pass
+    """
+    Balder I2C connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class I2SConnection(Connection):
-    pass
+    """
+    Balder I2S connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class OneWireConnection(Connection):
-    pass
+    """
+    Balder One-Wire connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class OpticalFiberConnection(Connection):
-    pass
+    """
+    Balder Optical-Fiber connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class SpiConnection(Connection):
-    pass
+    """
+    Balder SPI connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class TwistedPairCableConnection(Connection):
-    pass
+    """
+    Balder Twisted-Pair Cable connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class UsbConnection(Connection):
-    pass
+    """
+    Balder USB connection (OSI LAYER 1)
+    """
 
 
 @insert_into_tree(parents=[])
 class WifiConnection(Connection):
-    pass
+    """
+    Balder Wi-Fi connection (OSI LAYER 1)
+    """

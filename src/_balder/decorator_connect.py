@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import Type, Union
 
-from _balder.device import Device
-
 import re
+from _balder.device import Device
 from _balder.connection import Connection
 from _balder.controllers import DeviceController
 
@@ -23,7 +22,7 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
     :param dest_node_name: the node name of the destination device, given with `with_device` (if this param is not
                            given, balder automatically generates a new node name in format `n{unique device counter}`)
     """
-    ALLOWED_REGEX_AUTO_NODE_NAMES = r"n[0-9]+"
+    allowed_regex_auto_node_names = r"n[0-9]+"
 
     if not isinstance(with_device, str) and not issubclass(with_device, Device):
         raise ValueError("the value of `with_device` must be a `Device` (or a subclass thereof) or the device name "
@@ -42,16 +41,16 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
     if self_node_name is not None:
         if not isinstance(self_node_name, str):
             raise TypeError("the type of `node_name` must be a `str`")
-        if re.match(ALLOWED_REGEX_AUTO_NODE_NAMES, self_node_name):
+        if re.match(allowed_regex_auto_node_names, self_node_name):
             raise ValueError(
-                f"the given `self_node_name` matches the regular expression `{ALLOWED_REGEX_AUTO_NODE_NAMES}` that is "
+                f"the given `self_node_name` matches the regular expression `{allowed_regex_auto_node_names}` that is "
                 f"reserved for internal node naming and should not be used by you")
     if dest_node_name is not None:
         if not isinstance(dest_node_name, str):
             raise TypeError("the type of `node_name` must be a `str`")
-        if re.match(ALLOWED_REGEX_AUTO_NODE_NAMES, dest_node_name):
+        if re.match(allowed_regex_auto_node_names, dest_node_name):
             raise ValueError(
-                f"the given `dest_node_name` matches the regular expression `{ALLOWED_REGEX_AUTO_NODE_NAMES}` that is "
+                f"the given `dest_node_name` matches the regular expression `{allowed_regex_auto_node_names}` that is "
                 f"reserved for internal node naming and should not be used by you")
 
     class MyDecorator:
@@ -74,8 +73,9 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
             if not isinstance(with_device, str):
                 other_outer_class_name, _ = with_device.__qualname__.split('.')
                 if this_outer_class_name != other_outer_class_name:
-                    raise ValueError(f"the given device is not mentioned in this setup/scenario - please create a new "
-                                     f"direct inner device class, it can be inherited from `{with_device.__qualname__}`")
+                    raise ValueError(
+                        f"the given device is not mentioned in this setup/scenario - please create a new "
+                        f"direct inner device class, it can be inherited from `{with_device.__qualname__}`")
             decorated_cls_device_controller = DeviceController.get_for(decorated_cls)
 
             # if required give auto name to nodes

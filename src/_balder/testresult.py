@@ -1,13 +1,16 @@
 from __future__ import annotations
-from enum import Enum
-
 from typing import TYPE_CHECKING, List, Union
+
+from enum import Enum
 
 if TYPE_CHECKING:
     from _balder.executor.basic_executor import BasicExecutor
 
 
 class ResultState(Enum):
+    """
+    enumeration that describes the possible results of a testcase-/fixture-executor
+    """
     # this state will be assigned if the executor doesn't run yet
     NOT_RUN = 'NOT_RUN'
     # this state will be assigned if the test fails (only assignable to :class:`TestcaseExecutor`)
@@ -56,7 +59,8 @@ class _Result:
         return self.result.name
 
     @property
-    def result(self):
+    def result(self) -> ResultState:
+        """returns the result"""
         return self._result
 
     def get_result_as_char(self):
@@ -93,7 +97,7 @@ class BranchBodyResult(_Result):
 
         if isinstance(executor, TestcaseExecutor):
             raise TypeError("testcase executors are not allowed to use in `BranchBodyResult`")
-        super(BranchBodyResult, self).__init__(executor=executor)
+        super().__init__(executor=executor)
 
     @property
     def result(self):

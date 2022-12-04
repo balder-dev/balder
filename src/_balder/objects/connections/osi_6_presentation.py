@@ -8,4 +8,6 @@ from _balder.objects.connections import osi_4_transport
 
 @insert_into_tree(parents=[osi_4_transport.TcpIPv4Connection, osi_4_transport.TcpIPv6Connection])
 class TelnetConnection(Connection):
-    pass
+    """
+    Balder TELNET connection (OSI LAYER 6)
+    """

@@ -1,18 +1,12 @@
 from __future__ import annotations
 from typing import Union, List, Tuple, Dict, Type, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from _balder.setup import Setup
-    from _balder.device import Device
-    from _balder.scenario import Scenario
-    from _balder.connection import Connection
-
 import os
 import sys
-import balder
 import inspect
 import pathlib
 import argparse
+import balder
 from _balder.balder_plugin import BalderPlugin
 from _balder.plugin_manager import PluginManager
 from _balder.executor.executor_tree import ExecutorTree
@@ -20,6 +14,12 @@ from _balder.collector import Collector
 from _balder.solver import Solver
 from _balder.exceptions import DuplicateBalderSettingError
 from _balder.balder_settings import BalderSettings
+
+if TYPE_CHECKING:
+    from _balder.setup import Setup
+    from _balder.device import Device
+    from _balder.scenario import Scenario
+    from _balder.connection import Connection
 
 
 class BalderSession:
@@ -122,8 +122,8 @@ class BalderSession:
         """
         if BalderSession.baldersettings is None:
             raise ValueError("no baldersettings loaded yet")
-        else:
-            return BalderSession.baldersettings.used_global_connection_tree
+
+        return BalderSession.baldersettings.used_global_connection_tree
 
     # ---------------------------------- CLASS METHODS -----------------------------------------------------------------
 
@@ -181,7 +181,7 @@ class BalderSession:
         module = self.collector.load_balderglob_py_file()
         class_members = inspect.getmembers(module, inspect.isclass)
         all_classes = []
-        for cur_class_name, cur_class in class_members:
+        for _, cur_class in class_members:
             if issubclass(cur_class, BalderSettings):
                 all_classes.append(cur_class)
         if len(all_classes) == 0:
@@ -198,7 +198,7 @@ class BalderSession:
         module = self.collector.load_balderglob_py_file()
         class_members = inspect.getmembers(module, inspect.isclass)
         all_classes = []
-        for cur_class_name, cur_class in class_members:
+        for _, cur_class in class_members:
             if issubclass(cur_class, BalderPlugin):
                 all_classes.append(cur_class)
         return all_classes
@@ -215,12 +215,12 @@ class BalderSession:
             if found_idx != -1:
                 if len(sys.argv) <= found_idx + 1:
                     raise AttributeError(f"no path given for `{argv_working_dir_key}`")
-                else:
-                    self.working_dir = pathlib.Path(sys.argv[found_idx + 1]).absolute()
-                    if not self.working_dir.is_dir():
-                        raise NotADirectoryError(
-                            f'can not parse the given working directory `{self.working_dir}` correctly or the given '
-                            f'path is no directory..')
+
+                self.working_dir = pathlib.Path(sys.argv[found_idx + 1]).absolute()
+                if not self.working_dir.is_dir():
+                    raise NotADirectoryError(
+                        f'can not parse the given working directory `{self.working_dir}` correctly or the given '
+                        f'path is no directory..')
 
     def parse_args(self):
         """
@@ -302,27 +302,28 @@ class BalderSession:
         self.executor_tree.execute()
 
     def run(self):
-        LINE_LENGTH = 120
+        """
+        This method executes the whole session
+        """
+        line_length = 120
 
         self.collect()
 
         def print_rect_row(text):
             line = "| " + text
-            line = line + " " * (LINE_LENGTH - len(line) - 1) + "|"
+            line = line + " " * (line_length - len(line) - 1) + "|"
             print(line)
 
-        print("+" + "-" * (LINE_LENGTH - 2) + "+")
+        print("+" + "-" * (line_length - 2) + "+")
         print_rect_row("BALDER Testsystem")
-        print_rect_row(
-            " python version {} | balder version {}".format(sys.version.replace('\n', ''), balder.__version__))
-        print("+" + "-" * (LINE_LENGTH - 2) + "+")
-        print("Collect {} Setups and {} Scenarios".format(
-            len(self.all_collected_setups), len(self.all_collected_scenarios)))
+        sys_version = sys.version.replace('\n', '')
+        print_rect_row(f" python version {sys_version} | balder version {balder.__version__}")
+        print("+" + "-" * (line_length - 2) + "+")
+        print(f"Collect {len(self.all_collected_setups)} Setups and {len(self.all_collected_scenarios)} Scenarios")
         if not self.collect_only:
             self.solve()
             self.create_executor_tree()
-            print("  resolve them to {} mapping candidates".format(
-                len(self.executor_tree.get_all_variation_executors())))
+            print(f"  resolve them to {len(self.executor_tree.get_all_variation_executors())} mapping candidates")
             print("")
             if not self.resolve_only:
                 self.execute_executor_tree()
