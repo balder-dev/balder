@@ -321,9 +321,8 @@ class Collector:
             # now determine all RUN, SKIP and IGNORE values if they aren't already mentioned - if there exists a value
             #  for them, check if the value is valid
             base_classes.reverse()
-            for cur_idx in range(0, len(base_classes)):
+            for cur_idx, cur_class in enumerate(base_classes):
                 next_parent = None if cur_idx == 0 else base_classes[cur_idx - 1]
-                cur_class = base_classes[cur_idx]
                 if "IGNORE" in cur_class.__dict__.keys():
                     # IGNORE is mentioned in this specific class
                     if not isinstance(cur_class.IGNORE, list):

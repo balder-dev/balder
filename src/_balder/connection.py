@@ -195,8 +195,7 @@ class Connection:
         def tuple_is_contained_in_other(inner_tuple, contained_in_tuple):
             # check if every tuple elem fits in one of `contained_in_tuple` (allow to use a position in
             # `contained_in_tuple` multiple times)
-            for cur_idx in range(0, len(inner_tuple)):
-                cur_tuple_element = inner_tuple[cur_idx]
+            for cur_idx, cur_tuple_element in enumerate(inner_tuple):
                 found_match_for_this_elem = False
                 for cur_contained_in_elem in contained_in_tuple:
                     if cur_tuple_element.contained_in(cur_contained_in_elem, ignore_metadata=True):
@@ -1245,8 +1244,7 @@ class Connection:
         :param args: all connection items that should be added here
         """
 
-        for cur_idx in range(len(args)):
-            cur_connection = args[cur_idx]
+        for cur_idx, cur_connection in enumerate(args):
             if isinstance(cur_connection, type):
                 if not issubclass(cur_connection, Connection):
                     raise TypeError(f"illegal type `{cur_connection.__name__}` for parameter number {cur_idx}")
@@ -1273,8 +1271,7 @@ class Connection:
 
             elif isinstance(cur_connection, tuple):
                 result_tuple = ()
-                for cur_tuple_idx in range(len(cur_connection)):
-                    cur_tuple_elem = cur_connection[cur_tuple_idx]
+                for cur_tuple_idx, cur_tuple_elem in enumerate(cur_connection):
                     if isinstance(cur_tuple_elem, type):
                         if not issubclass(cur_tuple_elem, Connection):
                             raise TypeError(f"illegal type `{cur_tuple_elem.__name__}` for tuple element "
