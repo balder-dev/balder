@@ -331,9 +331,9 @@ class Connection:
                 if not isinstance(cur_higher_other_child, tuple):
                     if cls.is_parent_of(other_conn=cur_higher_other_child):
                         return True
-        else:
-            # the other connection has no parents, so this can not be the parent class
             return False
+        # the other connection has no parents, so this can not be the parent class
+        return False
 
     @classmethod
     def based_on(cls, *args: Union[Tuple[Union[Type[Connection], Connection], ...], Type[Connection], Connection]) \

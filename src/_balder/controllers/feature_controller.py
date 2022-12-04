@@ -196,33 +196,35 @@ class FeatureController(Controller):
                     f"found no possible method variation for method "
                     f"`{self.related_cls.__name__}.{of_method_name}` with vDevice `{for_vdevice.__name__}` "
                     f"and usable connection `{with_connection.get_tree_str()}´")
-        elif len(all_possible_method_variations) == 1:
-            return list(all_possible_method_variations.keys())[0]
-        else:
-            # we have to determine the outer one
-            length_before = None
-            while length_before is None or length_before != len(all_possible_method_variations):
-                length_before = len(all_possible_method_variations)
-                for cur_meth, cur_cnn in all_possible_method_variations.items():
-                    can_be_deleted = True
-                    for _, cur_other_cnn in all_possible_method_variations.items():
-                        if cur_cnn == cur_other_cnn:
-                            continue
-                        if not cur_cnn.contained_in(cur_other_cnn):
-                            can_be_deleted = False
-                    if can_be_deleted:
-                        del all_possible_method_variations[cur_meth]
-                        break
-                if len(all_possible_method_variations) == 1:
-                    # done
-                    break
+            return None
 
-            if len(all_possible_method_variations) > 1:
-                raise UnclearMethodVariationError(
-                    f"found more than one possible method variation for method "
-                    f"`{self.related_cls.__name__}.{of_method_name}` with vDevice `{for_vdevice.__name__}` "
-                    f"and usable connection `{with_connection.get_tree_str()}´")
+        if len(all_possible_method_variations) == 1:
             return list(all_possible_method_variations.keys())[0]
+
+        # we have to determine the outer one
+        length_before = None
+        while length_before is None or length_before != len(all_possible_method_variations):
+            length_before = len(all_possible_method_variations)
+            for cur_meth, cur_cnn in all_possible_method_variations.items():
+                can_be_deleted = True
+                for _, cur_other_cnn in all_possible_method_variations.items():
+                    if cur_cnn == cur_other_cnn:
+                        continue
+                    if not cur_cnn.contained_in(cur_other_cnn):
+                        can_be_deleted = False
+                if can_be_deleted:
+                    del all_possible_method_variations[cur_meth]
+                    break
+            if len(all_possible_method_variations) == 1:
+                # done
+                break
+
+        if len(all_possible_method_variations) > 1:
+            raise UnclearMethodVariationError(
+                f"found more than one possible method variation for method "
+                f"`{self.related_cls.__name__}.{of_method_name}` with vDevice `{for_vdevice.__name__}` "
+                f"and usable connection `{with_connection.get_tree_str()}´")
+        return list(all_possible_method_variations.keys())[0]
 
     def get_inner_vdevice_classes(self) -> List[Type[VDevice]]:
         """
