@@ -195,7 +195,7 @@ class Connection:
         def tuple_is_contained_in_other(inner_tuple, contained_in_tuple):
             # check if every tuple elem fits in one of `contained_in_tuple` (allow to use a position in
             # `contained_in_tuple` multiple times)
-            for cur_idx, cur_tuple_element in enumerate(inner_tuple):
+            for cur_tuple_element in inner_tuple:
                 found_match_for_this_elem = False
                 for cur_contained_in_elem in contained_in_tuple:
                     if cur_tuple_element.contained_in(cur_contained_in_elem, ignore_metadata=True):

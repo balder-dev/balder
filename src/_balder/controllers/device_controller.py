@@ -311,7 +311,7 @@ class DeviceController(BaseDeviceController, ABC):
             has read all files, all required information are available and this method should be able to resolve the
             device-strings.
         """
-        for cur_node, node_connections in self.connections.items():
+        for _, node_connections in self.connections.items():
             for cur_conn in node_connections:
                 # for every connection applies that the `from_device` must already be a type; also the
                 # `to_device` has to be an inner class of this type
