@@ -768,69 +768,8 @@ class Collector:
 
         # validate that all parent VDevices are overwritten if one or more VDevice(s) are defined in current feature
         for cur_feature in features:
-            all_direct_vdevices_of_this_feature_lvl = \
-                FeatureController.get_for(cur_feature).get_inner_vdevice_classes()
-            if len(all_direct_vdevices_of_this_feature_lvl) != 0:
-                # check that all absolute items of higher class are implemented
-                next_feature_parent = None
-                for cur_parent in cur_feature.__bases__:
-                    if issubclass(cur_parent, Feature) and cur_parent != Feature:
-                        if next_feature_parent is not None:
-                            raise MultiInheritanceError(
-                                "can not select the next parent class, found more than one parent classes for feature "
-                                f"`{cur_feature.__class__.__name__}` that is a subclass of `{Feature.__name__}`")
-                        next_feature_parent = cur_parent
-                # only continue if the current feature has a parent class
-                if next_feature_parent:
-                    # first check the parent feature (maybe the error has already occurred before)
-                    Collector.feature_validate_vdevice_inheritance([next_feature_parent])
-
-                    parent_vdevices = FeatureController.get_for(next_feature_parent).get_abs_inner_vdevice_classes()
-                    # now check for every parent vDevice if it also exists in the current selection
-                    for cur_parent_vdevice in parent_vdevices:
-                        direct_namings = [cur_item.__name__ for cur_item in all_direct_vdevices_of_this_feature_lvl]
-                        # check that the parent vDevice exists in the direct namings
-                        if cur_parent_vdevice.__name__ not in direct_namings:
-                            raise VDeviceOverwritingError(
-                                f"missing overwriting of parent VDevice class `{cur_parent_vdevice.__qualname__}` in "
-                                f"feature class `{cur_feature.__name__}` - if you overwrite one or more VDevice(s) "
-                                f"you have to overwrite all!")
-
-                        # otherwise check if inheritance AND feature overwriting is correct
-                        cur_child_idx = direct_namings.index(cur_parent_vdevice.__name__)
-                        related_child_vdevice = all_direct_vdevices_of_this_feature_lvl[cur_child_idx]
-                        if not issubclass(related_child_vdevice, cur_parent_vdevice):
-                            # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
-                            raise VDeviceOverwritingError(
-                                    f"the inner vDevice class `{related_child_vdevice.__qualname__}` has the same "
-                                    f"name than the vDevice `{cur_parent_vdevice.__qualname__}` - it should also "
-                                    f"inherit from it")
-                        # todo check that feature overwriting inside the VDevice is correct
-                        # now check that the vDevice overwrites the existing properties only in a proper manner (to
-                        #  overwrite it, it has to have the same property name as the property in the next parent
-                        #  class)
-                        cur_vdevice_features = \
-                            VDeviceController.get_for(related_child_vdevice).get_all_instantiated_feature_objects()
-                        cur_vdevice_base_features = \
-                            VDeviceController.get_for(cur_parent_vdevice).get_all_instantiated_feature_objects()
-                        for cur_base_property_name, cur_base_feature_instance in cur_vdevice_base_features.items():
-                            # now check that every base property is available in the current vDevice too - check
-                            #  that the instantiated feature is the same or the feature of the child vDevice is a
-                            #  child of it -> ignore it, if the child vDevice has more features than the base -
-                            #   that doesn't matter
-                            if cur_base_property_name not in cur_vdevice_features.keys():
-                                raise VDeviceResolvingError(
-                                    f"can not find the property `{cur_base_property_name}` of "
-                                    f"parent vDevice `{cur_parent_vdevice.__qualname__}` in the "
-                                    f"current vDevice class `{related_child_vdevice.__qualname__}`")
-                            cur_feature_instance = cur_vdevice_features[cur_base_property_name]
-                            if not isinstance(cur_feature_instance, cur_base_feature_instance.__class__):
-                                raise FeatureOverwritingError(
-                                    f"you are trying to overwrite an existing vDevice Feature property "
-                                    f"`{cur_base_property_name}` in vDevice `{related_child_vdevice.__qualname__}` "
-                                    f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
-                                    f"only possible with a child (or with the same) feature class the parent "
-                                    f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")
+            cur_feature_controller = FeatureController.get_for(cur_feature)
+            cur_feature_controller.validate_inner_vdevice_inheritance()
 
     @staticmethod
     def feature_determine_class_for_vdevice_values(features: List[Type[Feature]], print_warning=True):
