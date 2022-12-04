@@ -73,8 +73,9 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
             if not isinstance(with_device, str):
                 other_outer_class_name, _ = with_device.__qualname__.split('.')
                 if this_outer_class_name != other_outer_class_name:
-                    raise ValueError(f"the given device is not mentioned in this setup/scenario - please create a new "
-                                     f"direct inner device class, it can be inherited from `{with_device.__qualname__}`")
+                    raise ValueError(
+                        f"the given device is not mentioned in this setup/scenario - please create a new "
+                        f"direct inner device class, it can be inherited from `{with_device.__qualname__}`")
             decorated_cls_device_controller = DeviceController.get_for(decorated_cls)
 
             # if required give auto name to nodes
