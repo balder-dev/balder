@@ -32,4 +32,3 @@ def fixture(level: Literal['session', 'setup', 'scenario', 'variation', 'testcas
 
         return wrapper_fixture
     return decorator_fixture
-
