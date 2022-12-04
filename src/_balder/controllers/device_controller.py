@@ -255,9 +255,9 @@ class DeviceController(BaseDeviceController, ABC):
 
         result = {}
         all_connections = self.get_all_connections()
-        for cur_node_name in all_connections.keys():
-            cur_intersection = all_connections[cur_node_name][0]
-            for cur_node_connection in all_connections[cur_node_name][1:]:
+        for cur_node_name, node_connections in all_connections.items():
+            cur_intersection = node_connections[0]
+            for cur_node_connection in node_connections[1:]:
                 cur_intersection = cur_node_connection.intersection_with(cur_intersection)
             result[cur_node_name] = [cur_intersection]
 
@@ -311,8 +311,8 @@ class DeviceController(BaseDeviceController, ABC):
             has read all files, all required information are available and this method should be able to resolve the
             device-strings.
         """
-        for cur_node in self.connections.keys():
-            for cur_conn in self.connections[cur_node]:
+        for cur_node, node_connections in self.connections.items():
+            for cur_conn in node_connections:
                 # for every connection applies that the `from_device` must already be a type; also the
                 # `to_device` has to be an inner class of this type
 
