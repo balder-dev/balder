@@ -31,7 +31,7 @@ class Feature:
                         raise TypeError(f"the given value of vDevice mapping for vDevice `{cur_kwargs_key}` has to be "
                                         f"of the type `Device` - it is a subclass of `VDevice` - this is not allowed "
                                         f"here")
-                    if self.active_vdevices != {}:
+                    if self.active_vdevices:
                         raise AttributeError(
                             "the constructor expects exactly none or one vDevice mapping - found more than one here")
 

@@ -408,7 +408,7 @@ class VariationExecutor(BasicExecutor):
         :return: returns true if the method finds one or more valid routings for EVERY :class:`Connection`. Otherwise,
                  it returns false
         """
-        if self._routings == {}:
+        if not self._routings:
             self.determine_absolute_scenario_device_connections()
             self.create_all_valid_routings()
         for _, cur_routings in self._routings.items():
