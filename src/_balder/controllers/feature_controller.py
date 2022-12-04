@@ -1,15 +1,15 @@
 from __future__ import annotations
-from typing import Type, Dict, Union, List, Callable, Tuple, TYPE_CHECKING
+from typing import Type, Dict, Union, List, Callable, Tuple
 
 import logging
 import inspect
 from _balder.vdevice import VDevice
+from _balder.feature import Feature
 from _balder.controllers import Controller
+from _balder.controllers.vdevice_controller import VDeviceController
 from _balder.connection import Connection
-from _balder.exceptions import UnclearMethodVariationError
-
-if TYPE_CHECKING:
-    from _balder.feature import Feature
+from _balder.exceptions import UnclearMethodVariationError, MultiInheritanceError, VDeviceOverwritingError, \
+    VDeviceResolvingError, FeatureOverwritingError
 
 
 logger = logging.getLogger(__file__)
@@ -26,7 +26,6 @@ class FeatureController(Controller):
     _items: Dict[Type[Feature], FeatureController] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
-        from _balder.feature import Feature
 
         # this helps to make this constructor only possible inside the controller object
         if _priv_instantiate_key != FeatureController.__priv_instantiate_key:
@@ -234,7 +233,6 @@ class FeatureController(Controller):
 
         If you want to get the absolute VDevices use :meth:`Feature.get_inner_vdevice_classes`.
         """
-        from _balder.feature import Feature
 
         all_classes = inspect.getmembers(self.related_cls, inspect.isclass)
         filtered_classes = []
@@ -265,7 +263,6 @@ class FeatureController(Controller):
         some VDevices in the related feature class it also starts searching in the base classes. It always returns the
         first existing definition in the relevant parent classes.
         """
-        from _balder.feature import Feature
 
         filtered_classes = self.get_inner_vdevice_classes()
 
@@ -284,7 +281,6 @@ class FeatureController(Controller):
         This method returns a dictionary with all referenced :class:`Feature` objects, where the variable name is the
         key and the instantiated object the value.
         """
-        from _balder.feature import Feature
 
         result = {}
         for cur_name in dir(self.related_cls):
@@ -292,3 +288,83 @@ class FeatureController(Controller):
             if isinstance(cur_val, Feature):
                 result[cur_name] = cur_val
         return result
+
+    def validate_inner_vdevice_inheritance(self):
+        """
+        This method validates the inheritance of all inner :class:`VDevice` classes of the feature that belongs to this
+        controller.
+
+        It secures that new :class:`VDevice` classes are added or existing :class:`VDevice` classes are completely being
+        overwritten for every feature level. The method only allows the overwriting of :class:`VDevices`, which are
+        subclasses of another :class:`VDevice` that is defined in a parent :class:`Feature` class. In addition, the
+        class has to have the same name as its parent class.
+
+        The method also secures that the user overwrites instantiated :class:`Feature` classes in the VDevice (class
+        property name is the same) only with subclasses of the element that is being overwritten. New Features can be
+        added without consequences.
+        """
+
+        all_direct_vdevices_of_this_feature_lvl = self.get_inner_vdevice_classes()
+        if len(all_direct_vdevices_of_this_feature_lvl) != 0:
+            # check that all absolute items of higher class are implemented
+            next_feature_parent = None
+            for cur_parent in self._related_cls.__bases__:
+                if issubclass(cur_parent, Feature) and cur_parent != Feature:
+                    if next_feature_parent is not None:
+                        raise MultiInheritanceError(
+                            "can not select the next parent class, found more than one parent classes for feature "
+                            f"`{self._related_cls.__name__}` that is a subclass of `{Feature.__name__}`")
+                    next_feature_parent = cur_parent
+            # only continue if the current feature has a parent class
+            if next_feature_parent:
+                # first check the parent feature (secure that the inheritance chain is valid first)
+                parent_collector = FeatureController.get_for(next_feature_parent)
+                parent_collector.validate_inner_vdevice_inheritance()
+
+                # now continue with checking the inheritance between this feature and its direct parent
+                parent_vdevices = parent_collector.get_abs_inner_vdevice_classes()
+                # now check that every parent vDevice also exists in the current selection
+                for cur_parent_vdevice in parent_vdevices:
+                    direct_namings = [cur_item.__name__ for cur_item in all_direct_vdevices_of_this_feature_lvl]
+                    # check that the parent vDevice exists in the direct namings
+                    if cur_parent_vdevice.__name__ not in direct_namings:
+                        raise VDeviceOverwritingError(
+                            f"missing overwriting of parent VDevice class `{cur_parent_vdevice.__qualname__}` in "
+                            f"feature class `{self._related_cls.__name__}` - if you overwrite one or more VDevice(s) "
+                            f"you have to overwrite all!")
+
+                    # otherwise check if inheritance AND feature overwriting is correct
+                    cur_child_idx = direct_namings.index(cur_parent_vdevice.__name__)
+                    related_child_vdevice = all_direct_vdevices_of_this_feature_lvl[cur_child_idx]
+                    if not issubclass(related_child_vdevice, cur_parent_vdevice):
+                        # inherit from a parent device, but it has not the same naming -> NOT ALLOWED
+                        raise VDeviceOverwritingError(
+                            f"the inner vDevice class `{related_child_vdevice.__qualname__}` has the same "
+                            f"name than the vDevice `{cur_parent_vdevice.__qualname__}` - it should also "
+                            f"inherit from it")
+                    # todo check that feature overwriting inside the VDevice is correct
+                    # now check that the vDevice overwrites the existing properties only in a proper manner (to
+                    #  overwrite it, it has to have the same property name as the property in the next parent
+                    #  class)
+                    cur_vdevice_features = \
+                        VDeviceController.get_for(related_child_vdevice).get_all_instantiated_feature_objects()
+                    cur_vdevice_base_features = \
+                        VDeviceController.get_for(cur_parent_vdevice).get_all_instantiated_feature_objects()
+                    for cur_base_property_name, cur_base_feature_instance in cur_vdevice_base_features.items():
+                        # now check that every base property is available in the current vDevice too - check
+                        #  that the instantiated feature is the same or the feature of the child vDevice is a
+                        #  child of it -> ignore it, if the child vDevice has more features than the base -
+                        #   that doesn't matter
+                        if cur_base_property_name not in cur_vdevice_features.keys():
+                            raise VDeviceResolvingError(
+                                f"can not find the property `{cur_base_property_name}` of "
+                                f"parent vDevice `{cur_parent_vdevice.__qualname__}` in the "
+                                f"current vDevice class `{related_child_vdevice.__qualname__}`")
+                        cur_feature_instance = cur_vdevice_features[cur_base_property_name]
+                        if not isinstance(cur_feature_instance, cur_base_feature_instance.__class__):
+                            raise FeatureOverwritingError(
+                                f"you are trying to overwrite an existing vDevice Feature property "
+                                f"`{cur_base_property_name}` in vDevice `{related_child_vdevice.__qualname__}` "
+                                f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
+                                f"only possible with a child (or with the same) feature class the parent "
+                                f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")

@@ -3,7 +3,6 @@ from typing import Type, Dict, Tuple, Union
 
 from _balder.device import Device
 from _balder.vdevice import VDevice
-from _balder.controllers import FeatureController
 from _balder.exceptions import UnclearMethodVariationError
 
 
@@ -18,6 +17,7 @@ class Feature:
         :param kwargs: contains a dictionary that references all vDevices of the feature and a real
                         scenario :meth:`Device` as value
         """
+        from _balder.controllers import FeatureController
 
         #: this property contains the active mapping for the devices
         self.active_vdevices: Dict[VDevice, Union[Device, str]] = {}
@@ -91,6 +91,8 @@ class Feature:
 
         :param method_var_name: the name of the method or of the method variation that should be returned
         """
+        from _balder.controllers import FeatureController
+
         parent_class_controller = FeatureController.get_for(parent_class)
         if parent_class_controller.get_method_based_for_vdevice() is not None and \
                 method_var_name in parent_class_controller.get_method_based_for_vdevice().keys():
