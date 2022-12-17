@@ -171,12 +171,11 @@ class FeatureController(Controller):
             throw a waring.
         """
         # first determine this for all parent classes
-        to_determining_features = [
-            cur_cls for cur_cls in self.related_cls.__bases__ if issubclass(cur_cls, Feature) and cur_cls != Feature]
-        # with the following recursive call we guarantee that every parent class has the correct resolved class
+        next_parent_feat = self.get_next_parent_feature()
+        # with the following recursive call we guarantee that the next parent class has the correct resolved class
         #  based @for_vdevice information
-        for cur_feature in to_determining_features:
-            FeatureController.get_for(cur_feature).get_absolute_class_based_for_vdevice(print_warning=False)
+        if next_parent_feat:
+            FeatureController.get_for(next_parent_feat).get_absolute_class_based_for_vdevice(print_warning=False)
 
         # validate if all used vDevice references in method and class based `@for_vdevice` decorators can be used,
         # because they are members of this feature
@@ -213,19 +212,18 @@ class FeatureController(Controller):
             parent_values = []
             # read vDevice connection tree of parent feature class (only if the vDevice already exists in the
             # parent class)
-            if vdevice_of_interest is not None:
-                for cur_feature_base in to_determining_features:
-                    cur_feature_base_cls_for_vdevice = \
-                        FeatureController.get_for(cur_feature_base).get_class_based_for_vdevice()
-                    cur_feature_base_cls_for_vdevice = {} if cur_feature_base_cls_for_vdevice is None else \
-                        cur_feature_base_cls_for_vdevice
-                    if vdevice_of_interest in cur_feature_base_cls_for_vdevice.keys():
-                        for cur_cnn in cur_feature_base_cls_for_vdevice[vdevice_of_interest]:
-                            # clean metadata here because this is no connection between real devices
-                            cur_cnn.set_metadata_for_all_subitems(None)
-                            parent_values.append(cur_cnn)
+            if vdevice_of_interest is not None and next_parent_feat is not None:
+                next_parent_feat_cls_based_for_vdevice = \
+                    FeatureController.get_for(next_parent_feat).get_class_based_for_vdevice()
+                next_parent_feat_cls_based_for_vdevice = {} if next_parent_feat_cls_based_for_vdevice is None else \
+                    next_parent_feat_cls_based_for_vdevice
+                if vdevice_of_interest in next_parent_feat_cls_based_for_vdevice.keys():
+                    for cur_cnn in next_parent_feat_cls_based_for_vdevice[vdevice_of_interest]:
+                        # clean metadata here because this is no connection between real devices
+                        cur_cnn.set_metadata_for_all_subitems(None)
+                        parent_values.append(cur_cnn)
 
-            this_vdevice_intersection = parent_values + []
+            this_vdevice_intersection = parent_values
 
             # determine the class value automatically by discovering all method variations for this vDevice only
             this_vdevice_intersection += self._get_method_based_for_vdevice_intersection(for_vdevice=cur_vdevice)
@@ -512,3 +510,27 @@ class FeatureController(Controller):
                                 f"from the parent vDevice class `{cur_parent_vdevice.__qualname__}` - this is "
                                 f"only possible with a child (or with the same) feature class the parent "
                                 f"uses (in this case the `{cur_base_feature_instance.__class__.__name__}`)")
+
+    def get_next_parent_feature(self) -> Union[Type[Feature], None]:
+        """
+        This method returns the next parent class of this feature, which is still a subclass of :class:`Feature`. If
+        the next parent class is :class:`Feature`, None will be returned.
+
+        :return: the parent Feature class or None if no parent exists
+        """
+        possible_parent_classes = []
+        for cur_parent in self.related_cls.__bases__:
+            if issubclass(cur_parent, Feature) and cur_parent != Feature:
+                possible_parent_classes.append(cur_parent)
+
+        if len(possible_parent_classes) > 1:
+            raise MultiInheritanceError(
+                f"the feature `{self.related_cls.__name__}` has more than one parent classes from type "
+                f"`Feature` - this is not allowed")
+
+        if len(possible_parent_classes) == 1:
+            # we have found one parent feature class
+            return possible_parent_classes[0]
+
+        # we have no parent class
+        return None
