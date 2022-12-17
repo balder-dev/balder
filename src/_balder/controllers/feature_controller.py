@@ -97,6 +97,28 @@ class FeatureController(Controller):
                                 f"class `{self.related_cls.__name__}` which is no direct member of this feature - note "
                                 f"that you have to use the overwritten version if you overwrite a vDevice")
 
+    def _get_method_based_for_vdevice_intersection(self, for_vdevice) -> List[Connection]:
+        """helper method that determines the intersection connection list of all method based `@for_vdevice`
+        connections of the given `for_vdevice`"""
+        intersection = []
+
+        if self.get_method_based_for_vdevice() is not None:
+            for _, method_dict in self.get_method_based_for_vdevice().items():
+                for _, vdevice_dict in method_dict.items():
+                    if for_vdevice in vdevice_dict.keys():
+                        for cur_cnn in vdevice_dict[for_vdevice]:
+                            if isinstance(cur_cnn, type):
+                                cur_cnn = cur_cnn()
+                            # clean metadata here because this is no connection between real devices
+                            cur_cnn.set_metadata_for_all_subitems(None)
+                            intersection.append(cur_cnn)
+        else:
+            # there exists no method-variations
+            if self.get_class_based_for_vdevice() is None:
+                # there exists also no class based decorator -> set the gobal tree
+                intersection.append(Connection())
+        return intersection
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def get_class_based_for_vdevice(self) -> Union[Dict[Type[VDevice], List[Union[Connection]]], None]:
@@ -206,21 +228,8 @@ class FeatureController(Controller):
             this_vdevice_intersection = parent_values + []
 
             # determine the class value automatically by discovering all method variations for this vDevice only
-            if self.get_method_based_for_vdevice() is not None:
-                for _, method_dict in self.get_method_based_for_vdevice().items():
-                    for _, vdevice_dict in method_dict.items():
-                        if cur_vdevice in vdevice_dict.keys():
-                            for cur_cnn in vdevice_dict[cur_vdevice]:
-                                if isinstance(cur_cnn, type):
-                                    cur_cnn = cur_cnn()
-                                # clean metadata here because this is no connection between real devices
-                                cur_cnn.set_metadata_for_all_subitems(None)
-                                this_vdevice_intersection.append(cur_cnn)
-            else:
-                # there exists no method-variations
-                if self.get_class_based_for_vdevice() is None:
-                    # there exists also no class based decorator -> set the gobal tree
-                    this_vdevice_intersection.append(Connection())
+            this_vdevice_intersection += self._get_method_based_for_vdevice_intersection(for_vdevice=cur_vdevice)
+
             # set the determined data into the class based `@for_vdevice` class property
             cls_based_for_vdevice[cur_vdevice] = this_vdevice_intersection
             self.set_class_based_for_vdevice(cls_based_for_vdevice)
