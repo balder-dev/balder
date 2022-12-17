@@ -102,6 +102,144 @@ class FeatureController(Controller):
         """
         self._cls_for_vdevice = data
 
+    def get_absolute_class_based_for_vdevice(self, print_warning):
+        """
+
+        This method determines the absolute class based `@for_vdevice` value for the related feature.
+
+        First it checks if there is a direct class based `@for_vdevice` decorator for this feature. It will not change
+        anything, if the value was already set by an explicit class based `@for_vdevice` decorator. In this case the
+        method only checks that every given vDevice class is a real part of the current :class:`Feature` class (will be
+        returned by direct call of method `Feature.get_inner_vdevice_classes()`). Otherwise, it determines the class
+        based `@for_vdevice` value through analysing of the method based decorators and sets this determined value. If
+        the method has to determine the value, it throws a warning with a suggestion for a nice class based decorator.
+        Also, here the method will analyse the given vDevice classes and secures that they are defined in the current :
+        class:`Feature` class.
+
+        .. note::
+            This method automatically updates the values for the parent classes, too. Every time it searches for the
+            values it considers the parent values for the vDevice or the parent class of the vDevice, too.
+
+        .. note::
+            This method can throw a user warning (`throw_warning` has to be True for that), but only on the given list
+            of :class:`Feature` classes. All parent :class:`Feature` classes will be determined correctly, but will not
+            throw a waring.
+        """
+        # first determine this for all parent classes
+        to_determining_features = [
+            cur_cls for cur_cls in self.related_cls.__bases__ if issubclass(cur_cls, Feature) and cur_cls != Feature]
+        # with the following recursive call we guarantee that every parent class has the correct resolved class
+        #  based @for_vdevice information
+        for cur_feature in to_determining_features:
+            FeatureController.get_for(cur_feature).get_absolute_class_based_for_vdevice(print_warning=False)
+
+        # now check if a definition for this class exists
+        all_vdevices = self.get_abs_inner_vdevice_classes()
+        # check the class based @for_vdevice and check the used vDevice classes here
+        if self.get_class_based_for_vdevice() is not None:
+            for cur_decorated_vdevice in self.get_class_based_for_vdevice().keys():
+                if cur_decorated_vdevice not in all_vdevices:
+                    raise VDeviceResolvingError(
+                        f"you assign a vDevice to the class based decorator `@for_vdevice()` of the feature class "
+                        f"`{self.related_cls.__name__}` which is no direct member of this feature - note that you have "
+                        f"to define the vDevice in your feature before using it in the decorator - if necessary "
+                        f"overwrite it")
+        # check the method based @for_vdevice and check the used vDevice classes here
+        if self.get_method_based_for_vdevice() is not None:
+            for cur_method_name, cur_method_data in self.get_method_based_for_vdevice().items():
+                for _, vdevice_dict in cur_method_data.items():
+                    for cur_vdevice in vdevice_dict.keys():
+                        if cur_vdevice not in all_vdevices:
+                            raise VDeviceResolvingError(
+                                f"you assign a vDevice to the method variation `{cur_method_name}` of the feature "
+                                f"class `{self.related_cls.__name__}` which is no direct member of this feature - note "
+                                f"that you have to use the overwritten version if you overwrite a vDevice")
+        cur_feature_cls_for_vdevice = self.get_class_based_for_vdevice()
+        cur_feature_cls_for_vdevice = {} if cur_feature_cls_for_vdevice is None else cur_feature_cls_for_vdevice
+        for cur_vdevice in all_vdevices:
+            # determine the class based for_vdevice value only if there is no one defined for this vDevice
+            if cur_vdevice not in cur_feature_cls_for_vdevice.keys() or \
+                    len(cur_feature_cls_for_vdevice[cur_vdevice]) == 0:
+                # first determine the valid parent intersection (can also be extended itself)
+
+                # get the correct vDevice that is known in the parent feature class
+                if VDeviceController.get_for(cur_vdevice).get_outer_class() == self.related_cls:
+                    # this cur_vdevice is (newly) defined in this Feature class -> can't exist in one of the parent
+                    #  classes
+                    #  -> search parent vDevice existence (if there is a parent vDevice, this vDevice is also in our
+                    #     parent feature class)
+                    #  -> if it does not exist -> there is no parent class based definition
+                    possible_vdevices_of_interest = []
+                    for cur_vdevice_of_interest in cur_vdevice.__bases__:
+                        if issubclass(cur_vdevice_of_interest, VDevice) and cur_vdevice_of_interest != VDevice:
+                            possible_vdevices_of_interest.append(cur_vdevice_of_interest)
+
+                    if len(possible_vdevices_of_interest) > 1:
+                        raise VDeviceResolvingError(
+                            f"the vdevice `{cur_vdevice.__name__}` has more than one parent classes from type "
+                            f"`VDevice` - this is not allowed")
+
+                    if len(possible_vdevices_of_interest) == 1:
+                        # we have found one parent vDevice that has the same name as the cur_vdevice
+                        vdevice_of_interest = possible_vdevices_of_interest[0]
+                    else:
+                        # we have no parent vDevice -> there are no parent ConnectionTree
+                        vdevice_of_interest = None
+
+                else:
+                    # the definition scope of the VDevice is in a higher Feature parent -> has to be in the
+                    # `__cls_for_vdevice` in one of the next base classes
+                    vdevice_of_interest = cur_vdevice
+
+                parent_values = []
+                # read vDevice connection tree of parent feature class (only if the vDevice already exists in the
+                # parent class)
+                if vdevice_of_interest is not None:
+                    for cur_feature_base in to_determining_features:
+                        cur_feature_base_cls_for_vdevice = \
+                            FeatureController.get_for(cur_feature_base).get_class_based_for_vdevice()
+                        cur_feature_base_cls_for_vdevice = {} if cur_feature_base_cls_for_vdevice is None else \
+                            cur_feature_base_cls_for_vdevice
+                        if vdevice_of_interest in cur_feature_base_cls_for_vdevice.keys():
+                            for cur_cnn in cur_feature_base_cls_for_vdevice[vdevice_of_interest]:
+                                # clean metadata here because this is no connection between real devices
+                                cur_cnn.set_metadata_for_all_subitems(None)
+                                parent_values.append(cur_cnn)
+
+                this_vdevice_intersection = parent_values + []
+
+                # determine the class value automatically by discovering all method variations for this vDevice only
+                if self.get_method_based_for_vdevice() is not None:
+                    for _, method_dict in self.get_method_based_for_vdevice().items():
+                        for _, vdevice_dict in method_dict.items():
+                            if cur_vdevice in vdevice_dict.keys():
+                                for cur_cnn in vdevice_dict[cur_vdevice]:
+                                    if isinstance(cur_cnn, type):
+                                        cur_cnn = cur_cnn()
+                                    # clean metadata here because this is no connection between real devices
+                                    cur_cnn.set_metadata_for_all_subitems(None)
+                                    this_vdevice_intersection.append(cur_cnn)
+                else:
+                    # there exists no method-variations
+                    if self.get_class_based_for_vdevice() is None:
+                        # there exists also no class based decorator -> set the gobal tree
+                        this_vdevice_intersection.append(Connection())
+                # set the determined data into the class based `@for_vdevice` class property
+                cur_feature_cls_for_vdevice[cur_vdevice] = this_vdevice_intersection
+                self.set_class_based_for_vdevice(cur_feature_cls_for_vdevice)
+
+                # print warning only if the printing is enabled and there is a sub connection tree (otherwise, the
+                #  decorator is not necessary)
+                if print_warning and len(this_vdevice_intersection) > 0:
+                    # only print the warning if there exists method variations for the feature
+                    if self.get_method_based_for_vdevice() is not None:
+                        logger.warning(
+                            f"your used feature class `{self.related_cls.__name__}` doesn't provide a class based "
+                            f"@for_vdevice decorator for the vDevice `{cur_vdevice.__name__}`\n"
+                            f"Balder has determined a possible marker:\n\n"
+                            f'@balder.for_vdevice("{cur_vdevice.__name__}", '
+                            f'{", ".join([cur_cnn.get_tree_str() for cur_cnn in this_vdevice_intersection])})\n\n')
+
     def get_method_based_for_vdevice(self) -> \
             Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None]:
         """
