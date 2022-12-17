@@ -74,6 +74,29 @@ class FeatureController(Controller):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
+    def _validate_vdevice_reference_used_in_for_vdevice_decorators(self):
+        # now check if a definition for this class exists
+        all_vdevices = self.get_abs_inner_vdevice_classes()
+        # check the class based @for_vdevice and check the used vDevice classes here
+        if self.get_class_based_for_vdevice() is not None:
+            for cur_decorated_vdevice in self.get_class_based_for_vdevice().keys():
+                if cur_decorated_vdevice not in all_vdevices:
+                    raise VDeviceResolvingError(
+                        f"you assign a vDevice to the class based decorator `@for_vdevice()` of the feature class "
+                        f"`{self.related_cls.__name__}` which is no direct member of this feature - note that you have "
+                        f"to define the vDevice in your feature before using it in the decorator - if necessary "
+                        f"overwrite it")
+        # check the method based @for_vdevice and check the used vDevice classes here
+        if self.get_method_based_for_vdevice() is not None:
+            for cur_method_name, cur_method_data in self.get_method_based_for_vdevice().items():
+                for _, vdevice_dict in cur_method_data.items():
+                    for cur_vdevice in vdevice_dict.keys():
+                        if cur_vdevice not in all_vdevices:
+                            raise VDeviceResolvingError(
+                                f"you assign a vDevice to the method variation `{cur_method_name}` of the feature "
+                                f"class `{self.related_cls.__name__}` which is no direct member of this feature - note "
+                                f"that you have to use the overwritten version if you overwrite a vDevice")
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def get_class_based_for_vdevice(self) -> Union[Dict[Type[VDevice], List[Union[Connection]]], None]:
@@ -133,27 +156,13 @@ class FeatureController(Controller):
         for cur_feature in to_determining_features:
             FeatureController.get_for(cur_feature).get_absolute_class_based_for_vdevice(print_warning=False)
 
+        # validate if all used vDevice references in method and class based `@for_vdevice` decorators can be used,
+        # because they are members of this feature
+        self._validate_vdevice_reference_used_in_for_vdevice_decorators()
+
         # now check if a definition for this class exists
         all_vdevices = self.get_abs_inner_vdevice_classes()
-        # check the class based @for_vdevice and check the used vDevice classes here
-        if self.get_class_based_for_vdevice() is not None:
-            for cur_decorated_vdevice in self.get_class_based_for_vdevice().keys():
-                if cur_decorated_vdevice not in all_vdevices:
-                    raise VDeviceResolvingError(
-                        f"you assign a vDevice to the class based decorator `@for_vdevice()` of the feature class "
-                        f"`{self.related_cls.__name__}` which is no direct member of this feature - note that you have "
-                        f"to define the vDevice in your feature before using it in the decorator - if necessary "
-                        f"overwrite it")
-        # check the method based @for_vdevice and check the used vDevice classes here
-        if self.get_method_based_for_vdevice() is not None:
-            for cur_method_name, cur_method_data in self.get_method_based_for_vdevice().items():
-                for _, vdevice_dict in cur_method_data.items():
-                    for cur_vdevice in vdevice_dict.keys():
-                        if cur_vdevice not in all_vdevices:
-                            raise VDeviceResolvingError(
-                                f"you assign a vDevice to the method variation `{cur_method_name}` of the feature "
-                                f"class `{self.related_cls.__name__}` which is no direct member of this feature - note "
-                                f"that you have to use the overwritten version if you overwrite a vDevice")
+
         cur_feature_cls_for_vdevice = self.get_class_based_for_vdevice()
         cur_feature_cls_for_vdevice = {} if cur_feature_cls_for_vdevice is None else cur_feature_cls_for_vdevice
         for cur_vdevice in all_vdevices:
