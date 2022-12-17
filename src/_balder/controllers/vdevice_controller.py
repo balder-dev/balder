@@ -5,7 +5,7 @@ import logging
 import inspect
 from _balder.vdevice import VDevice
 from _balder.controllers.base_device_controller import BaseDeviceController
-from _balder.exceptions import DeviceScopeError
+from _balder.exceptions import DeviceScopeError, VDeviceResolvingError
 
 if TYPE_CHECKING:
     from _balder.feature import Feature
@@ -69,8 +69,7 @@ class VDeviceController(BaseDeviceController):
 
     def get_outer_class(self) -> Union[Type[Feature], None]:
         """
-        This method delivers the outer class of this device. In Balder, this has to be a :class:`Setup` or a
-        :class:`Scenario`.
+        This method delivers the outer class of this device. In Balder, this has to be a :class:`Feature`.
         """
         from _balder.feature import Feature
 
@@ -94,3 +93,27 @@ class VDeviceController(BaseDeviceController):
                                 f"not allowed (outer class has to be a `Feature` class)")
             return outer_class
         raise RuntimeError(f"can not find the outer class of this vDevice `{self.related_cls.__qualname__}`")
+
+    def get_next_parent_vdevice(self) -> Union[Type[VDevice], None]:
+        """
+        This method returns the next parent VDevice class, which is still a subclass of :class:`VDevice`. If the next
+        parent class is :class:`VDevice`, None will be returned.
+
+        :return: the parent VDevice class or None if no parent exists
+        """
+        possible_vdevices_of_interest = []
+        for cur_vdevice_of_interest in self.related_cls.__bases__:
+            if issubclass(cur_vdevice_of_interest, VDevice) and cur_vdevice_of_interest != VDevice:
+                possible_vdevices_of_interest.append(cur_vdevice_of_interest)
+
+        if len(possible_vdevices_of_interest) > 1:
+            raise VDeviceResolvingError(
+                f"the vdevice `{self.related_cls.__name__}` has more than one parent classes from type "
+                f"`VDevice` - this is not allowed")
+
+        if len(possible_vdevices_of_interest) == 1:
+            # we have found one parent vDevice that has the same name as the cur_vdevice
+            return possible_vdevices_of_interest[0]
+
+        # we have no parent vDevice -> there are no parent ConnectionTree
+        return None
