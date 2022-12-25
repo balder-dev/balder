@@ -153,17 +153,17 @@ class TestcaseExecutor(BasicExecutor):
                                          f"`{self.base_testcase_callable.__name__}`")
 
                     self.body_result.set_result(ResultState.SUCCESS)
-                except:
+                except Exception:
                     traceback.print_exception(*sys.exc_info())
                     self.body_result.set_result(ResultState.FAILURE)
                 finally:
                     self.execution_time_sec = time.perf_counter() - start_time
-            except:
+            except Exception:
                 # we can catch everything, because error is already documented
                 traceback.print_exception(*sys.exc_info())
             if self.fixture_manager.is_allowed_to_leave(self):
                 self.fixture_manager.leave(self)
             print(f"[{self.body_result.get_result_as_char()}]")
-        except:
+        except Exception:
             # we can catch everything, because error is already documented
             traceback.print_exception(*sys.exc_info())
