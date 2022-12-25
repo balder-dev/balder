@@ -215,11 +215,11 @@ class ScenarioExecutor(BasicExecutor):
                         cur_variation_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
                     else:
                         cur_variation_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-            except:
+            except Exception:
                 # we can catch everything, because error is already documented
                 traceback.print_exception(*sys.exc_info())
             if self.fixture_manager.is_allowed_to_leave(self):
                 self.fixture_manager.leave(self)
-        except:
+        except Exception:
             # we can catch everything, because error is already documented
             traceback.print_exception(*sys.exc_info())
