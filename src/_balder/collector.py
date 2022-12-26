@@ -224,22 +224,27 @@ class Collector:
         result = []
         for cur_path in py_file_paths:
             #: only use files that match the filter
-            if cur_path.parts[-1].startswith('setup_'):
-                module_name = \
-                    f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
-                    f"{cur_path.stem}"
-                if module_name not in sys.modules.keys():
-                    spec = importlib.util.spec_from_file_location(module_name, cur_path)
-                    cur_module = importlib.util.module_from_spec(spec)
-                    sys.modules[module_name] = cur_module
-                    spec.loader.exec_module(cur_module)
-                    class_members = inspect.getmembers(cur_module, inspect.isclass)
-                    for cur_class_name, cur_class in class_members:
-                        if cur_class_name.startswith('Setup') and issubclass(cur_class, Setup) and cur_class != Setup:
-                            if filter_abstracts and inspect.isabstract(cur_class):
-                                break
-                            if cur_class not in result:
-                                result.append(cur_class)
+            if not cur_path.parts[-1].startswith('setup_'):
+                continue
+            module_name = \
+                f"{self.working_dir.stem}.{'.'.join(cur_path.parent.relative_to(self.working_dir).parts)}." \
+                f"{cur_path.stem}"
+
+            # ignore all already imported items
+            if module_name in sys.modules.keys():
+                continue
+
+            spec = importlib.util.spec_from_file_location(module_name, cur_path)
+            cur_module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = cur_module
+            spec.loader.exec_module(cur_module)
+            class_members = inspect.getmembers(cur_module, inspect.isclass)
+            for cur_class_name, cur_class in class_members:
+                if cur_class_name.startswith('Setup') and issubclass(cur_class, Setup) and cur_class != Setup:
+                    if filter_abstracts and inspect.isabstract(cur_class):
+                        break
+                    if cur_class not in result:
+                        result.append(cur_class)
         return result
 
     @staticmethod
