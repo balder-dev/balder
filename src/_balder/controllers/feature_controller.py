@@ -522,33 +522,10 @@ class FeatureController(Controller):
         for cur_vdevice in feature_vdevices:
             cur_vdevice_cls_cnn = self.get_class_based_for_vdevice().get(cur_vdevice)
             # get parent class of vdevice
-            relevant_parent_class = None
-            for cur_vdevice_base_cls in cur_vdevice.__bases__:
+            relevant_parent_class = VDeviceController.get_for(cur_vdevice).get_next_parent_vdevice()
 
-                # ignore all parent classes that are `VDevice` or are no subclass of it
-                if not issubclass(cur_vdevice_base_cls, VDevice) or cur_vdevice_base_cls == VDevice:
-                    continue
-
-                relevant_parent_class = cur_vdevice_base_cls
-                relevant_parent_class_controller = VDeviceController.get_for(relevant_parent_class)
-                while relevant_parent_class != VDevice and \
-                        relevant_parent_class_controller.get_outer_class() == self.related_cls:
-                    for cur_vdevice_base_of_base_cls in relevant_parent_class.__bases__:
-                        # ignore all base classes that are no subclass of `VDevice`
-                        if not issubclass(cur_vdevice_base_of_base_cls, VDevice):
-                            continue
-                        relevant_parent_class = cur_vdevice_base_of_base_cls
-                        if relevant_parent_class == VDevice:
-                            break
-                        if relevant_parent_class_controller.get_outer_class() != self.related_cls:
-                            # found next vDevice in another Feature
-                            break
-                if relevant_parent_class != VDevice:
-                    break
-
-            # continue with next vdevice if no relevant parent class was found or the founded class is the `VDevice`
-            # class itself
-            if relevant_parent_class is None or relevant_parent_class == VDevice:
+            # continue with next vdevice if no relevant parent class was found
+            if relevant_parent_class is None:
                 continue
 
             relevant_parent_class_controller = VDeviceController.get_for(relevant_parent_class)
