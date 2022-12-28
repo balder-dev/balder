@@ -547,7 +547,6 @@ class Collector:
             cur_device_controller = DeviceController.get_for(cur_device)
             cur_device_controller.resolve_connection_device_strings()
 
-
     def exchange_vdevice_mapping_device_strings(self):
         """
         This method iterates over every collected :class:`.Setup` and :class:`.Scenario` device and updates the inner
@@ -808,43 +807,18 @@ class Collector:
     @staticmethod
     def check_vdevice_feature_existence(items: Union[List[Type[Scenario]], List[Type[Setup]]]):
         """
-        This method validates that all mapped VDevice connections exist in the related device. For this the method only
-        checks the absolute VDevices on Setup/on Scenario level. Variations are not related to this and will not be
-        checked here.
+        This method validates that the :class:`Feature` property set of a :class:`Device` holds all required
+        :class:`Feature` objects of the related :class:`VDevice`. For this the method checks that every feature (that
+        is used in a mapped :class:`VDevice`) also exists as a child :class:`Feature` property in the related
+        :class:`Device` class.
+
+        .. note::
+            Variations are not related to this and will not be checked here.
+
         """
         for cur_scenario_or_setup in items:
-            cur_scenario_or_setup_controller = None
-            if issubclass(cur_scenario_or_setup, Scenario):
-                cur_scenario_or_setup_controller = ScenarioController.get_for(cur_scenario_or_setup)
-            elif issubclass(cur_scenario_or_setup, Setup):
-                cur_scenario_or_setup_controller = SetupController.get_for(cur_scenario_or_setup)
-
-            for cur_device in cur_scenario_or_setup_controller.get_all_abs_inner_device_classes():
-                cur_device_instantiated_features = \
-                    DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
-                for _, cur_feature in cur_device_instantiated_features.items():
-                    active_vdevice, related_device = cur_feature.active_vdevice_device_mapping
-                    if active_vdevice is not None:
-                        # check that all the defined features in the VDevice also exist in the related device ->
-                        #  otherwise error
-                        orig_features = [
-                            feat for _, feat in
-                            DeviceController.get_for(related_device).get_all_instantiated_feature_objects().items()]
-                        active_vdevice_instantiated_features = \
-                            VDeviceController.get_for(active_vdevice).get_all_instantiated_feature_objects()
-                        for _, cur_vdevice_feature in active_vdevice_instantiated_features.items():
-                            # search for it
-                            found_it = False
-                            for cur_orig_feature in orig_features:
-                                if isinstance(cur_orig_feature, cur_vdevice_feature.__class__):
-                                    found_it = True
-                                    break
-                            if not found_it:
-                                raise Exception(
-                                    f"the device `{related_device.__name__}` which is mapped to the VDevice "
-                                    f"`{active_vdevice.__name__}` doesn't have an implementation for the feature "
-                                    f"`{cur_vdevice_feature.__class__.__name__}` required by the VDevice class "
-                                    f"`{active_vdevice.__name__}`")
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            cur_scenario_or_setup_controller.check_vdevice_feature_existence()
 
     @staticmethod
     def feature_check_inherited_vdevice_class_connection_subset(features: List[Type[Feature]]):
