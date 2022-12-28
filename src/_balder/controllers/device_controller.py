@@ -10,8 +10,8 @@ from _balder.device import Device
 from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.controllers.base_device_controller import BaseDeviceController
-from _balder.exceptions import DeviceScopeError, DeviceResolvingException
-
+from _balder.controllers.feature_controller import FeatureController
+from _balder.exceptions import DeviceScopeError, DeviceResolvingException, InnerFeatureResolvingError
 if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.controllers import ScenarioController, SetupController
@@ -343,3 +343,36 @@ class DeviceController(BaseDeviceController, ABC):
                     raise DeviceResolvingException(
                         f"cannot resolve the str for the given device class `{cur_conn.to_device}` for "
                         f"`@connect` decorator at device `{cur_conn.from_device.__qualname__}`")
+
+    def validate_inner_referenced_features(self):
+        """
+        This method validates that every :class:`Feature` that is referenced from another :class:`Feature` of this
+        device also exists in the definition list of this device.
+        """
+        all_instantiated_feature_objs = self.get_all_instantiated_feature_objects()
+        for _, cur_feature in all_instantiated_feature_objs.items():
+            cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
+            # now check the inner referenced features of this feature and check if that exists in the device
+            for cur_ref_feature_name, cur_ref_feature in \
+                    cur_feature_controller.get_inner_referenced_features().items():
+                potential_candidates = []
+                for _, cur_potential_candidate_feature in all_instantiated_feature_objs.items():
+                    if isinstance(cur_potential_candidate_feature, cur_ref_feature.__class__):
+                        # the current match is the current feature itself -> not allowed to reference itself
+                        if cur_potential_candidate_feature == cur_feature:
+                            raise InnerFeatureResolvingError(
+                                f"can not reference the same feature from itself (done in feature "
+                                f"`{cur_feature.__class__.__name__}` with `{cur_ref_feature_name}`)")
+                        potential_candidates.append(cur_potential_candidate_feature)
+
+                if len(potential_candidates) == 0:
+                    raise InnerFeatureResolvingError(
+                        f"can not find a matching feature in the device `{self.related_cls.__name__}` that could "
+                        f"be assigned to the inner feature reference `{cur_ref_feature_name}` of the feature "
+                        f"`{cur_feature.__class__.__name__}`")
+
+                if len(potential_candidates) > 1:
+                    raise InnerFeatureResolvingError(
+                        f"found more than one matching feature in the device `{self.related_cls.__name__}` that "
+                        f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
+                        f"feature `{cur_feature.__class__.__name__}`")
