@@ -11,7 +11,6 @@ from _balder.connection import Connection
 from _balder.exceptions import UnclearMethodVariationError, MultiInheritanceError, VDeviceOverwritingError, \
     VDeviceResolvingError, FeatureOverwritingError
 
-
 logger = logging.getLogger(__file__)
 
 
@@ -525,49 +524,60 @@ class FeatureController(Controller):
             # get parent class of vdevice
             relevant_parent_class = None
             for cur_vdevice_base_cls in cur_vdevice.__bases__:
-                if issubclass(cur_vdevice_base_cls, VDevice) and cur_vdevice_base_cls != VDevice:
-                    relevant_parent_class = cur_vdevice_base_cls
-                    relevant_parent_class_controller = VDeviceController.get_for(relevant_parent_class)
-                    while relevant_parent_class != VDevice and \
-                            relevant_parent_class_controller.get_outer_class() == self.related_cls:
-                        for cur_vdevice_base_of_base_cls in relevant_parent_class.__bases__:
-                            if issubclass(cur_vdevice_base_of_base_cls, VDevice):
-                                relevant_parent_class = cur_vdevice_base_of_base_cls
-                                if relevant_parent_class == VDevice:
-                                    break
-                                if relevant_parent_class_controller.get_outer_class() != self.related_cls:
-                                    # found next vDevice in another Feature
-                                    break
-                    if relevant_parent_class != VDevice:
-                        break
-            if relevant_parent_class is not None and relevant_parent_class != VDevice:
+
+                # ignore all parent classes that are `VDevice` or are no subclass of it
+                if not issubclass(cur_vdevice_base_cls, VDevice) or cur_vdevice_base_cls == VDevice:
+                    continue
+
+                relevant_parent_class = cur_vdevice_base_cls
                 relevant_parent_class_controller = VDeviceController.get_for(relevant_parent_class)
-                # only if there is a higher class which has to be considered
-                parent_vdevice_feature = relevant_parent_class_controller.get_outer_class()
-                if parent_vdevice_feature not in to_checking_parent_features:
-                    to_checking_parent_features.append(parent_vdevice_feature)
-                parent_vdevice_cnn = \
-                    FeatureController.get_for(
-                        parent_vdevice_feature).get_class_based_for_vdevice()[relevant_parent_class]
-                # check if VDevice connection elements are all contained in the parent connection
-                for cur_element in cur_vdevice_cls_cnn:
-                    if isinstance(cur_element, tuple):
-                        if not Connection.check_if_tuple_contained_in_connection(
-                                cur_element, Connection.based_on(*parent_vdevice_cnn)):
-                            raise VDeviceResolvingError(
-                                f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
-                                f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
-                                f"the child - the connection tuple `("
-                                f"{', '.join([cur_tuple_item.get_tree_str() for cur_tuple_item in cur_element])})´"
-                                f" is not contained in the connection-tree of the parent VDevice")
-                    else:
-                        if not cur_element.contained_in(
-                                Connection.based_on(*parent_vdevice_cnn), ignore_metadata=True):
-                            raise VDeviceResolvingError(
-                                f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
-                                f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
-                                f"the child - the connection element `{cur_element.get_tree_str()})´ is not "
-                                f"contained in the connection-tree of the parent VDevice")
+                while relevant_parent_class != VDevice and \
+                        relevant_parent_class_controller.get_outer_class() == self.related_cls:
+                    for cur_vdevice_base_of_base_cls in relevant_parent_class.__bases__:
+                        # ignore all base classes that are no subclass of `VDevice`
+                        if not issubclass(cur_vdevice_base_of_base_cls, VDevice):
+                            continue
+                        relevant_parent_class = cur_vdevice_base_of_base_cls
+                        if relevant_parent_class == VDevice:
+                            break
+                        if relevant_parent_class_controller.get_outer_class() != self.related_cls:
+                            # found next vDevice in another Feature
+                            break
+                if relevant_parent_class != VDevice:
+                    break
+
+            # continue with next vdevice if no relevant parent class was found or the founded class is the `VDevice`
+            # class itself
+            if relevant_parent_class is None or relevant_parent_class == VDevice:
+                continue
+
+            relevant_parent_class_controller = VDeviceController.get_for(relevant_parent_class)
+            # only if there is a higher class which has to be considered
+            parent_vdevice_feature = relevant_parent_class_controller.get_outer_class()
+            if parent_vdevice_feature not in to_checking_parent_features:
+                to_checking_parent_features.append(parent_vdevice_feature)
+            parent_vdevice_cnn = \
+                FeatureController.get_for(
+                    parent_vdevice_feature).get_class_based_for_vdevice()[relevant_parent_class]
+            # check if VDevice connection elements are all contained in the parent connection
+            for cur_element in cur_vdevice_cls_cnn:
+                if isinstance(cur_element, tuple):
+                    if not Connection.check_if_tuple_contained_in_connection(
+                            cur_element, Connection.based_on(*parent_vdevice_cnn)):
+                        raise VDeviceResolvingError(
+                            f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
+                            f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
+                            f"the child - the connection tuple `("
+                            f"{', '.join([cur_tuple_item.get_tree_str() for cur_tuple_item in cur_element])})´"
+                            f" is not contained in the connection-tree of the parent VDevice")
+                else:
+                    if not cur_element.contained_in(
+                            Connection.based_on(*parent_vdevice_cnn), ignore_metadata=True):
+                        raise VDeviceResolvingError(
+                            f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
+                            f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
+                            f"the child - the connection element `{cur_element.get_tree_str()})´ is not "
+                            f"contained in the connection-tree of the parent VDevice")
 
         # check all features where we have found parent VDevices as inner-classes to check next inheritance levels
         for cur_feature in to_checking_parent_features:
