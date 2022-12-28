@@ -9,6 +9,7 @@ from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.controllers.controller import Controller
 from _balder.controllers.device_controller import DeviceController
+from _balder.controllers.vdevice_controller import VDeviceController
 from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError
 
 if TYPE_CHECKING:
@@ -215,3 +216,45 @@ class NormalScenarioSetupController(Controller, ABC):
 
         # also check the parent class here
         self.__class__.get_for(parent_scenario_or_setup).validate_inheritance()
+
+    def check_vdevice_feature_existence(self):
+        """
+        This method validates that the :class:`Feature` property set of a :class:`Device` holds all required
+        :class:`Feature` objects of the related :class:`VDevice`. For this the method checks that every feature (that
+        is used in a mapped :class:`VDevice`) also exists as a child :class:`Feature` property in the related
+        :class:`Device` class.
+
+        .. note::
+            Variations are not related to this and will not be checked here.
+
+        """
+
+        for cur_device in self.get_all_abs_inner_device_classes():
+            cur_device_instantiated_features = \
+                DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
+            for _, cur_feature in cur_device_instantiated_features.items():
+                active_vdevice, related_device = cur_feature.active_vdevice_device_mapping
+                if active_vdevice is None:
+                    # ignore this, because no active vdevice exists
+                    continue
+
+                # secure that all the defined features in the VDevice also exist in the related device ->
+                #  otherwise error
+                orig_device_features = [
+                    feat for _, feat in
+                    DeviceController.get_for(related_device).get_all_instantiated_feature_objects().items()]
+                active_vdevice_instantiated_features = \
+                    VDeviceController.get_for(active_vdevice).get_all_instantiated_feature_objects()
+                for _, cur_vdevice_feature in active_vdevice_instantiated_features.items():
+                    # search for it
+                    found_it = False
+                    for cur_orig_feature in orig_device_features:
+                        if isinstance(cur_orig_feature, cur_vdevice_feature.__class__):
+                            found_it = True
+                            break
+                    if not found_it:
+                        raise Exception(
+                            f"the device `{related_device.__name__}` which is mapped to the VDevice "
+                            f"`{active_vdevice.__name__}` doesn't have an implementation for the feature "
+                            f"`{cur_vdevice_feature.__class__.__name__}` required by the VDevice class "
+                            f"`{active_vdevice.__name__}`")
