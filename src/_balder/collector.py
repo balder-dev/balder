@@ -794,7 +794,7 @@ class Collector:
             cur_scenario_or_setup_controller.check_vdevice_feature_existence()
 
     @staticmethod
-    def feature_check_inherited_vdevice_class_connection_subset(features: List[Type[Feature]]):
+    def validate_inherited_class_based_vdevice_cnn_subset(features: List[Type[Feature]]):
         """
         This method checks that the class based for_vdevice values of a child :class:`Feature` class are contained_in
         the related VDevice defined in a parent :class:`Feature` class.
@@ -855,7 +855,7 @@ class Collector:
 
         # check all features where we have found parent VDevices as inner-classes to check next inheritance levels
         if len(to_checking_features) > 0:
-            Collector.feature_check_inherited_vdevice_class_connection_subset(to_checking_features)
+            Collector.validate_inherited_class_based_vdevice_cnn_subset(to_checking_features)
 
     def determine_raw_absolute_device_connections_for(self, items: Union[List[Type[Scenario]], List[Type[Setup]]]):
         """
@@ -1297,7 +1297,7 @@ class Collector:
         Collector.feature_determine_class_for_vdevice_values(all_setup_features)
         Collector.check_vdevice_feature_existence(self.all_scenarios)
         Collector.check_vdevice_feature_existence(self.all_setups)
-        Collector.feature_check_inherited_vdevice_class_connection_subset(all_scenario_features)
+        Collector.validate_inherited_class_based_vdevice_cnn_subset(all_scenario_features)
         self.validate_feature_clearance_for_parallel_connections_for_scenarios(self.all_scenarios)
         self.determine_raw_absolute_device_connections_for(self.all_scenarios)
         self.determine_raw_absolute_device_connections_for(self.all_setups)
