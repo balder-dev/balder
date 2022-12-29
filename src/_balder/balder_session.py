@@ -75,7 +75,7 @@ class BalderSession:
             self.working_dir = working_dir
 
         ##
-        # instantiate and initialize all components to completly load the plugins (plugins could access the command
+        # instantiate and initialize all components to completely load the plugins (plugins could access the command
         # line argument parser)
         ##
         #: contains the reference to the used PluginManager
@@ -329,3 +329,5 @@ class BalderSession:
                 self.execute_executor_tree()
             else:
                 self.executor_tree.print_tree()
+
+        self.plugin_manager.execute_session_finished(self.executor_tree)

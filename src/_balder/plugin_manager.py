@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Type, Tuple
+from typing import TYPE_CHECKING, List, Type, Tuple, Union
 
 import argparse
 import pathlib
@@ -124,3 +124,15 @@ class PluginManager:
         """
         for cur_plugin in self.all_plugins:
             cur_plugin.filter_executor_tree(executor_tree=executor_tree)
+
+    def execute_session_finished(self, executor_tree: Union[ExecutorTree, None]) -> None:
+        """
+        This method executes all plugin methods :ref:`BalderPlugin.session_finished`.
+
+        This callback will be executed at the end of every session. The callback will run in a `collect-only` and
+        `resolve-only` session too. Note, that the `executor_tree` argument is None in a `collect-only` session.
+
+        :param executor_tree: the reference to the main :class:`ExecutorTree` object that balder uses for this session
+        """
+        for cur_plugin in self.all_plugins:
+            cur_plugin.session_finished(executor_tree=executor_tree)

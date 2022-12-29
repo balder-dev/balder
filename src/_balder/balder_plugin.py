@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Type, Tuple, List
+from typing import TYPE_CHECKING, Type, Tuple, List, Union
 
 import pathlib
 
@@ -62,4 +62,12 @@ class BalderPlugin:
         reference.
 
         :param executor_tree: the reference to the main :class:`ExecutorTree` object balder uses for this session
+        """
+
+    def session_finished(self, executor_tree: Union[ExecutorTree, None]):
+        """
+        This callback will be executed at the end of every session. The callback will run in a `collect-only` and
+        `resolve-only` session too. Note, that the `executor_tree` argument is None in a `collect-only` session.
+
+        :param executor_tree: the reference to the main :class:`ExecutorTree` object that balder uses for this session
         """
