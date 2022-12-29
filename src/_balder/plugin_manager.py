@@ -34,7 +34,7 @@ class PluginManager:
         plugin_instance = plugin_class(session)
         self.all_plugins.append(plugin_instance)
 
-    def execute_addoption(self, argument_parser: argparse.ArgumentParser):
+    def execute_addoption(self, argument_parser: argparse.ArgumentParser) -> None:
         """
         This method executes all plugin callbacks :ref:`BalderPlugin.addoption`.
 
@@ -43,9 +43,6 @@ class PluginManager:
         :param argument_parser: the argument parser object
         """
         for cur_plugin in self.all_plugins:
-            if cur_plugin.__class__.addoption == BalderPlugin.addoption:
-                # there is no specific implementation
-                break
             cur_plugin.addoption(argument_parser)
 
     def execute_modify_collected_pyfiles(self, pyfiles: List[pathlib.Path]) -> List[pathlib.Path]:
@@ -126,7 +123,4 @@ class PluginManager:
         :param executor_tree: the reference to the main :class:`ExecutorTree` object that balder uses for this session
         """
         for cur_plugin in self.all_plugins:
-            if cur_plugin.__class__.filter_executor_tree == BalderPlugin.filter_executor_tree:
-                # there is no specific implementation
-                break
             cur_plugin.filter_executor_tree(executor_tree=executor_tree)
