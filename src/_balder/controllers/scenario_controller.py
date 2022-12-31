@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Type, Dict, List
+from typing import Type, Dict, List, Tuple
 
 import logging
 import inspect
+from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.controllers.feature_controller import FeatureController
@@ -137,24 +138,31 @@ class ScenarioController(NormalScenarioSetupController):
                         f"`{mapped_device.__name__}`, but it is not clear which of the parallel connection "
                         f"could be used")
 
-    def determine_absolute_device_connections(self):
+    def get_feature_cleaned_absolute_single_connections(self) -> \
+            Tuple[Dict[Type[Device], Dict[str, Dict[Type[Device], Dict[str, List[Connection]]]]],  Dict[
+                Tuple[Device, Device], List[Connection]]]:
         """
-        This method determines the real possible Sub-Connections for every element of the scenarios. For this the method
-        will create a possible intersection connection, for the :class:´Connection´ between two devices and
-        all :class:`Connection`-Subtrees that are allowed for the mapped vDevices in the used :class:`Feature`
-        classes.
-        The data will be saved in the :class:`Device` property ``_absolute_connections``. If the method detects an empty
-        intersection between two devices that are connected through a VDevice-Device mapping, the method will throw an
-        exception.
+        This method returns all absolute-single connections between all devices of this scenario, but already cleaned
+        based on the cumulated class-based decorators of all the feature devices.
+
+        .. note::
+            Please note, that the reduction candidates connections do not have to be unique.
+
+        :return: returns a tuple with the cleaned up connections (sorted as dictionary per device) and the reduced
+                 connections as second element
         """
-        reduction_candidates = []
+        reduction_candidates = {}
 
-        def add_reduction_candidate(device, other_device):
+        def add_reduction_candidate(device, other_device, connections: Connection):
 
-            if (device, other_device) not in reduction_candidates and \
-                    (other_device, device) not in reduction_candidates:
-                # we have to add it
-                reduction_candidates.append((device, other_device))
+            if (device, other_device) not in reduction_candidates.keys() and \
+                    (other_device, device) not in reduction_candidates.keys():
+                # we have to add it as new list
+                reduction_candidates[(device, other_device)] = [connections]
+            elif (device, other_device) in reduction_candidates.keys():
+                reduction_candidates[(device, other_device)].append(connections)
+            elif (other_device, device) in reduction_candidates.keys():
+                reduction_candidates[(other_device, device)].append(connections)
 
         # start to generate the singles for every connection between the devices of every scenario
         all_abs_single_connections = self.get_absolute_single_connections()
@@ -218,7 +226,7 @@ class ScenarioController(NormalScenarioSetupController):
                         # this abs single connection is not fulfilled by the current feature -> remove it
                         all_abs_single_connections[cur_from_device][device_node_name][
                             mapped_device][mapped_node_name].remove(cur_abs_connection)
-                        add_reduction_candidate(cur_from_device, mapped_device)
+                        add_reduction_candidate(cur_from_device, mapped_device, cur_abs_connection)
                 if start_length_before_reduction > 0 and \
                         len(all_abs_single_connections[cur_from_device][device_node_name][
                                 mapped_device][mapped_node_name]) == 0:
@@ -237,7 +245,7 @@ class ScenarioController(NormalScenarioSetupController):
                         # this abs single connection is not being fulfilled by the current feature -> remove it
                         all_abs_single_connections[mapped_device][mapped_node_name][
                             cur_from_device][device_node_name].remove(cur_abs_connection)
-                        add_reduction_candidate(cur_from_device, mapped_device)
+                        add_reduction_candidate(cur_from_device, mapped_device, cur_abs_connection)
                 if start_length_before_reduction > 0 and \
                         len(all_abs_single_connections[mapped_device][mapped_node_name][
                                 cur_from_device][device_node_name]) == 0:
@@ -245,6 +253,21 @@ class ScenarioController(NormalScenarioSetupController):
                         f"the `{self.related_cls.__name__}` has a connection from device "
                         f"`{cur_from_device.__name__}` to `{mapped_device.__name__}` - some mapped VDevices of "
                         f"their feature classes define mismatched connections")
+        return all_abs_single_connections, reduction_candidates
+
+    def determine_absolute_device_connections(self):
+        """
+        This method determines the real possible Sub-Connections for every element of the scenarios. For this the method
+        will create a possible intersection connection, for the :class:´Connection´ between two devices and
+        all :class:`Connection`-Subtrees that are allowed for the mapped vDevices in the used :class:`Feature`
+        classes.
+        The data will be saved in the :class:`Device` property ``_absolute_connections``. If the method detects an empty
+        intersection between two devices that are connected through a VDevice-Device mapping, the method will throw an
+        exception.
+        """
+
+        # start to generate the singles for every connection between the devices of every scenario
+        all_abs_single_connections, reduction_candidates = self.get_feature_cleaned_absolute_single_connections()
 
         # generate all required warnings
         for cur_warning_tuple in reduction_candidates:
