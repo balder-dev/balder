@@ -178,9 +178,9 @@ class ScenarioController(NormalScenarioSetupController):
                 # search node names that is the relevant connection
                 relevant_cnns: List[List[Connection]] = []
                 for _, cur_node_data in all_abs_single_connections[cur_from_device].items():
-                    for cur_to_device, cur_other_device_data in cur_node_data.items():
+                    for cur_to_device, cur_to_device_data in cur_node_data.items():
                         if cur_to_device == mapped_device:
-                            for _, cur_cnns in cur_other_device_data.items():
+                            for _, cur_cnns in cur_to_device_data.items():
                                 relevant_cnns.append(cur_cnns)
                 device_cnn_singles = None
                 if len(relevant_cnns) > 1:
@@ -254,8 +254,8 @@ class ScenarioController(NormalScenarioSetupController):
 
         # first cleanup the relevant absolute connections
         for cur_from_device, from_device_data in all_abs_single_connections.items():
-            for _, from_node_date in from_device_data.items():
-                for cur_to_device, to_device_data in from_node_date.items():
+            for _, from_node_data in from_device_data.items():
+                for cur_to_device, to_device_data in from_node_data.items():
                     cur_from_device_controller = DeviceController.get_for(cur_from_device)
                     cur_to_device_controller = DeviceController.get_for(cur_to_device)
 
@@ -264,9 +264,9 @@ class ScenarioController(NormalScenarioSetupController):
 
         # replace all absolute connection with the single ones
         for cur_from_device, from_device_data in all_abs_single_connections.items():
-            for cur_from_node, from_node_date in from_device_data.items():
-                for cur_to_device, to_device_data in from_node_date.items():
-                    for cur_to_node, cur_single_cnns in to_device_data.items():
+            for _, from_node_data in from_device_data.items():
+                for cur_to_device, to_device_data in from_node_data.items():
+                    for _, cur_single_cnns in to_device_data.items():
 
                         cur_from_device_controller = DeviceController.get_for(cur_from_device)
                         cur_to_device_controller = DeviceController.get_for(cur_to_device)
