@@ -3,7 +3,6 @@ from typing import Type, Dict, List
 
 import logging
 import inspect
-from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.controllers.feature_controller import FeatureController
@@ -158,41 +157,7 @@ class ScenarioController(NormalScenarioSetupController):
                 reduction_candidates.append((device, other_device))
 
         # start to generate the singles for every connection between the devices of every scenario
-        all_abs_single_connections: \
-            Dict[Type[Device], Dict[str, Dict[Type[Device], Dict[str, List[Connection]]]]] = {}
-
-        all_devices = self.get_all_abs_inner_device_classes()
-        for cur_from_device in all_devices:
-            cur_from_device_controller = DeviceController.get_for(cur_from_device)
-
-            # generate the whole `all_abs_single_connections` and convert the connections to singles
-            for cur_to_device, cur_connections in cur_from_device_controller.absolute_connections.items():
-                for cur_cnn in cur_connections:
-                    if cur_from_device == cur_cnn.from_device:
-                        cur_from_node = cur_cnn.from_node_name
-                        cur_to_node = cur_cnn.to_node_name
-                    else:
-                        cur_from_node = cur_cnn.to_node_name
-                        cur_to_node = cur_cnn.from_node_name
-                    if cur_from_device not in all_abs_single_connections.keys():
-                        all_abs_single_connections[cur_from_device] = {}
-                    if cur_from_node not in all_abs_single_connections[cur_from_device].keys():
-                        all_abs_single_connections[cur_from_device][cur_from_node] = {}
-                    if cur_to_device not in \
-                            all_abs_single_connections[cur_from_device][cur_from_node].keys():
-                        all_abs_single_connections[cur_from_device][
-                            cur_from_node][cur_to_device] = {}
-                    if cur_to_node not in all_abs_single_connections[cur_from_device][cur_from_node][cur_to_device].keys():
-                        all_abs_single_connections[cur_from_device][cur_from_node][cur_to_device][
-                            cur_to_node] = cur_cnn.get_singles()
-                        # we do not have to set the connection in communication device, because the absolute
-                        # connections are always synchronized
-                    else:
-                        raise ValueError(
-                            f'found multiple definitions for connection from device '
-                            f'{cur_from_device.__qualname__} (node: `{cur_from_node}`) to device '
-                            f'{cur_to_device.__qualname__} (node: `{cur_to_node}`) in scenario '
-                            f'`{self.related_cls.__name__}`')
+        all_abs_single_connections = self.get_absolute_single_connections()
 
         all_devices = self.get_all_abs_inner_device_classes()
         for cur_from_device in all_devices:
