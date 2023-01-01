@@ -189,6 +189,33 @@ class ScenarioController(NormalScenarioSetupController):
                     f"`{dev1.__name__}` to `{dev2.__name__}` - some mapped VDevices of "
                     f"their feature classes define mismatched connections")
 
+        def get_single_cnns_between_device_for_feature(from_device, to_device, relevant_feature_cnn):
+            # search node names that is the relevant connection
+            relevant_cnns: List[List[Connection]] = []
+            for _, cur_node_data in all_abs_single_connections[from_device].items():
+                for cur_to_device, cur_to_device_data in cur_node_data.items():
+                    if cur_to_device == to_device:
+                        relevant_cnns += [cur_cnns for _, cur_cnns in cur_to_device_data.items()]
+
+            result_singles = None
+            if len(relevant_cnns) > 1:
+                # there exists parallel connections - filter only the relevant one
+                for cur_single_cnns in relevant_cnns:
+                    for cur_single_cnn in cur_single_cnns:
+                        if relevant_feature_cnn.contained_in(cur_single_cnn):
+                            # this is the relevant connection (all other can not fit, because we have
+                            # already checked this with method
+                            # `scenario_controller.validate_feature_clearance_for_parallel_connections()`)
+                            result_singles = cur_single_cnns
+                            break
+                    if result_singles is not None:
+                        break
+            elif len(relevant_cnns) == 1:
+                result_singles = relevant_cnns[0]
+            if result_singles is None:
+                raise ValueError("can not find relevant connection of all parallel connections")
+            return result_singles
+
         all_devices = self.get_all_abs_inner_device_classes()
         for cur_from_device in all_devices:
             # determine all VDevice-Device mappings for this one, by iterating over all instantiated Feature classes
@@ -205,30 +232,9 @@ class ScenarioController(NormalScenarioSetupController):
                     FeatureController.get_for(
                         cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
                 cur_feature_cnn = Connection.based_on(*cur_feature_class_based_for_vdevice)
-                # search node names that is the relevant connection
-                relevant_cnns: List[List[Connection]] = []
-                for _, cur_node_data in all_abs_single_connections[cur_from_device].items():
-                    for cur_to_device, cur_to_device_data in cur_node_data.items():
-                        if cur_to_device == mapped_device:
-                            for _, cur_cnns in cur_to_device_data.items():
-                                relevant_cnns.append(cur_cnns)
-                device_cnn_singles = None
-                if len(relevant_cnns) > 1:
-                    # there exists parallel connections - filter only the relevant one
-                    for cur_single_cnns in relevant_cnns:
-                        for cur_single_cnn in cur_single_cnns:
-                            if cur_feature_cnn.contained_in(cur_single_cnn):
-                                # this is the relevant connection (all other can not fit, because we have
-                                # already checked this with method
-                                # `scenario_controller.validate_feature_clearance_for_parallel_connections()`)
-                                device_cnn_singles = cur_single_cnns
-                                break
-                        if device_cnn_singles is not None:
-                            break
-                elif len(relevant_cnns) == 1:
-                    device_cnn_singles = relevant_cnns[0]
-                if device_cnn_singles is None:
-                    raise ValueError("can not find relevant connection of all parallel connections")
+
+                device_cnn_singles = get_single_cnns_between_device_for_feature(
+                    from_device=cur_from_device, to_device=mapped_device, relevant_feature_cnn=cur_feature_cnn)
 
                 reduce_based_on_feature_cnns_for_devices(
                     cur_feature_cnn, device_cnn_singles[0].from_device, device_cnn_singles[0].from_node_name,
