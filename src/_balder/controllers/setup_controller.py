@@ -88,24 +88,29 @@ class SetupController(NormalScenarioSetupController):
                     continue
 
                 cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
-                if cur_feature_controller.get_class_based_for_vdevice() and mapped_vdevice in \
-                        cur_feature_controller.get_class_based_for_vdevice().keys():
-                    # there exists a class based requirement for this vDevice
-                    class_based_cnns = cur_feature_controller.get_class_based_for_vdevice()[mapped_vdevice]
-                    class_based_cnn = Connection.based_on(*class_based_cnns)
-                    # search relevant connection
-                    cur_device_controller = DeviceController.get_for(cur_device)
-                    for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
-                        for cur_cnn in cur_cnn_list:
-                            if cur_cnn.has_connection_from_to(cur_device, mapped_device):
-                                # check if the class-based feature connection is CONTAINED-IN this
-                                # absolute-connection
-                                if not class_based_cnn.contained_in(cur_cnn, ignore_metadata=True):
+                feature_class_based_for_vdevice = cur_feature_controller.get_class_based_for_vdevice()
+                if not feature_class_based_for_vdevice or mapped_vdevice not in feature_class_based_for_vdevice.keys():
+                    # there exists no class based for vdevice information (at least for the current active vdevice)
+                    continue
 
-                                    raise IllegalVDeviceMappingError(
-                                        f"the @for_vdevice connection for vDevice `{mapped_vdevice.__name__}` "
-                                        f"of feature `{cur_feature.__class__.__name__}` (used in "
-                                        f"`{cur_device.__qualname__}`) uses a connection that does not fit "
-                                        f"with the connection defined in setup class "
-                                        f"`{cur_device_controller.get_outer_class().__name__}` to related "
-                                        f"device `{mapped_device.__name__}`")
+                # there exists a class based requirement for this vDevice
+                class_based_cnn = Connection.based_on(*feature_class_based_for_vdevice[mapped_vdevice])
+                # search relevant connection
+                cur_device_controller = DeviceController.get_for(cur_device)
+                for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
+                    for cur_cnn in cur_cnn_list:
+                        if not cur_cnn.has_connection_from_to(cur_device, mapped_device):
+                            # this connection can be ignored, because it is no connection between the current device
+                            # and the mapped device
+                            continue
+                        # check if the class-based feature connection is CONTAINED-IN this
+                        # absolute-connection
+                        if not class_based_cnn.contained_in(cur_cnn, ignore_metadata=True):
+
+                            raise IllegalVDeviceMappingError(
+                                f"the @for_vdevice connection for vDevice `{mapped_vdevice.__name__}` "
+                                f"of feature `{cur_feature.__class__.__name__}` (used in "
+                                f"`{cur_device.__qualname__}`) uses a connection that does not fit "
+                                f"with the connection defined in setup class "
+                                f"`{cur_device_controller.get_outer_class().__name__}` to related "
+                                f"device `{mapped_device.__name__}`")
