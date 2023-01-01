@@ -3,6 +3,10 @@ from typing import Type, Dict, TYPE_CHECKING
 
 import logging
 from _balder.setup import Setup
+from _balder.connection import Connection
+from _balder.exceptions import IllegalVDeviceMappingError
+from _balder.controllers.feature_controller import FeatureController
+from _balder.controllers.device_controller import DeviceController
 from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
 
 if TYPE_CHECKING:
@@ -67,3 +71,46 @@ class SetupController(NormalScenarioSetupController):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def validate_feature_possibility(self):
+        """
+        This method validates that every feature connection (that already has a vDevice<->Device mapping on setup level)
+        has a connection that is CONTAINED-IN the connection of the related setup devices.
+        """
+        all_devices = self.get_all_abs_inner_device_classes()
+        for cur_device in all_devices:
+            cur_device_instantiated_features = \
+                DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
+            for _, cur_feature in cur_device_instantiated_features.items():
+                mapped_vdevice, mapped_device = cur_feature.active_vdevice_device_mapping
+                if mapped_device is None:
+                    # ignore this, because we have no vDevice mapping on setup level
+                    continue
+
+                cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
+                feature_class_based_for_vdevice = cur_feature_controller.get_class_based_for_vdevice()
+                if not feature_class_based_for_vdevice or mapped_vdevice not in feature_class_based_for_vdevice.keys():
+                    # there exists no class based for vdevice information (at least for the current active vdevice)
+                    continue
+
+                # there exists a class based requirement for this vDevice
+                class_based_cnn = Connection.based_on(*feature_class_based_for_vdevice[mapped_vdevice])
+                # search relevant connection
+                cur_device_controller = DeviceController.get_for(cur_device)
+                for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
+                    for cur_cnn in cur_cnn_list:
+                        if not cur_cnn.has_connection_from_to(cur_device, mapped_device):
+                            # this connection can be ignored, because it is no connection between the current device
+                            # and the mapped device
+                            continue
+                        # check if the class-based feature connection is CONTAINED-IN this
+                        # absolute-connection
+                        if not class_based_cnn.contained_in(cur_cnn, ignore_metadata=True):
+
+                            raise IllegalVDeviceMappingError(
+                                f"the @for_vdevice connection for vDevice `{mapped_vdevice.__name__}` "
+                                f"of feature `{cur_feature.__class__.__name__}` (used in "
+                                f"`{cur_device.__qualname__}`) uses a connection that does not fit "
+                                f"with the connection defined in setup class "
+                                f"`{cur_device_controller.get_outer_class().__name__}` to related "
+                                f"device `{mapped_device.__name__}`")

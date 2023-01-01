@@ -19,8 +19,7 @@ from _balder.connection import Connection
 from _balder.executor.executor_tree import ExecutorTree
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
-from _balder.exceptions import VDeviceResolvingError, IllegalVDeviceMappingError, \
-    UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, DuplicateForVDeviceError, \
+from _balder.exceptions import VDeviceResolvingError, IllegalVDeviceMappingError, DuplicateForVDeviceError, \
     UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
 
@@ -935,38 +934,7 @@ class Collector:
         has a connection that is CONTAINED-IN the connection of the related setup devices.
         """
         for cur_setup in setups:
-            all_devices = SetupController.get_for(cur_setup).get_all_abs_inner_device_classes()
-            for cur_device in all_devices:
-                cur_device_instantiated_features = \
-                    DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
-                for _, cur_feature in cur_device_instantiated_features.items():
-                    mapped_vdevice, mapped_device = cur_feature.active_vdevice_device_mapping
-                    if mapped_device is None:
-                        # ignore this, because we have no vDevice mapping on setup level
-                        continue
-
-                    cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
-                    if cur_feature_controller.get_class_based_for_vdevice() and mapped_vdevice in \
-                            cur_feature_controller.get_class_based_for_vdevice().keys():
-                        # there exists a class based requirement for this vDevice
-                        class_based_cnns = cur_feature_controller.get_class_based_for_vdevice()[mapped_vdevice]
-                        class_based_cnn = Connection.based_on(*class_based_cnns)
-                        # search relevant connection
-                        cur_device_controller = DeviceController.get_for(cur_device)
-                        for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
-                            for cur_cnn in cur_cnn_list:
-                                if cur_cnn.has_connection_from_to(cur_device, mapped_device):
-                                    # check if the class-based feature connection is CONTAINED-IN this
-                                    # absolute-connection
-                                    if not class_based_cnn.contained_in(cur_cnn, ignore_metadata=True):
-
-                                        raise IllegalVDeviceMappingError(
-                                            f"the @for_vdevice connection for vDevice `{mapped_vdevice.__name__}` "
-                                            f"of feature `{cur_feature.__class__.__name__}` (used in "
-                                            f"`{cur_device.__qualname__}`) uses a connection that does not fit "
-                                            f"with the connection defined in setup class "
-                                            f"`{cur_device_controller.get_outer_class().__name__}` to related "
-                                            f"device `{mapped_device.__name__}`")
+            SetupController.get_for(cur_setup).validate_feature_possibility()
 
     def collect(self, plugin_manager: PluginManager):
         """
