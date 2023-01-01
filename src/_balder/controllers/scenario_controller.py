@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import Type, Dict, List
+from typing import Type, Dict, List, Tuple
 
 import logging
 import inspect
+from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.controllers.feature_controller import FeatureController
 from _balder.controllers.device_controller import DeviceController
 from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
-from _balder.exceptions import UnclearAssignableFeatureConnectionError
+from _balder.exceptions import UnclearAssignableFeatureConnectionError, ConnectionIntersectionError
 
 logger = logging.getLogger(__file__)
 
@@ -136,3 +137,157 @@ class ScenarioController(NormalScenarioSetupController):
                         f"feature `{cur_feature.__class__.__name__}` that matches with the device "
                         f"`{mapped_device.__name__}`, but it is not clear which of the parallel connection "
                         f"could be used")
+
+    def get_feature_cleaned_absolute_single_connections(self) -> \
+            Tuple[Dict[Type[Device], Dict[str, Dict[Type[Device], Dict[str, List[Connection]]]]],  Dict[
+                Tuple[Device, Device], List[Connection]]]:
+        """
+        This method returns all absolute-single connections between all devices of this scenario, but already cleaned
+        based on the cumulated class-based decorators of all the feature devices.
+
+        .. note::
+            Please note, that the reduction candidates connections do not have to be unique.
+
+        :return: returns a tuple with the cleaned up connections (sorted as dictionary per device) and the reduced
+                 connections as second element
+        """
+        reduction_candidates = {}
+
+        def add_reduction_candidate(device, other_device, connections: Connection):
+
+            if (device, other_device) not in reduction_candidates.keys() and \
+                    (other_device, device) not in reduction_candidates.keys():
+                # we have to add it as new list
+                reduction_candidates[(device, other_device)] = [connections]
+            elif (device, other_device) in reduction_candidates.keys():
+                reduction_candidates[(device, other_device)].append(connections)
+            elif (other_device, device) in reduction_candidates.keys():
+                reduction_candidates[(other_device, device)].append(connections)
+
+        # start to generate the singles for every connection between the devices of every scenario
+        all_abs_single_connections = self.get_absolute_single_connections()
+
+        def reduce_based_on_feature_cnns_for_devices(
+                feature_cnn: Connection, dev1: Type[Device], node_dev1: str, dev2: Type[Device], node_dev2: str):
+            # execute further process only if there is exactly one relevant connection
+            start_length_before_reduction = \
+                len(all_abs_single_connections[dev1][node_dev1][
+                        dev2][node_dev2])
+            for cur_abs_connection in \
+                    all_abs_single_connections[dev1][node_dev1][
+                        dev2][node_dev2].copy():
+                if not feature_cnn.contained_in(cur_abs_connection, ignore_metadata=True):
+                    # this abs single connection is not fulfilled by the current feature -> remove it
+                    all_abs_single_connections[dev1][node_dev1][
+                        dev2][node_dev2].remove(cur_abs_connection)
+                    add_reduction_candidate(dev1, dev2, cur_abs_connection)
+            if start_length_before_reduction > 0 and \
+                    len(all_abs_single_connections[dev1][node_dev1][
+                            dev2][node_dev2]) == 0:
+                raise ConnectionIntersectionError(
+                    f"the `{self.related_cls.__name__}` has a connection from device "
+                    f"`{dev1.__name__}` to `{dev2.__name__}` - some mapped VDevices of "
+                    f"their feature classes define mismatched connections")
+
+        def get_single_cnns_between_device_for_feature(from_device, to_device, relevant_feature_cnn):
+            # search node names that is the relevant connection
+            relevant_cnns: List[List[Connection]] = []
+            for _, cur_node_data in all_abs_single_connections[from_device].items():
+                for cur_to_device, cur_to_device_data in cur_node_data.items():
+                    if cur_to_device == to_device:
+                        relevant_cnns += [cur_cnns for _, cur_cnns in cur_to_device_data.items()]
+
+            result_singles = None
+            if len(relevant_cnns) > 1:
+                # there exists parallel connections - filter only the relevant one
+                for cur_single_cnns in relevant_cnns:
+                    for cur_single_cnn in cur_single_cnns:
+                        if relevant_feature_cnn.contained_in(cur_single_cnn):
+                            # this is the relevant connection (all other can not fit, because we have
+                            # already checked this with method
+                            # `scenario_controller.validate_feature_clearance_for_parallel_connections()`)
+                            result_singles = cur_single_cnns
+                            break
+                    if result_singles is not None:
+                        break
+            elif len(relevant_cnns) == 1:
+                result_singles = relevant_cnns[0]
+            if result_singles is None:
+                raise ValueError("can not find relevant connection of all parallel connections")
+            return result_singles
+
+        all_devices = self.get_all_abs_inner_device_classes()
+        for cur_from_device in all_devices:
+            # determine all VDevice-Device mappings for this one, by iterating over all instantiated Feature classes
+            cur_from_device_instantiated_features = \
+                DeviceController.get_for(cur_from_device).get_all_instantiated_feature_objects()
+            for _, cur_feature in cur_from_device_instantiated_features.items():
+                mapped_vdevice, mapped_device = cur_feature.active_vdevice_device_mapping
+                if mapped_device is None:
+                    # ignore this, because we have no vDevices here
+                    continue
+
+                # now try to reduce the scenario connections according to the requirements of the feature class
+                cur_feature_class_based_for_vdevice = \
+                    FeatureController.get_for(
+                        cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
+                cur_feature_cnn = Connection.based_on(*cur_feature_class_based_for_vdevice)
+
+                device_cnn_singles = get_single_cnns_between_device_for_feature(
+                    from_device=cur_from_device, to_device=mapped_device, relevant_feature_cnn=cur_feature_cnn)
+
+                reduce_based_on_feature_cnns_for_devices(
+                    cur_feature_cnn, device_cnn_singles[0].from_device, device_cnn_singles[0].from_node_name,
+                    device_cnn_singles[0].to_device, device_cnn_singles[0].to_node_name)
+                # do the same for the opposite direction (features are always bidirectional)
+                reduce_based_on_feature_cnns_for_devices(
+                    cur_feature_cnn, device_cnn_singles[0].to_device, device_cnn_singles[0].to_node_name,
+                    device_cnn_singles[0].from_device, device_cnn_singles[0].from_node_name)
+
+        return all_abs_single_connections, reduction_candidates
+
+    def determine_absolute_device_connections(self):
+        """
+        This method determines the real possible Sub-Connections for every element of the scenarios. For this the method
+        will create a possible intersection connection, for the :class:´Connection´ between two devices and
+        all :class:`Connection`-Subtrees that are allowed for the mapped vDevices in the used :class:`Feature`
+        classes.
+        The data will be saved in the :class:`Device` property ``_absolute_connections``. If the method detects an empty
+        intersection between two devices that are connected through a VDevice-Device mapping, the method will throw an
+        exception.
+        """
+
+        # start to generate the singles for every connection between the devices of every scenario
+        all_abs_single_connections, reduction_candidates = self.get_feature_cleaned_absolute_single_connections()
+
+        # generate all required warnings
+        for cur_warning_tuple in reduction_candidates:
+            logger.warning(f"detect some connections between the devices `{cur_warning_tuple[0].__name__}` and "
+                           f"`{cur_warning_tuple[1].__name__}` of scenario `{self.related_cls.__name__}` that can be "
+                           f"reduced, because their related features only use a subset of the defined connection")
+
+        # first cleanup the relevant absolute connections
+        for cur_from_device, from_device_data in all_abs_single_connections.items():
+            for _, from_node_data in from_device_data.items():
+                for cur_to_device, to_device_data in from_node_data.items():
+                    cur_from_device_controller = DeviceController.get_for(cur_from_device)
+                    cur_to_device_controller = DeviceController.get_for(cur_to_device)
+
+                    cur_from_device_controller.cleanup_absolute_connections_with(cur_to_device)
+                    cur_to_device_controller.cleanup_absolute_connections_with(cur_from_device)
+
+        # replace all absolute connection with the single ones
+        for cur_from_device, from_device_data in all_abs_single_connections.items():
+            for _, from_node_data in from_device_data.items():
+                for cur_to_device, to_device_data in from_node_data.items():
+                    for _, cur_single_cnns in to_device_data.items():
+
+                        cur_from_device_controller = DeviceController.get_for(cur_from_device)
+                        cur_to_device_controller = DeviceController.get_for(cur_to_device)
+
+                        new_cnn = Connection.based_on(*cur_single_cnns)
+                        new_cnn.set_metadata_for_all_subitems(cur_single_cnns[0].metadata)
+                        if cur_from_device == cur_single_cnns[0].from_device:
+                            cur_from_device_controller.add_new_absolute_connection(new_cnn)
+                        else:
+                            cur_to_device_controller.add_new_absolute_connection(new_cnn)
