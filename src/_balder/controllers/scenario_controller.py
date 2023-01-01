@@ -92,8 +92,7 @@ class ScenarioController(NormalScenarioSetupController):
         for the related devices and the method is not able to determine a clear connection.
         """
 
-        all_devices = self.get_all_abs_inner_device_classes()
-        for cur_from_device in all_devices:
+        for cur_from_device in self.get_all_abs_inner_device_classes():
             # determine all VDevice-Device mappings for this one, by iterating over all instantiated Feature classes
             cur_from_device_instantiated_features = \
                 DeviceController.get_for(cur_from_device).get_all_instantiated_feature_objects()
@@ -105,38 +104,35 @@ class ScenarioController(NormalScenarioSetupController):
 
                 # now check if one or more single of the classbased connection are CONTAINED IN the possible
                 # parallel connection (only if there exists more than one parallel)
-                cur_feature_class_based = \
-                    FeatureController.get_for(
-                        cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice]
-                feature_cnn = Connection.based_on(*cur_feature_class_based)
-                feature_cnns_singles = feature_cnn.get_singles()
+                feature_cnn = Connection.based_on(*FeatureController.get_for(
+                        cur_feature.__class__).get_class_based_for_vdevice()[mapped_vdevice])
 
                 # search node names that is the relevant connection
                 relevant_cnns: List[Connection] = []
                 mapped_device_abs_cnns = DeviceController.get_for(mapped_device).get_all_absolute_connections()
                 for _, all_connections in mapped_device_abs_cnns.items():
-                    for cur_cnn in all_connections:
-                        if cur_cnn.has_connection_from_to(cur_from_device, mapped_device):
-                            relevant_cnns.append(cur_cnn)
+                    relevant_cnns += [cur_cnn for cur_cnn in all_connections
+                                      if cur_cnn.has_connection_from_to(cur_from_device, mapped_device)]
 
-                if len(relevant_cnns) > 1:
-                    # there are some parallel connections -> check that only one fits with the feature
-                    matched_relevant_cnns = []
-                    for cur_relevant_cnn in relevant_cnns:
-                        cur_relevant_cnn_singles = cur_relevant_cnn.get_singles()
-                        matched = False
-                        for cur_relevant_single in cur_relevant_cnn_singles:
-                            for cur_feature_cnn in feature_cnns_singles:
-                                if cur_feature_cnn.contained_in(cur_relevant_single):
-                                    matched = True
-                                    break
-                            if matched:
-                                matched_relevant_cnns.append(True)
-                                break
-                    if sum(matched_relevant_cnns) > 1:
-                        raise UnclearAssignableFeatureConnectionError(
-                            f"the devices {cur_from_device.__name__} and {mapped_device.__name__} have "
-                            f"multiple parallel connections - the device `{cur_from_device.__name__}` uses a "
-                            f"feature `{cur_feature.__class__.__name__}` that matches with the device "
-                            f"`{mapped_device.__name__}`, but it is not clear which of the parallel connection "
-                            f"could be used")
+                if len(relevant_cnns) <= 1:
+                    # ignore if there are not more than one relevant connection
+                    continue
+
+                # there are some parallel connections -> check that only one fits with the feature
+                matched_relevant_cnns = []
+                for cur_relevant_cnn in relevant_cnns:
+                    cur_relevant_cnn_singles = cur_relevant_cnn.get_singles()
+
+                    for cur_relevant_single in cur_relevant_cnn_singles:
+                        matches = [True for cur_feature_cnn in feature_cnn.get_singles()
+                                   if cur_feature_cnn.contained_in(cur_relevant_single)]
+                        if len(matches):
+                            matched_relevant_cnns.append(True)
+                            break
+                if sum(matched_relevant_cnns) > 1:
+                    raise UnclearAssignableFeatureConnectionError(
+                        f"the devices {cur_from_device.__name__} and {mapped_device.__name__} have "
+                        f"multiple parallel connections - the device `{cur_from_device.__name__}` uses a "
+                        f"feature `{cur_feature.__class__.__name__}` that matches with the device "
+                        f"`{mapped_device.__name__}`, but it is not clear which of the parallel connection "
+                        f"could be used")
