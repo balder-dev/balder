@@ -94,7 +94,7 @@ class Solver:
         """
         returns all still active mappings between :meth:`Scenario`'s and :meth:`Setup`'s.
         """
-        if self._mapping is None or self._mapping == [] or self._resolving_was_executed is False:
+        if not self._mapping or self._resolving_was_executed is False:
             raise AttributeError("please call the `resolve()` method before omitting this value")
         return self._mapping
 
