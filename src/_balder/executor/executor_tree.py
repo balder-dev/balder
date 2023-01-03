@@ -21,9 +21,6 @@ class ExecutorTree(BasicExecutor):
     This class is the root object of the executor tree structure
     """
 
-    # metadata object that contains all raw fixtures (classes that were not be resolved yet)
-    raw_fixtures = {}
-
     # metadata object that contains all fixtures (balderglob, Setup and Scenario classes)
     fixtures = {}
 

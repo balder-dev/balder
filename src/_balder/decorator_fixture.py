@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Literal
 
 import functools
-from _balder.executor.executor_tree import ExecutorTree
+from _balder.collector import Collector
 from _balder.fixture_manager import FixtureManager
 
 
@@ -20,11 +20,9 @@ def fixture(level: Literal['session', 'setup', 'scenario', 'variation', 'testcas
     def decorator_fixture(func):
         # always add the fixture to FixtureManager.raw_fixtures - class determination will be done later by
         # :meth:`Collector`
-        if not hasattr(ExecutorTree, 'raw_fixtures'):
-            ExecutorTree.raw_fixtures = {}
-        if level not in ExecutorTree.raw_fixtures.keys():
-            ExecutorTree.raw_fixtures[level] = []
-        ExecutorTree.raw_fixtures[level].append(func)
+        if level not in Collector.raw_fixtures.keys():
+            Collector.raw_fixtures[level] = []
+        Collector.raw_fixtures[level].append(func)
 
         @functools.wraps(func)
         def wrapper_fixture(*args, **kwargs):

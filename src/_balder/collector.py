@@ -34,6 +34,8 @@ class Collector:
     The Collector class manages the loading and importing of all relevant balder objects. It does not resolve something,
     but secures that all relevant data is being collected.
     """
+    # metadata object that contains all raw fixtures (classes that were not be resolved yet)
+    raw_fixtures = {}
 
     # this static attribute will be managed by the decorator `@for_vdevice(..)`. It holds all functions/methods that
     # were decorated with `@for_vdevice(..)` (without checking their correctness). The collector will check them later
@@ -307,7 +309,7 @@ class Collector:
         This method resolves all raw fixtures and sets the resolved attribute `ExecutorTree.fixtures`
         """
         resolved_dict = {}
-        for cur_level, cur_module_fixture_dict in ExecutorTree.raw_fixtures.items():
+        for cur_level, cur_module_fixture_dict in Collector.raw_fixtures.items():
             resolved_dict[cur_level] = {}
             for cur_fn in cur_module_fixture_dict:
                 cls, func_type = inspect_method(cur_fn)
