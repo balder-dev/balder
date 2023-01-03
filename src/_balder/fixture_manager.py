@@ -16,6 +16,7 @@ from _balder.exceptions import LostInExecutorTreeException, FixtureReferenceErro
     UnclearUniqueClassReference
 
 if TYPE_CHECKING:
+    from _balder.utils import METHOD_TYPE
     from _balder.executor.executor_tree import ExecutorTree
 
 
@@ -26,8 +27,12 @@ class FixtureManager:
     #: the ordering for the execution levels
     EXECUTION_LEVEL_ORDER = ['session', 'setup', 'scenario', 'variation', 'testcase']
 
-    def __init__(self, executor_tree):
-        self._executor_tree: ExecutorTree = executor_tree
+    def __init__(self, fixtures: Dict[str, Dict[Union[type, None], List[Tuple[METHOD_TYPE, Callable]]]]):
+
+        # The first key is the fixture level, the second key is the namespace in which the fixture is defined (for
+        # example the scenario class), which describes the definition-scope. As value a list with tuples is returned.
+        #  The first element is the type of the method/function and the second is the callable itself.
+        self.fixtures: Dict[str, Dict[Union[type, None], List[Tuple[METHOD_TYPE, Callable]]]] = fixtures
 
         # contains all active fixtures with their namespace, their func_type, their callable, the generator object
         # (otherwise an empty generator, if the fixture is not a generator) and the result according to the fixture's
@@ -189,13 +194,12 @@ class FixtureManager:
 
         :param cur_execution_level: the current execution level that is currently active
         """
-        from _balder.executor.executor_tree import ExecutorTree
         # this method is only interested in fixtures with execution level SESSION!
 
         if isinstance(fixture_callable_namespace, Scenario) and cur_execution_level == "session":
             all_setup_scoped_fixtures = []
 
-            for cur_namespace_type, fixtures in ExecutorTree.fixtures.get('session', {}).items():
+            for cur_namespace_type, fixtures in self.fixtures.get('session', {}).items():
                 if cur_namespace_type is not None and issubclass(cur_namespace_type, Setup):
                     all_setup_scoped_fixtures += [cur_fixt.__name__ for _, cur_fixt in fixtures]
             for cur_arg in arguments:
@@ -426,7 +430,7 @@ class FixtureManager:
         # current relevant EXECUTION LEVEL - all other levels are not relevant for this call
         cur_execution_level = self.resolve_type_level[branch.__class__]
         # get all fixtures of the current relevant level
-        fixtures_of_exec_level = ExecutorTree.fixtures.get(cur_execution_level, {})
+        fixtures_of_exec_level = self.fixtures.get(cur_execution_level, {})
 
         all_fixtures = {}
         # get all relevant fixtures of `balderglob.py` (None is key for balderglob fixtures)

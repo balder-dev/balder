@@ -9,14 +9,13 @@ import inspect
 import pathlib
 import functools
 import importlib.util
-from _balder.utils import inspect_method, get_class_that_defines_method
+from _balder.utils import get_class_that_defines_method
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.feature import Feature
 from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.connection import Connection
-from _balder.executor.executor_tree import ExecutorTree
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import VDeviceResolvingError, IllegalVDeviceMappingError, DuplicateForVDeviceError, \
@@ -302,22 +301,6 @@ class Collector:
         for cur_scenario_or_setup in items:
             cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
             cur_scenario_or_setup_controller.validate_inheritance()
-
-    @staticmethod
-    def resolve_raw_fixtures():
-        """
-        This method resolves all raw fixtures and sets the resolved attribute `ExecutorTree.fixtures`
-        """
-        resolved_dict = {}
-        for cur_level, cur_module_fixture_dict in Collector.raw_fixtures.items():
-            resolved_dict[cur_level] = {}
-            for cur_fn in cur_module_fixture_dict:
-                cls, func_type = inspect_method(cur_fn)
-                # mechanism also works for balderglob fixtures (`func_type` is 'function' and `cls` is None)
-                if cls not in resolved_dict[cur_level].keys():
-                    resolved_dict[cur_level][cls] = []
-                resolved_dict[cur_level][cls].append((func_type, cur_fn))
-        ExecutorTree.fixtures = resolved_dict
 
     def set_run_skip_ignore_of_test_methods_in_scenarios(self):
         """
@@ -977,7 +960,6 @@ class Collector:
         # do some further stuff after everything was read
         self.set_original_device_features_for(self._all_scenarios)
         self.set_original_device_features_for(self._all_setups)
-        Collector.resolve_raw_fixtures()
         Collector.set_original_device_features_for_all_vdevices_of(all_scenario_features)
         Collector.set_original_device_features_for_all_vdevices_of(all_setup_features)
         self.exchange_device_connection_device_strings()
