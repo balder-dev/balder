@@ -136,7 +136,7 @@ class Solver:
                     mapping.append((cur_setup, cur_scenario, device_mapping))
         return mapping
 
-    def resolve(self, plugin_manager: PluginManager) -> None:
+    def resolve(self, plugin_manager: PluginManager) -> None:  # pylint: disable=unused-argument
         """
         This method carries out the entire resolve process and saves the end result in the object property
         `self._mapping`.
@@ -147,7 +147,7 @@ class Solver:
         self._mapping = initial_mapping
         self._resolving_was_executed = True
 
-    def get_executor_tree(self, plugin_manager: PluginManager) -> ExecutorTree:
+    def get_executor_tree(self, plugin_manager: PluginManager) -> ExecutorTree:  # pylint: disable=unused-argument
         """
         This method builds the ExecutorTree from the resolved data and returns it
 
@@ -155,7 +155,6 @@ class Solver:
         """
 
         executor_tree = ExecutorTree()
-
 
         # create all setup executor
 
