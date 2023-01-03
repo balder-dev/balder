@@ -21,16 +21,10 @@ class ExecutorTree(BasicExecutor):
     This class is the root object of the executor tree structure
     """
 
-    # metadata object that contains all raw fixtures (classes that were not be resolved yet)
-    raw_fixtures = {}
-
-    # metadata object that contains all fixtures (balderglob, Setup and Scenario classes)
-    fixtures = {}
-
-    def __init__(self):
+    def __init__(self, fixture_manager: FixtureManager):
         super().__init__()
         self._setup_executors: List[SetupExecutor] = []
-        self._fixture_manager = FixtureManager(executor_tree=self)
+        self._fixture_manager = fixture_manager
 
         # contains the result object for the BODY part of this branch (will be overwritten in :class:`TestcaseExecutor`)
         self.body_result = BranchBodyResult(self)
