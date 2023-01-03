@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Type, Union, List, Dict, TYPE_CHECKING
 
-import sys
-import traceback
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.utils import get_class_that_defines_method
 from _balder.executor.basic_executor import BasicExecutor
@@ -92,6 +90,23 @@ class ScenarioExecutor(BasicExecutor):
         return self._base_scenario_class.IGNORE
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
+
+    def _prepare_execution(self):
+        print(f"  SCENARIO {self.base_scenario_class.__class__.__name__}")
+
+    def _body_execution(self):
+        for cur_variation_executor in self.variation_executors:
+            if cur_variation_executor.has_runnable_elements():
+                cur_variation_executor.execute()
+            elif cur_variation_executor.prev_mark == PreviousExecutorMark.SKIP:
+                cur_variation_executor.set_result_for_whole_branch(ResultState.SKIP)
+            elif cur_variation_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
+                cur_variation_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
+            else:
+                cur_variation_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
+
+    def _cleanup_execution(self):
+        pass
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
@@ -197,36 +212,3 @@ class ScenarioExecutor(BasicExecutor):
                 return cur_variation_executor
         # can not find some
         return None
-
-    def execute(self) -> None:
-        """
-        This method executes this branch of the tree
-        """
-        print(f"  SCENARIO {self.base_scenario_class.__class__.__name__}")
-        try:
-            try:
-                self.fixture_manager.enter(self)
-                self.construct_result.set_result(ResultState.SUCCESS)
-
-                for cur_variation_executor in self.variation_executors:
-                    if cur_variation_executor.has_runnable_elements():
-                        cur_variation_executor.execute()
-                    elif cur_variation_executor.prev_mark == PreviousExecutorMark.SKIP:
-                        cur_variation_executor.set_result_for_whole_branch(ResultState.SKIP)
-                    elif cur_variation_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
-                        cur_variation_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
-                    else:
-                        cur_variation_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-            except Exception as exc:
-                # this has to be a construction fixture error
-                traceback.print_exception(*sys.exc_info())
-                self.construct_result.set_result(ResultState.ERROR, exc)
-            finally:
-                if self.fixture_manager.is_allowed_to_leave(self):
-                    self.fixture_manager.leave(self)
-                    self.teardown_result.set_result(ResultState.SUCCESS)
-
-        except Exception as exc:
-            # this has to be a teardown fixture error
-            traceback.print_exception(*sys.exc_info())
-            self.teardown_result.set_result(ResultState.ERROR, exc)

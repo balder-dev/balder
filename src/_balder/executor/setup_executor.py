@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Type, Union, List, TYPE_CHECKING
 
-import sys
-import traceback
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
@@ -72,6 +70,23 @@ class SetupExecutor(BasicExecutor):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
+    def _prepare_execution(self):
+        print(f"SETUP {self.base_setup_class.__class__.__name__}")
+
+    def _body_execution(self):
+        for cur_scenario_executor in self.scenario_executors:
+            if cur_scenario_executor.has_runnable_elements():
+                cur_scenario_executor.execute()
+            elif cur_scenario_executor.prev_mark == PreviousExecutorMark.SKIP:
+                cur_scenario_executor.set_result_for_whole_branch(ResultState.SKIP)
+            elif cur_scenario_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
+                cur_scenario_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
+            else:
+                cur_scenario_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
+
+    def _cleanup_execution(self):
+        pass
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def cleanup_empty_executor_branches(self):
@@ -108,36 +123,3 @@ class SetupExecutor(BasicExecutor):
                 return cur_scenario_executor
         # can not find some
         return None
-
-    def execute(self) -> None:
-        """
-        This method executes this branch of the tree
-        """
-        print(f"SETUP {self.base_setup_class.__class__.__name__}")
-        try:
-            try:
-                self.fixture_manager.enter(self)
-                self.construct_result.set_result(ResultState.SUCCESS)
-
-                for cur_scenario_executor in self.scenario_executors:
-                    if cur_scenario_executor.has_runnable_elements():
-                        cur_scenario_executor.execute()
-                    elif cur_scenario_executor.prev_mark == PreviousExecutorMark.SKIP:
-                        cur_scenario_executor.set_result_for_whole_branch(ResultState.SKIP)
-                    elif cur_scenario_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
-                        cur_scenario_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
-                    else:
-                        cur_scenario_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-            except Exception as exc:
-                # this has to be a construction fixture error
-                traceback.print_exception(*sys.exc_info())
-                self.construct_result.set_result(ResultState.ERROR, exc)
-            finally:
-                if self.fixture_manager.is_allowed_to_leave(self):
-                    self.fixture_manager.leave(self)
-                    self.teardown_result.set_result(ResultState.SUCCESS)
-
-        except Exception as exc:
-            # this has to be a teardown fixture error
-            traceback.print_exception(*sys.exc_info())
-            self.teardown_result.set_result(ResultState.ERROR, exc)

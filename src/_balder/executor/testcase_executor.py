@@ -31,10 +31,11 @@ class TestcaseExecutor(BasicExecutor):
         # if there exist executors that cover this item, they are contained as list in this property
         self.covered_by_executors = None
 
-        self.execution_time_sec = None
-
         # contains the result object for the BODY part of this branch
         self.body_result = TestcaseResult(self)
+
+        # holds the raw test execution time in seconds
+        self.test_execution_time_sec = 0
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
@@ -74,6 +75,42 @@ class TestcaseExecutor(BasicExecutor):
         return self._fixture_manager
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
+
+    def _prepare_execution(self):
+        print(f"      TEST {self.base_testcase_callable.__qualname__} ", end='')
+        if self.should_be_skipped():
+            self.body_result.set_result(ResultState.SKIP)
+            self.execution_time_sec = 0
+            print("[S]")
+            return
+
+    def _body_execution(self):
+        start_time = time.perf_counter()
+        try:
+            _, func_type = inspect_method(self.base_testcase_callable)
+            all_args = self.fixture_manager.get_all_attribute_values(
+                self, self.base_testcase_obj.__class__, self.base_testcase_callable, func_type)
+            if func_type == "staticmethod":
+                # testcase is a staticmethod - no special first attribute
+                self.base_testcase_callable(**all_args)
+            elif func_type == "classmethod":
+                self.base_testcase_callable(self=self.base_testcase_obj.__class__, **all_args)
+            elif func_type == "instancemethod":
+                self.base_testcase_callable(self=self.base_testcase_obj, **all_args)
+            else:
+                # `function` is not allowed here!
+                raise ValueError(f"found illegal value for func_type `{func_type}` for test "
+                                 f"`{self.base_testcase_callable.__name__}`")
+
+            self.body_result.set_result(ResultState.SUCCESS)
+        except Exception as exc:
+            # this has to be a test error
+            traceback.print_exception(*sys.exc_info())
+            self.body_result.set_result(ResultState.FAILURE, exc)
+        self.test_execution_time_sec = time.perf_counter() - start_time
+
+    def _cleanup_execution(self):
+        print(f"[{self.body_result.get_result_as_char()}]")
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
@@ -120,55 +157,3 @@ class TestcaseExecutor(BasicExecutor):
         if scenario_class in covered_by_dict_resolved.keys():
             all_covered_by_data += covered_by_dict_resolved[scenario_class]
         return all_covered_by_data
-
-    def execute(self) -> None:
-        """
-        This method executes this testcase.
-        """
-        print(f"      TEST {self.base_testcase_callable.__qualname__} ", end='')
-        if self.should_be_skipped():
-            self.body_result.set_result(ResultState.SKIP)
-            self.execution_time_sec = 0
-            print("[S]")
-            return
-        try:
-            try:
-                self.fixture_manager.enter(self)
-                self.construct_result.set_result(ResultState.SUCCESS)
-
-                start_time = time.perf_counter()
-                try:
-                    _, func_type = inspect_method(self.base_testcase_callable)
-                    all_args = self.fixture_manager.get_all_attribute_values(
-                        self, self.base_testcase_obj.__class__, self.base_testcase_callable, func_type)
-                    if func_type == "staticmethod":
-                        # testcase is a staticmethod - no special first attribute
-                        self.base_testcase_callable(**all_args)
-                    elif func_type == "classmethod":
-                        self.base_testcase_callable(self=self.base_testcase_obj.__class__, **all_args)
-                    elif func_type == "instancemethod":
-                        self.base_testcase_callable(self=self.base_testcase_obj, **all_args)
-                    else:
-                        # `function` is not allowed here!
-                        raise ValueError(f"found illegal value for func_type `{func_type}` for test "
-                                         f"`{self.base_testcase_callable.__name__}`")
-
-                    self.body_result.set_result(ResultState.SUCCESS)
-                except Exception as exc:
-                    # this has to be a test error
-                    traceback.print_exception(*sys.exc_info())
-                    self.body_result.set_result(ResultState.FAILURE, exc)
-                finally:
-                    self.execution_time_sec = time.perf_counter() - start_time
-            except Exception as exc:
-                # this has to be a construction fixture error
-                traceback.print_exception(*sys.exc_info())
-                self.construct_result.set_result(ResultState.ERROR, exc)
-            if self.fixture_manager.is_allowed_to_leave(self):
-                self.fixture_manager.leave(self)
-                self.teardown_result.set_result(ResultState.SUCCESS)
-            print(f"[{self.body_result.get_result_as_char()}]")
-        except Exception as exc:
-            # this has to be a teardown fixture error
-            traceback.print_exception(*sys.exc_info())
-            self.teardown_result.set_result(ResultState.ERROR, exc)

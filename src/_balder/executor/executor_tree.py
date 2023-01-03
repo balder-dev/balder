@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Union, List, Type, TYPE_CHECKING
 
-import sys
-import traceback
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.fixture_manager import FixtureManager
@@ -59,6 +57,23 @@ class ExecutorTree(BasicExecutor):
         return None
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
+
+    def _prepare_execution(self):
+        pass
+
+    def _body_execution(self):
+        for cur_setup_executor in self.setup_executors:
+            if cur_setup_executor.has_runnable_elements():
+                cur_setup_executor.execute()
+            elif cur_setup_executor.prev_mark == PreviousExecutorMark.SKIP:
+                cur_setup_executor.set_result_for_whole_branch(ResultState.SKIP)
+            elif cur_setup_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
+                cur_setup_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
+            else:
+                cur_setup_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
+
+    def _cleanup_execution(self):
+        pass
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
@@ -142,32 +157,7 @@ class ExecutorTree(BasicExecutor):
         runnables = [cur_exec.has_runnable_elements() for cur_exec in self.setup_executors]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
         if one_or_more_runnable_setups:
-            try:
-                try:
-                    self.fixture_manager.enter(self)
-                    self.construct_result.set_result(ResultState.SUCCESS)
-
-                    for cur_setup_executor in self.setup_executors:
-                        if cur_setup_executor.has_runnable_elements():
-                            cur_setup_executor.execute()
-                        elif cur_setup_executor.prev_mark == PreviousExecutorMark.SKIP:
-                            cur_setup_executor.set_result_for_whole_branch(ResultState.SKIP)
-                        elif cur_setup_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
-                            cur_setup_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
-                        else:
-                            cur_setup_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-                except Exception as exc:
-                    # this has to be a construction fixture error
-                    traceback.print_exception(*sys.exc_info())
-                    self.construct_result.set_result(ResultState.ERROR, exc)
-                finally:
-                    if self.fixture_manager.is_allowed_to_leave(self):
-                        self.fixture_manager.leave(self)
-                        self.teardown_result.set_result(ResultState.SUCCESS)
-            except Exception as exc:
-                # we can catch everything, because error is already documented
-                traceback.print_exception(*sys.exc_info())
-                self.teardown_result.set_result(ResultState.ERROR, exc)
+            super().execute()
         else:
             print("NO EXECUTABLE SETUPS/SCENARIOS FOUND")
         print_line(end_text)
