@@ -1,7 +1,12 @@
 from __future__ import annotations
+
+import time
 from typing import List, Dict, Union, Type, TYPE_CHECKING
 
+import sys
 import types
+import traceback
+from abc import ABC, abstractmethod
 from _balder.testresult import FixturePartResult, ResultState
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import TestcaseResult
@@ -9,9 +14,10 @@ from _balder.testresult import TestcaseResult
 if TYPE_CHECKING:
     from _balder.setup import Setup
     from _balder.scenario import Scenario
+    from _balder.fixture_manager import FixtureManager
 
 
-class BasicExecutor:
+class BasicExecutor(ABC):
     """
     The BasicExecutor class is an abstract class that represents the parent class of all executors. Together with other
     executor classes, an executor forms a tree structure in which individual tests, which later on are executed, are
@@ -29,6 +35,9 @@ class BasicExecutor:
         # contains the result object for the TEARDOWN FIXTURE part of this branch
         self.teardown_result = FixturePartResult(self)
 
+        # holds the execution time of this branch (with branch fixtures)
+        self.execution_time_sec = None
+
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     # ---------------------------------- CLASS METHODS ----------------------------------------------------------------
@@ -36,22 +45,27 @@ class BasicExecutor:
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
+    @abstractmethod
     def all_child_executors(self) -> List[BasicExecutor]:
         """
         returns all child executors of this object or None if no child executors can exist (this element is a leaf)
         """
-        raise NotImplementedError("this property must be overwritten in the subclass")
 
     @property
+    @abstractmethod
     def parent_executor(self) -> BasicExecutor:
         """returns the parent executor of this element"""
-        raise NotImplementedError("this property must be overwritten in the subclass")
 
     @property
+    @abstractmethod
     def base_instance(self) -> object:
         """returns the base class instance to which this executor instance belongs or None if this element is a
         ExecutorTree"""
-        raise NotImplementedError("this property must be overwritten in the subclass")
+
+    @property
+    @abstractmethod
+    def fixture_manager(self) -> FixtureManager:
+        """returns the active fixture manager instance"""
 
     @property
     def executor_result(self) -> ResultState:
@@ -71,6 +85,26 @@ class BasicExecutor:
         return relative_result
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
+
+    @abstractmethod
+    def _prepare_execution(self):
+        """
+        This method runs before the branch will be executed and before the fixture construction code of this branch
+        runs.
+        """
+
+    @abstractmethod
+    def _body_execution(self):
+        """
+        This method runs between the fixture construction and teardown code. It should trigger the execution of the
+        child branches.
+        """
+
+    @abstractmethod
+    def _cleanup_execution(self):
+        """
+        This method runs after the branch was executed (also after the fixture teardown code ran)
+        """
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
@@ -129,12 +163,12 @@ class BasicExecutor:
         # remove duplicate items
         return list(set(result))
 
+    @abstractmethod
     def cleanup_empty_executor_branches(self):
         """
         This method searches the whole tree and removes branches where an executor item has no own children. It can
         remove these branches, because they have no valid matchings.
         """
-        raise NotImplementedError("this property must be overwritten in the subclass")
 
     def filter_tree_for_user_filters(self):
         """
@@ -169,3 +203,33 @@ class BasicExecutor:
                     else:
                         summary[cur_key] = cur_child_dict[cur_key]
         return summary
+
+    def execute(self):
+        """
+        Executes the whole branch
+        """
+        start_time = time.perf_counter()
+        self._prepare_execution()
+
+        try:
+            try:
+                self.fixture_manager.enter(self)
+                self.construct_result.set_result(ResultState.SUCCESS)
+
+                self._body_execution()
+            except Exception as exc:
+                # this has to be a construction fixture error
+                traceback.print_exception(*sys.exc_info())
+                self.construct_result.set_result(ResultState.ERROR, exc)
+            finally:
+                if self.fixture_manager.is_allowed_to_leave(self):
+                    self.fixture_manager.leave(self)
+                    self.teardown_result.set_result(ResultState.SUCCESS)
+        except Exception as exc:
+            # this has to be a teardown fixture error
+            traceback.print_exception(*sys.exc_info())
+            self.teardown_result.set_result(ResultState.ERROR, exc)
+
+        self._cleanup_execution()
+
+        self.execution_time_sec = time.perf_counter() - start_time

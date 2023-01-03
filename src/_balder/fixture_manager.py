@@ -1,14 +1,12 @@
 from __future__ import annotations
 from typing import List, Tuple, Generator, Dict, Union, Type, Callable, TYPE_CHECKING
 
-import sys
 import inspect
-import traceback
 from graphlib import TopologicalSorter
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.scenario import Scenario
 from _balder.setup import Setup
-from _balder.testresult import ResultState
+from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
 from _balder.executor.variation_executor import VariationExecutor
@@ -284,8 +282,8 @@ class FixtureManager:
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def is_allowed_to_enter(
-            self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \
-            -> bool:
+            self, branch: Union[BasicExecutor, ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor,
+                                TestcaseExecutor]) -> bool:
         """
         This method return true if the given branch can be entered, otherwise false
         """
@@ -293,7 +291,8 @@ class FixtureManager:
         return execution_level not in self.current_tree_fixtures.keys()
 
     def is_allowed_to_leave(
-            self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \
+            self, branch: Union[BasicExecutor, ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor,
+                                TestcaseExecutor]) \
             -> bool:
         """
         This method returns true if the given branch can be left now (there exist entries from earlier run enter()
@@ -302,7 +301,8 @@ class FixtureManager:
         execution_level = self.resolve_type_level[branch.__class__]
         return execution_level in self.current_tree_fixtures.keys()
 
-    def enter(self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]):
+    def enter(self, branch: Union[BasicExecutor, ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor,
+                                  TestcaseExecutor]):
         """
         With this method you enter a branch for the fixture manager in order to execute the fixtures contained in it
 
@@ -360,14 +360,10 @@ class FixtureManager:
                         (cur_scope_namespace_type, cur_fixture_func_type, cur_fixture, cur_generator, cur_retvalue))
                 except StopIteration:
                     pass
-                except Exception as exc:
-                    # every other exception that is thrown, will be recognized and rethrown
-                    branch.construct_result.set_result(ResultState.ERROR, exc)
-                    raise exc
-        # set fixture construct part to SUCCESS if no error occurs
-        branch.construct_result.set_result(ResultState.SUCCESS)
+                # every other exception that is thrown, will be recognized and rethrown
 
-    def leave(self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]):
+    def leave(self, branch: Union[BasicExecutor, ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor,
+                                  TestcaseExecutor]):
         """
         With this method you leave a previously entered branch and execute the teardown code of the fixtures. Note that
         you can only leave the branch that you entered before!
@@ -388,10 +384,6 @@ class FixtureManager:
             except StopIteration:
                 pass
             except Exception as exc:
-                # print traceback of the current exception
-                traceback.print_exception(*sys.exc_info())
-                # every other exception that is thrown, will be recognized and rethrown
-                branch.teardown_result.set_result(ResultState.ERROR, exc)
                 if not exception:
                     # only save the first exception
                     exception = exc
@@ -401,9 +393,6 @@ class FixtureManager:
 
         if exception:
             raise exception
-
-        # set fixture construct part to SUCCESS if no error occurs
-        branch.teardown_result.set_result(ResultState.SUCCESS)
 
     def get_all_fixtures_for_current_level(
             self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \
