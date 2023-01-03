@@ -560,10 +560,12 @@ class Connection:
             usable_cur_conn = Connection.based_on(cur_conn) if isinstance(cur_conn, tuple) else cur_conn
             is_contained_in_another = False
             for cur_validate_cnn in intersection_without_duplicates:
+                cur_usable_validate_cnn = \
+                    Connection.based_on(cur_validate_cnn) if isinstance(cur_validate_cnn, tuple) else cur_validate_cnn
                 if cur_validate_cnn == cur_conn:
                     # skip the same element
                     continue
-                if usable_cur_conn.contained_in(cur_validate_cnn, ignore_metadata=True):
+                if usable_cur_conn.contained_in(cur_usable_validate_cnn, ignore_metadata=True):
                     is_contained_in_another = True
                     break
             if not is_contained_in_another:
