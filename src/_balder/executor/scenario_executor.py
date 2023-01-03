@@ -206,6 +206,8 @@ class ScenarioExecutor(BasicExecutor):
         try:
             try:
                 self.fixture_manager.enter(self)
+                self.construct_result.set_result(ResultState.SUCCESS)
+
                 for cur_variation_executor in self.variation_executors:
                     if cur_variation_executor.has_runnable_elements():
                         cur_variation_executor.execute()
@@ -215,11 +217,16 @@ class ScenarioExecutor(BasicExecutor):
                         cur_variation_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
                     else:
                         cur_variation_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-            except Exception:
-                # we can catch everything, because error is already documented
+            except Exception as exc:
+                # this has to be a construction fixture error
                 traceback.print_exception(*sys.exc_info())
-            if self.fixture_manager.is_allowed_to_leave(self):
-                self.fixture_manager.leave(self)
-        except Exception:
-            # we can catch everything, because error is already documented
+                self.construct_result.set_result(ResultState.ERROR, exc)
+            finally:
+                if self.fixture_manager.is_allowed_to_leave(self):
+                    self.fixture_manager.leave(self)
+                    self.teardown_result.set_result(ResultState.SUCCESS)
+
+        except Exception as exc:
+            # this has to be a teardown fixture error
             traceback.print_exception(*sys.exc_info())
+            self.teardown_result.set_result(ResultState.ERROR, exc)

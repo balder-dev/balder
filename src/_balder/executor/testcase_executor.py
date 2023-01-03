@@ -134,6 +134,7 @@ class TestcaseExecutor(BasicExecutor):
         try:
             try:
                 self.fixture_manager.enter(self)
+                self.construct_result.set_result(ResultState.SUCCESS)
 
                 start_time = time.perf_counter()
                 try:
@@ -153,17 +154,21 @@ class TestcaseExecutor(BasicExecutor):
                                          f"`{self.base_testcase_callable.__name__}`")
 
                     self.body_result.set_result(ResultState.SUCCESS)
-                except Exception:
+                except Exception as exc:
+                    # this has to be a test error
                     traceback.print_exception(*sys.exc_info())
-                    self.body_result.set_result(ResultState.FAILURE)
+                    self.body_result.set_result(ResultState.FAILURE, exc)
                 finally:
                     self.execution_time_sec = time.perf_counter() - start_time
-            except Exception:
-                # we can catch everything, because error is already documented
+            except Exception as exc:
+                # this has to be a construction fixture error
                 traceback.print_exception(*sys.exc_info())
+                self.construct_result.set_result(ResultState.ERROR, exc)
             if self.fixture_manager.is_allowed_to_leave(self):
                 self.fixture_manager.leave(self)
+                self.teardown_result.set_result(ResultState.SUCCESS)
             print(f"[{self.body_result.get_result_as_char()}]")
-        except Exception:
-            # we can catch everything, because error is already documented
+        except Exception as exc:
+            # this has to be a teardown fixture error
             traceback.print_exception(*sys.exc_info())
+            self.teardown_result.set_result(ResultState.ERROR, exc)

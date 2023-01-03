@@ -145,6 +145,8 @@ class ExecutorTree(BasicExecutor):
             try:
                 try:
                     self.fixture_manager.enter(self)
+                    self.construct_result.set_result(ResultState.SUCCESS)
+
                     for cur_setup_executor in self.setup_executors:
                         if cur_setup_executor.has_runnable_elements():
                             cur_setup_executor.execute()
@@ -154,14 +156,18 @@ class ExecutorTree(BasicExecutor):
                             cur_setup_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
                         else:
                             cur_setup_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-                except Exception:
-                    # we can catch everything, because error is already documented
+                except Exception as exc:
+                    # this has to be a construction fixture error
                     traceback.print_exception(*sys.exc_info())
-                if self.fixture_manager.is_allowed_to_leave(self):
-                    self.fixture_manager.leave(self)
-            except Exception:
+                    self.construct_result.set_result(ResultState.ERROR, exc)
+                finally:
+                    if self.fixture_manager.is_allowed_to_leave(self):
+                        self.fixture_manager.leave(self)
+                        self.teardown_result.set_result(ResultState.SUCCESS)
+            except Exception as exc:
                 # we can catch everything, because error is already documented
                 traceback.print_exception(*sys.exc_info())
+                self.teardown_result.set_result(ResultState.ERROR, exc)
         else:
             print("NO EXECUTABLE SETUPS/SCENARIOS FOUND")
         print_line(end_text)

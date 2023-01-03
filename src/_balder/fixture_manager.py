@@ -360,12 +360,7 @@ class FixtureManager:
                         (cur_scope_namespace_type, cur_fixture_func_type, cur_fixture, cur_generator, cur_retvalue))
                 except StopIteration:
                     pass
-                except Exception as exc:
-                    # every other exception that is thrown, will be recognized and rethrown
-                    branch.construct_result.set_result(ResultState.ERROR, exc)
-                    raise exc
-        # set fixture construct part to SUCCESS if no error occurs
-        branch.construct_result.set_result(ResultState.SUCCESS)
+                # every other exception that is thrown, will be recognized and rethrown
 
     def leave(self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]):
         """
@@ -388,10 +383,6 @@ class FixtureManager:
             except StopIteration:
                 pass
             except Exception as exc:
-                # print traceback of the current exception
-                traceback.print_exception(*sys.exc_info())
-                # every other exception that is thrown, will be recognized and rethrown
-                branch.teardown_result.set_result(ResultState.ERROR, exc)
                 if not exception:
                     # only save the first exception
                     exception = exc
@@ -401,9 +392,6 @@ class FixtureManager:
 
         if exception:
             raise exception
-
-        # set fixture construct part to SUCCESS if no error occurs
-        branch.teardown_result.set_result(ResultState.SUCCESS)
 
     def get_all_fixtures_for_current_level(
             self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \

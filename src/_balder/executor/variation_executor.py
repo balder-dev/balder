@@ -794,16 +794,17 @@ class VariationExecutor(BasicExecutor):
         device_map_str = [f"{scenario_device.__qualname__}:{setup_device.__qualname__}"
                           for scenario_device, setup_device in self._base_device_mapping.items()]
         print(' | '.join(device_map_str))
+        self.determine_abs_variation_connections()
+        self.update_scenario_device_feature_instances()
+        self.update_active_vdevice_device_mappings_in_scenario_and_setup_devices()
+        self.update_inner_referenced_feature_instances()
+        self.update_vdevice_referenced_feature_instances()
+        self.set_conn_dependent_methods()
+
         try:
             try:
-                self.determine_abs_variation_connections()
-                self.update_scenario_device_feature_instances()
-                self.update_active_vdevice_device_mappings_in_scenario_and_setup_devices()
-                self.update_inner_referenced_feature_instances()
-                self.update_vdevice_referenced_feature_instances()
-                self.set_conn_dependent_methods()
-
                 self.fixture_manager.enter(self)
+                self.construct_result.set_result(ResultState.SUCCESS)
 
                 for cur_testcase_executor in self.testcase_executors:
                     if cur_testcase_executor.has_runnable_elements():
@@ -815,14 +816,18 @@ class VariationExecutor(BasicExecutor):
                         cur_testcase_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
                     else:
                         cur_testcase_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
-            except Exception:
-                # we can catch everything, because error is already documented
+            except Exception as exc:
+                # this has to be a construction fixture error
                 traceback.print_exception(*sys.exc_info())
-            if self.fixture_manager.is_allowed_to_leave(self):
-                self.fixture_manager.leave(self)
-        except Exception:
-            # we can catch everything, because error is already documented
+                self.construct_result.set_result(ResultState.ERROR, exc)
+            finally:
+                if self.fixture_manager.is_allowed_to_leave(self):
+                    self.fixture_manager.leave(self)
+                    self.teardown_result.set_result(ResultState.SUCCESS)
+        except Exception as exc:
+            # this has to be a teardown fixture error
             traceback.print_exception(*sys.exc_info())
+            self.teardown_result.set_result(ResultState.ERROR, exc)
         finally:
             self.revert_active_vdevice_device_mappings_in_scenario_and_setup_devices()
             self.revert_scenario_device_feature_instances()
