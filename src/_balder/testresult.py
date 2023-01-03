@@ -50,7 +50,7 @@ class _Result:
             ResultState.NOT_RUN: " ",
             ResultState.FAILURE: "X",
             ResultState.ERROR: "E",
-            ResultState.SUCCESS: "\u2713",
+            ResultState.SUCCESS: ".",
             ResultState.SKIP: "S",
             ResultState.COVERED_BY: "C"
         }
