@@ -78,7 +78,7 @@ def for_vdevice(
                 Collector._possible_method_variations[func] = []
             Collector._possible_method_variations[func].append((vdevice, with_connections))
 
-        def __new__(cls, *args, **kwargs):
+        def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
             nonlocal vdevice
 
             func = args[0]

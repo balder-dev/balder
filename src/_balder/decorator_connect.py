@@ -61,7 +61,7 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
         object and if the `dest_node_name` is None, it will also set this value to None. This secure that the
         collector will create a unique auto node for it.
         """
-        def __new__(cls, *args, **kwargs):
+        def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
 
             decorated_cls = args[0]
             nonlocal with_device

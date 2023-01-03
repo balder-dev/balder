@@ -35,7 +35,7 @@ def insert_into_tree(parents: List[Union[Type[Connection], Tuple[Type[Connection
 
     class MyDecorator:
         """decorator class for `@insert_into_tree` decorator"""
-        def __new__(cls, *args, **kwargs):
+        def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
 
             nonlocal parents
 
