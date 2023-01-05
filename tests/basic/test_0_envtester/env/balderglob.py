@@ -82,7 +82,10 @@ class MyErrorThrowingPlugin(balder.BalderPlugin):
         # use this method to set the values
         RuntimeObserver.error_throwing = {}
         if self.balder_session.parsed_args.test_error_file:
-            RuntimeObserver.error_throwing['file'] = self.balder_session.parsed_args.test_error_file
+            path = pathlib.Path(self.balder_session.parsed_args.test_error_file)
+            if not path.is_absolute():
+                path = str(self.balder_session.working_dir.joinpath(path))
+            RuntimeObserver.error_throwing['file'] = path
         if self.balder_session.parsed_args.test_error_cls:
             RuntimeObserver.error_throwing['cls'] = self.balder_session.parsed_args.test_error_cls
         if self.balder_session.parsed_args.test_error_meth:
