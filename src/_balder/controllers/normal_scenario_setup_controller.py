@@ -3,7 +3,7 @@ from typing import Type, List, Union, Optional, Dict, TYPE_CHECKING
 
 import logging
 import inspect
-from abc import ABC
+from abc import ABC, abstractmethod
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.scenario import Scenario
@@ -86,19 +86,23 @@ class NormalScenarioSetupController(Controller, ABC):
         cls_devices = self.get_all_inner_device_classes()
         if len(cls_devices) == 0:
             # search for parent class
-            base_class = None
-            for cur_base in self.related_cls.__bases__:
-                if issubclass(cur_base, self._related_type):
-                    if base_class is not None:
-                        raise MultiInheritanceError(
-                            f"the class `{self.related_cls.__name__}` has multiple parent classes from type `Scenario`")
-                    base_class = cur_base
-            if base_class == self._related_type:
+            base_class = self.get_next_parent_class()
+
+            if base_class is None:
                 # if the class type is the original `Setup` or `Scenario` type -> no inner devices exists
                 return []
             return self.__class__.get_for(base_class).get_all_abs_inner_device_classes()
 
         return cls_devices
+
+    @abstractmethod
+    def get_next_parent_class(self) -> Union[Type[Scenario], Type[Setup], None]:
+        """
+        This method returns the next parent class which is a subclass of the :class:`Scenario`/:class:`Setup` itself.
+
+        :return: returns the next parent class or None if the next parent class is :class:`Scenario`/:class:`Setup`
+                 itself
+        """
 
     def get_all_connections(self) -> List[Connection]:
         """
@@ -139,16 +143,8 @@ class NormalScenarioSetupController(Controller, ABC):
         """
 
         # get parent scenario / setup class and check no multi inheritance
-        parent_scenario_or_setup = None
-        for cur_base_class in self.related_cls.__bases__:
-            if issubclass(cur_base_class, Scenario) or issubclass(cur_base_class, Setup):
-                if parent_scenario_or_setup is not None:
-                    # multi inheritance is not allowed
-                    raise MultiInheritanceError(
-                        f"found more than one Scenario/Setup parent classes for `{self.related_cls.__name__}` "
-                        f"- multi inheritance is not allowed for Scenario/Setup classes")
-                parent_scenario_or_setup = cur_base_class
-        if parent_scenario_or_setup in (Scenario, Setup):
+        parent_scenario_or_setup = self.get_next_parent_class()
+        if parent_scenario_or_setup is None:
             # done, because the parent class is direct Scenario/Setup class
             return
 
@@ -313,15 +309,10 @@ class NormalScenarioSetupController(Controller, ABC):
         they are bidirectional). It does not analyse or take :class:`Feature` classes into consideration.
         """
         # determine next relevant base class
-        next_base_class = None
-        for cur_base in self.related_cls.__bases__:
-            if issubclass(cur_base, Scenario) or issubclass(cur_base, Setup):
-                if next_base_class is not None:
-                    raise MultiInheritanceError(f"the class `{self.related_cls.__name__}` has multiple parent classes "
-                                                f"from type `Scenario` or `Setup`")
-                next_base_class = cur_base
+        next_base_class = self.get_next_parent_class()
+
         # executed this method for all parents too
-        if next_base_class not in (Scenario, Setup):
+        if next_base_class:
             NormalScenarioSetupController.get_for(next_base_class).determine_raw_absolute_device_connections()
 
         all_relevant_cnns = []
@@ -343,8 +334,8 @@ class NormalScenarioSetupController(Controller, ABC):
         if len(all_devices) > 0 and not has_connect_decorator:
             # the current item has defined devices, but no own `@connect()` decorator -> use absolute data from
             #  next parent
-
-            if next_base_class not in (Scenario, Setup):
+            if next_base_class is not None:
+                # only if there is a next base class
                 next_base_class_controller = NormalScenarioSetupController.get_for(next_base_class)
 
                 for cur_parent_cnn in next_base_class_controller.get_all_abs_connections():
