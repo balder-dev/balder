@@ -59,7 +59,8 @@ class Base0EnvtesterClass(ABC):
 
         proc.join()
         assert proc.exitcode == self.expected_exit_code, \
-            f"the process does not terminates with expected exit code `{self.expected_exit_code}`"
+            f"the process terminates with unexpected exit code `{proc.exitcode}` - exit code " \
+            f"`{self.expected_exit_code}` was expected"
 
         if self.expected_data_alternative is None:
             # only one possible truth

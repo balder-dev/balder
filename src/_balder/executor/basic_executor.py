@@ -108,6 +108,23 @@ class BasicExecutor(ABC):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
+    def get_all_recognized_exception(self) -> List[Exception]:
+        """
+        This method returns all occurred Exception of this branch.
+
+        :return: a list with all occurred and recorded exceptions
+        """
+        all_own = [self.construct_result.exception, self.body_result.exception, self.teardown_result.exception]
+        if self.all_child_executors:
+            for cur_child_executor in self.all_child_executors:
+                all_own += cur_child_executor.get_all_recognized_exception()
+
+        # filter all duplicated entries
+        all_own = list(set(all_own))
+        if None in all_own:
+            all_own.remove(None)
+        return all_own
+
     def set_result_for_whole_branch(self, value: ResultState):
         """
         This method sets the executor result for all sub executors.

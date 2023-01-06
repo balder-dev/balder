@@ -20,6 +20,10 @@ class Test0UnclearSetupScopedFixtureReference(Base0EnvtesterClass):
     """
 
     @property
+    def expected_exit_code(self) -> int:
+        return 4
+
+    @property
     def expected_data(self) -> tuple:
         return (
             # FIXTURE-CONSTRUCTION: balderglob_fixture_session

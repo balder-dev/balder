@@ -24,6 +24,10 @@ class Test0TreecheckFixtBalderglobTestcaseConstruction(Base0EnvtesterClass):
         ]
 
     @property
+    def expected_exit_code(self):
+        return 1
+
+    @property
     def expected_data(self):
         return (
             # FIXTURE-CONSTRUCTION: balderglob_fixture_session
