@@ -332,9 +332,9 @@ class NormalScenarioSetupController(Controller, ABC):
         # check if the devices of the current item has minimum one own connect() decorator
         has_connect_decorator = False
         for cur_device in all_devices:
-            cur_device_controller = DeviceController.get_for(cur_device)
-            if len(cur_device_controller.connections) > 0:
+            if len(DeviceController.get_for(cur_device).connections) > 0:
                 has_connect_decorator = True
+
         if len(all_devices) == 0 and len(self.get_all_abs_inner_device_classes()) > 0:
             # only the parent class has defined scenarios -> use absolute data from next parent
             #  NOTHING TO DO, because we also use these devices in child setup/scenario
@@ -373,8 +373,7 @@ class NormalScenarioSetupController(Controller, ABC):
             # otherwise, use data from current layer, because there is no parent, no devices or this item overwrites
             # the connections from higher classes
             for cur_device in all_devices:
-                cur_device_controller = DeviceController.get_for(cur_device)
-                for _, cur_cnn_list in cur_device_controller.connections.items():
+                for _, cur_cnn_list in DeviceController.get_for(cur_device).connections.items():
                     # now add every single connection correctly into the dictionary
                     for cur_cnn in cur_cnn_list:
                         if cur_cnn not in all_relevant_cnns:
@@ -382,8 +381,5 @@ class NormalScenarioSetupController(Controller, ABC):
 
         # now set the absolute connections correctly
         for cur_cnn in all_relevant_cnns:
-            cur_cnn_from_device_controller = DeviceController.get_for(cur_cnn.from_device)
-            cur_cnn_to_device_controller = DeviceController.get_for(cur_cnn.to_device)
-
-            cur_cnn_from_device_controller.add_new_absolute_connection(cur_cnn)
-            cur_cnn_to_device_controller.add_new_absolute_connection(cur_cnn)
+            DeviceController.get_for(cur_cnn.from_device).add_new_absolute_connection(cur_cnn)
+            DeviceController.get_for(cur_cnn.to_device).add_new_absolute_connection(cur_cnn)
