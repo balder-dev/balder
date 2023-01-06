@@ -16,6 +16,10 @@ class Test0VdeviceMappingInVdeviceFeatureScenario(Base0EnvtesterClass):
     def expected_data(self) -> tuple:
         return ()
 
+    @property
+    def expected_exit_code(self):
+        return 4
+
     @staticmethod
     def handle_balder_exception(exc: BalderException):
         assert isinstance(exc, IllegalVDeviceMappingError), \
