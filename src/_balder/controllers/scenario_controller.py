@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Type, Dict, List, Tuple
+from typing import Type, Dict, List, Tuple, Union
 
 import logging
 import inspect
@@ -9,7 +9,8 @@ from _balder.connection import Connection
 from _balder.controllers.feature_controller import FeatureController
 from _balder.controllers.device_controller import DeviceController
 from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
-from _balder.exceptions import UnclearAssignableFeatureConnectionError, ConnectionIntersectionError
+from _balder.exceptions import UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, \
+    MultiInheritanceError
 
 logger = logging.getLogger(__file__)
 
@@ -70,6 +71,25 @@ class ScenarioController(NormalScenarioSetupController):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def get_next_parent_class(self) -> Union[Type[Scenario], None]:
+        """
+        This method returns the next parent class which is a subclass of the :class:`Scenario` itself.
+
+        :return: returns the next parent class or None if the next parent class is :class:`Scenario`
+                 itself
+        """
+        next_base_class = None
+        for cur_base in self.related_cls.__bases__:
+            if issubclass(cur_base, Scenario):
+                if next_base_class is not None:
+                    raise MultiInheritanceError(
+                        f"found more than one Scenario parent classes for `{self.related_cls.__name__}` "
+                        f"- multi inheritance is not allowed for Scenario/Setup classes")
+                next_base_class = cur_base
+        if next_base_class == Scenario:
+            return None
+        return next_base_class
 
     def get_all_test_methods(self) -> List[callable]:
         """

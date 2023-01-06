@@ -3,7 +3,7 @@ from typing import Type, List, Union, Optional, Dict, TYPE_CHECKING
 
 import logging
 import inspect
-from abc import ABC
+from abc import ABC, abstractmethod
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.scenario import Scenario
@@ -86,19 +86,23 @@ class NormalScenarioSetupController(Controller, ABC):
         cls_devices = self.get_all_inner_device_classes()
         if len(cls_devices) == 0:
             # search for parent class
-            base_class = None
-            for cur_base in self.related_cls.__bases__:
-                if issubclass(cur_base, self._related_type):
-                    if base_class is not None:
-                        raise MultiInheritanceError(
-                            f"the class `{self.related_cls.__name__}` has multiple parent classes from type `Scenario`")
-                    base_class = cur_base
-            if base_class == self._related_type:
+            base_class = self.get_next_parent_class()
+
+            if base_class is None:
                 # if the class type is the original `Setup` or `Scenario` type -> no inner devices exists
                 return []
             return self.__class__.get_for(base_class).get_all_abs_inner_device_classes()
 
         return cls_devices
+
+    @abstractmethod
+    def get_next_parent_class(self) -> Union[Type[Scenario], Type[Setup], None]:
+        """
+        This method returns the next parent class which is a subclass of the :class:`Scenario`/:class:`Setup` itself.
+
+        :return: returns the next parent class or None if the next parent class is :class:`Scenario`/:class:`Setup`
+                 itself
+        """
 
     def get_all_connections(self) -> List[Connection]:
         """
@@ -139,16 +143,8 @@ class NormalScenarioSetupController(Controller, ABC):
         """
 
         # get parent scenario / setup class and check no multi inheritance
-        parent_scenario_or_setup = None
-        for cur_base_class in self.related_cls.__bases__:
-            if issubclass(cur_base_class, Scenario) or issubclass(cur_base_class, Setup):
-                if parent_scenario_or_setup is not None:
-                    # multi inheritance is not allowed
-                    raise MultiInheritanceError(
-                        f"found more than one Scenario/Setup parent classes for `{self.related_cls.__name__}` "
-                        f"- multi inheritance is not allowed for Scenario/Setup classes")
-                parent_scenario_or_setup = cur_base_class
-        if parent_scenario_or_setup in (Scenario, Setup):
+        parent_scenario_or_setup = self.get_next_parent_class()
+        if parent_scenario_or_setup is None:
             # done, because the parent class is direct Scenario/Setup class
             return
 
@@ -305,3 +301,74 @@ class NormalScenarioSetupController(Controller, ABC):
                             f'{cur_to_device.__qualname__} (node: `{cur_to_node}`) in scenario '
                             f'`{self.related_cls.__name__}`')
         return all_abs_single_connections
+
+    def determine_raw_absolute_device_connections(self):
+        """
+        This method determines and creates the basic `_absolute_connections` for the related scenario/setup. Note,
+        that this method only creates the class attribute and adds the synchronized connections (same on both sides if
+        they are bidirectional). It does not analyse or take :class:`Feature` classes into consideration.
+        """
+        # determine next relevant base class
+        next_base_class = self.get_next_parent_class()
+
+        # executed this method for all parents too
+        if next_base_class:
+            NormalScenarioSetupController.get_for(next_base_class).determine_raw_absolute_device_connections()
+
+        all_relevant_cnns = []
+
+        all_devices = self.get_all_inner_device_classes()
+        all_devices_as_strings = [search_device.__name__ for search_device in all_devices]
+
+        # check if the devices of the current item has minimum one own connect() decorator
+        has_connect_decorator = False
+        for cur_device in all_devices:
+            if len(DeviceController.get_for(cur_device).connections) > 0:
+                has_connect_decorator = True
+
+        if len(all_devices) == 0 and len(self.get_all_abs_inner_device_classes()) > 0:
+            # only the parent class has defined scenarios -> use absolute data from next parent
+            #  NOTHING TO DO, because we also use these devices in child setup/scenario
+            return
+
+        if len(all_devices) > 0 and not has_connect_decorator:
+            # the current item has defined devices, but no own `@connect()` decorator -> use absolute data from
+            #  next parent
+            if next_base_class is not None:
+                # only if there is a next base class
+                next_base_class_controller = NormalScenarioSetupController.get_for(next_base_class)
+
+                for cur_parent_cnn in next_base_class_controller.get_all_abs_connections():
+
+                    # find all related devices (for this connection)
+                    related_from_device = \
+                        all_devices[all_devices_as_strings.index(cur_parent_cnn.from_device.__name__)]
+                    related_to_device = all_devices[all_devices_as_strings.index(cur_parent_cnn.to_device.__name__)]
+                    new_cnn = cur_parent_cnn.clone()
+                    new_cnn.set_metadata_for_all_subitems(None)
+                    new_cnn.set_metadata_for_all_subitems(
+                        {"from_device": related_from_device, "to_device": related_to_device,
+                         "from_device_node_name": cur_parent_cnn.from_node_name,
+                         "to_device_node_name": cur_parent_cnn.to_node_name})
+                    all_relevant_cnns.append(new_cnn)
+
+                # throw warning (but only if this scenario/setup has minimum one of the parent classes has inner
+                # devices (and connection between them) by its own)
+                if len(next_base_class_controller.get_all_abs_inner_device_classes()) > 0 and \
+                        len(next_base_class_controller.get_all_abs_connections()) > 0:
+                    logger.warning(
+                        f"the collected `{self.related_cls.__name__}` class overwrites devices, but does "
+                        f"not define connections between them by its own - please provide them in case you "
+                        f"overwrite devices")
+        else:
+            # otherwise, use data from current layer, because there is no parent, no devices or this item overwrites
+            # the connections from higher classes
+            for cur_device in all_devices:
+                for _, cur_cnn_list in DeviceController.get_for(cur_device).connections.items():
+                    # now add every single connection correctly into the dictionary
+                    all_relevant_cnns += [cur_cnn for cur_cnn in cur_cnn_list if cur_cnn not in all_relevant_cnns]
+
+        # now set the absolute connections correctly
+        for cur_cnn in all_relevant_cnns:
+            DeviceController.get_for(cur_cnn.from_device).add_new_absolute_connection(cur_cnn)
+            DeviceController.get_for(cur_cnn.to_device).add_new_absolute_connection(cur_cnn)
