@@ -1,10 +1,10 @@
-
-from multiprocessing import Process
-from balder.exceptions import DeviceOverwritingError
 from _balder.balder_session import BalderSession
+from _balder.exceptions import BalderException, DeviceOverwritingError
+
+from tests.test_utilities.base_0_envtester_class import Base0EnvtesterClass
 
 
-def test_0_scenario_inheritance_missing_device_inheritance(balder_working_dir):
+class Test0ScenarioInheritanceMissingDeviceInheritance(Base0EnvtesterClass):
     """
     This testcase executes a reduced version of the basic envtester environment. It only implements the `ScenarioA` and
     its related `SetupA` and a child class of the related ScenarioA that has an additional test method.
@@ -15,22 +15,17 @@ def test_0_scenario_inheritance_missing_device_inheritance(balder_working_dir):
         The `ScenarioAParent` class has a child (the `ScenarioAChild` class). This forbids the execution of the
         `ScenarioAParent` class.
     """
-    proc = Process(target=processed, args=(balder_working_dir, ))
-    proc.start()
-    proc.join()
-    assert proc.exitcode == 0, "the process terminates with an error"
 
+    @property
+    def expected_data(self) -> tuple:
+        return ()
 
-def processed(env_dir):
-
-    print("\n", flush=True)
-    session = BalderSession(cmd_args=[], working_dir=env_dir)
-    try:
-        session.run()
-        print("\n")
-        assert False, "test session terminates without an error"
-    except DeviceOverwritingError as exc:
+    @staticmethod
+    def handle_balder_exception(exc: BalderException):
+        assert isinstance(exc, DeviceOverwritingError), 'unexpected exception type'
         assert exc.args[0] == "the inner device class `ScenarioAChild.ScenarioDevice2` has the same name than the " \
                               "device `ScenarioAParent.ScenarioDevice2` - it should also inherit from it"
 
-    assert session.executor_tree is None, "test session does not terminates before collector work was done"
+    @staticmethod
+    def validate_finished_session(session: BalderSession):
+        assert session.executor_tree is None, "test session does not terminates before collector work was done"

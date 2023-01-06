@@ -1,9 +1,10 @@
-from multiprocessing import Process
 from _balder.balder_session import BalderSession
-from _balder.exceptions import VDeviceOverwritingError
+from _balder.exceptions import VDeviceOverwritingError, BalderException
+
+from tests.test_utilities.base_0_envtester_class import Base0EnvtesterClass
 
 
-def test_0_overwrite_illegally_miss_inherit_betsceset(balder_working_dir):
+class Test0OverwriteIllegallyMissInheritBetsceset(Base0EnvtesterClass):
     """
     This testcase is a modified version of the basic ENVTESTER environment. It is limited to the `ScenarioA` and the
     `SetupA` and uses a feature `FeatureOfRelevance` for testing the correct overwriting of VDevices BETWEEN the
@@ -17,22 +18,17 @@ def test_0_overwrite_illegally_miss_inherit_betsceset(balder_working_dir):
 
     The test should terminate successful and no error should occur!
     """
-    proc = Process(target=processed, args=(balder_working_dir, ))
-    proc.start()
-    proc.join()
-    assert proc.exitcode == 0, "the process terminates with an error"
 
+    @property
+    def expected_data(self) -> tuple:
+        return ()
 
-def processed(env_dir):
-
-    print("\n", flush=True)
-    session = BalderSession(cmd_args=[], working_dir=env_dir)
-    try:
-        session.run()
-        print("\n")
-        assert False, "test session terminates without an error"
-    except VDeviceOverwritingError as exc:
+    @staticmethod
+    def handle_balder_exception(exc: BalderException):
+        assert isinstance(exc, VDeviceOverwritingError), 'unexpected exception type'
         assert exc.args[0] == "the inner vDevice class `FeatureOfRelevanceLvl2.VDeviceWithI` has the same name than " \
                               "the vDevice `FeatureOfRelevanceLvl1.VDeviceWithI` - it should also inherit from it"
 
-    assert session.executor_tree is None, "test session does not terminates before collector work was done"
+    @staticmethod
+    def validate_finished_session(session: BalderSession):
+        assert session.executor_tree is None, "test session does not terminates before collector work was done"

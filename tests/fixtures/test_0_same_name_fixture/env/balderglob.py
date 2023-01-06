@@ -4,8 +4,8 @@ from datetime import datetime
 import pathlib
 import balder
 import argparse
-import inspect
 import logging
+from multiprocessing import Queue
 from .lib.utils import FixtureReturn
 
 logger = logging.getLogger(__file__)
@@ -17,7 +17,7 @@ class MyTestException(Exception):
 
 class RuntimeObserver:
     """This is a helper object, that will be used from this test environment to observe the execution order"""
-    data = []
+    queue: Union[Queue, None] = None
 
     error_throwing = {}
 
@@ -26,7 +26,7 @@ class RuntimeObserver:
                   category: Literal["fixture", "testcase", "feature"] = None,
                   part: Literal["construction", "teardown"] = None):
         """
-        adds a new entry into the internal data
+        adds a new entry and sends it over the queue
 
         :param file: the full filepath where the log will be generated
 
@@ -43,14 +43,14 @@ class RuntimeObserver:
         if hasattr(meth, 'fn'):
             meth = meth.fn
         new_dataset = {
-            "timestamp": datetime.now(), "file": file, "cls": cls, "meth": meth, "msg": msg, "category": category,
-            "part": part
+            "timestamp": datetime.now(), "file": file, "cls": "" if cls is None else cls.__name__,
+            "meth": meth.__name__, "msg": msg, "category": category, "part": part
         }
-        logger.info("{:16} | {:16} | {:30} | {:12} | {:15} | {}".format(
+        logger.info("{:22} | {:20} | {:30} | {:12} | {:15} | {}".format(
             pathlib.Path(file).parts[-1], "" if cls is None else cls.__name__, "" if meth is None else meth.__name__,
             "" if category is None else category, "" if part is None else part, "" if msg is None else msg))
 
-        RuntimeObserver.data.append(new_dataset)
+        RuntimeObserver.queue.put(new_dataset)
         # check if we have to throw the error
         error_throwing_required = len(RuntimeObserver.error_throwing) > 0
         for cur_key in RuntimeObserver.error_throwing.keys():
@@ -82,7 +82,10 @@ class MyErrorThrowingPlugin(balder.BalderPlugin):
         # use this method to set the values
         RuntimeObserver.error_throwing = {}
         if self.balder_session.parsed_args.test_error_file:
-            RuntimeObserver.error_throwing['file'] = self.balder_session.parsed_args.test_error_file
+            path = pathlib.Path(self.balder_session.parsed_args.test_error_file)
+            if not path.is_absolute():
+                path = str(self.balder_session.working_dir.joinpath(path))
+            RuntimeObserver.error_throwing['file'] = path
         if self.balder_session.parsed_args.test_error_cls:
             RuntimeObserver.error_throwing['cls'] = self.balder_session.parsed_args.test_error_cls
         if self.balder_session.parsed_args.test_error_meth:
@@ -90,7 +93,6 @@ class MyErrorThrowingPlugin(balder.BalderPlugin):
         if self.balder_session.parsed_args.test_error_part:
             RuntimeObserver.error_throwing['part'] = self.balder_session.parsed_args.test_error_part
         return pyfiles
-
 
 @balder.fixture(level="session")
 def fixture_session():

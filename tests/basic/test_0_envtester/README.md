@@ -30,52 +30,66 @@ runtime_data = RuntimeObserver.data.copy()
 
 ```
 
+## The base test class `Base0EnvtesterClass`
+
+This is a base test class from which every test should inherit that wants to use this environment. This makes the test 
+process much easier. Internally, this class provides an auto test method `test()` which manages the process and 
+secures that the queue is available in the balder-process. 
+
+You can simply inherit from this class and only overwrite the necessary methods, like shown below:
+
+```python
+from _balder.testresult import ResultState
+from _balder.balder_session import BalderSession
+from tests.test_utilities.base_0_envtester_class import Base0EnvtesterClass
+
+
+class Test0Envtester(Base0EnvtesterClass):
+    """
+    This testcase executes the basic example and checks if the tree ends with the result SUCCESS
+    """
+    @property
+    def expected_data(self):
+        return (
+            # FIXTURE-CONSTRUCTION: balderglob_fixture_session
+            {"file": "balderglob.py", "meth": "balderglob_fixture_session", "part": "construction"},
+            [
+                (
+                    # FIXTURE-CONSTRUCTION: SetupA.fixture_session
+                    {"cls": "SetupA", "meth": "fixture_session", "part": "construction"},
+                    {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                ),
+                (
+                    # FIXTURE-CONSTRUCTION: SetupB.fixture_session
+                    {"cls": "SetupB", "meth": "fixture_session", "part": "construction"},
+                    {"cls": "SetupFeatureIII", "meth": "do_something", "category": "feature"},
+                    {"cls": "SetupFeatureIV", "meth": "do_something", "category": "feature"},
+                )
+            ],
+            ...,
+            # FIXTURE-TEARDOWN: balderglob_fixture_session
+            {"file": "balderglob.py", "meth": "balderglob_fixture_session", "part": "teardown"},
+        )
+
+    @staticmethod
+    def validate_finished_session(session: BalderSession):
+        # check result states everywhere (have to be SUCCESS everywhere
+        assert session.executor_tree.executor_result == ResultState.SUCCESS, \
+            "test session does not terminates with success"
+
+        ...
+
+```
+
+Everything else is automatically managed by the `Base0EnvtesterClass`
+
 ## The helper validation function ``compare_observed_list_with_expected``
 
 The balder test directory has an own function ``compare_observed_list_with_expected``, that allows the validation of the
 ``RuntimeObserver`` entries with an own list of expected-values.
 
 You can find this function at ``tests/test_utilities/observer_compare.py``.
-
-The validation should be done after the balder test session was executed. For the most cases the code looks like the 
-following:
-
-```python
-
-import pathlib
-import sys
-
-from _balder.balder_session import BalderSession
-
-from tests.test_utilities.observer_compare import compare_observed_list_with_expected
-
-...
-
-
-def processed(env_dir):
-    print("\n", flush=True)
-    session = BalderSession(cmd_args=[], working_dir=env_dir)
-    session.run()
-    print("\n")
-
-    # get the class instance from already imported module - balder loads it from given working directory
-    RuntimeObserver = getattr(sys.modules.get('env.balderglob'), "RuntimeObserver")
-    runtime_data = RuntimeObserver.data.copy()
-
-    # cleanup the data from `RuntimeObserver` and convert filepath to relative path
-    exec_list = []
-    for cur_data in runtime_data:
-        new_data = cur_data.copy()
-        new_data["file"] = pathlib.Path(new_data["file"]).relative_to(env_dir)
-        exec_list.append(new_data)
-
-    expected_data = (
-        ...
-    )
-
-    compare_observed_list_with_expected(exec_list, expected_data)
-
-```
 
 ### Entry of ``expected_data`` tuple
 

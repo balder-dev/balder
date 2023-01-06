@@ -18,11 +18,11 @@ def _compare_observed_entry(original_item: Dict, expected_item: Dict):
             return False
     if KEY_CLS in expected_item.keys():
         if isinstance(expected_item[KEY_CLS], str) and original_item[KEY_CLS] is not None and \
-                original_item[KEY_CLS].__name__ != expected_item[KEY_CLS]:
+                original_item[KEY_CLS] != expected_item[KEY_CLS]:
             return False
     if KEY_METH in expected_item.keys():
         if isinstance(expected_item[KEY_METH], str) and \
-                original_item[KEY_METH].__name__ != expected_item[KEY_METH]:
+                original_item[KEY_METH] != expected_item[KEY_METH]:
             return False
     if KEY_MSG in expected_item.keys():
         if original_item[KEY_MSG] != expected_item[KEY_MSG]:
