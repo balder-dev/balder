@@ -366,9 +366,7 @@ class NormalScenarioSetupController(Controller, ABC):
             for cur_device in all_devices:
                 for _, cur_cnn_list in DeviceController.get_for(cur_device).connections.items():
                     # now add every single connection correctly into the dictionary
-                    for cur_cnn in cur_cnn_list:
-                        if cur_cnn not in all_relevant_cnns:
-                            all_relevant_cnns.append(cur_cnn)
+                    all_relevant_cnns += [cur_cnn for cur_cnn in cur_cnn_list if cur_cnn not in all_relevant_cnns]
 
         # now set the absolute connections correctly
         for cur_cnn in all_relevant_cnns:
