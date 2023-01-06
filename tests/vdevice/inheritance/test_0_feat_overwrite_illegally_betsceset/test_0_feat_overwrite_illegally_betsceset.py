@@ -1,9 +1,10 @@
-from multiprocessing import Process
 from _balder.balder_session import BalderSession
-from _balder.exceptions import FeatureOverwritingError
+from _balder.exceptions import FeatureOverwritingError, BalderException
+
+from tests.test_utilities.base_0_envtester_class import Base0EnvtesterClass
 
 
-def test_0_feat_overwrite_illegally_betsceset(balder_working_dir):
+class Test0FeatOverwriteIllegallyBetsceset(Base0EnvtesterClass):
     """
     This testcase is a modified version of the basic ENVTESTER environment. It is limited to the `ScenarioA` and the
     `SetupA` and uses a feature `FeatureOfRelevance` for testing the correct overwriting of VDevices BETWEEN the
@@ -18,24 +19,19 @@ def test_0_feat_overwrite_illegally_betsceset(balder_working_dir):
 
     The test should terminate successful and no error should occur!
     """
-    proc = Process(target=processed, args=(balder_working_dir, ))
-    proc.start()
-    proc.join()
-    assert proc.exitcode == 0, "the process terminates with an error"
 
+    @property
+    def expected_data(self) -> tuple:
+        return ()
 
-def processed(env_dir):
-
-    print("\n", flush=True)
-    session = BalderSession(cmd_args=[], working_dir=env_dir)
-    try:
-        session.run()
-        print("\n")
-        assert False, "test session terminates without an error"
-    except FeatureOverwritingError as exc:
+    @staticmethod
+    def handle_balder_exception(exc: BalderException):
+        assert isinstance(exc, FeatureOverwritingError), "wrong exception type"
         assert exc.args[0] == "you are trying to overwrite an existing vDevice Feature property `i` in vDevice " \
                               "`FeatureOfRelevanceLvl2.VDeviceWithI` from the parent vDevice class " \
                               "`FeatureOfRelevanceLvl1.VDeviceWithI` - this is only possible with a child (or with " \
                               "the same) feature class the parent uses (in this case the `FeatureI`)"
 
-    assert session.executor_tree is None, "test session does not terminates before collector work was done"
+    @staticmethod
+    def validate_finished_session(session: BalderSession):
+        assert session.executor_tree is None, "test session does not terminates before collector work was done"
