@@ -859,16 +859,14 @@ class Collector:
                              "to_device_node_name": cur_parent_cnn.to_node_name})
                         all_relevant_cnns.append(new_cnn)
 
-                    # throw warning (but only if this scenario/setup is a collected one, and minimum one of the parent
-                    # classes has inner devices (and connection between them) by its own)
+                    # throw warning (but only if this scenario/setup has minimum one of the parent classes has inner
+                    # devices (and connection between them) by its own)
                     if len(next_base_class_controller.get_all_abs_inner_device_classes()) > 0 and \
                             len(next_base_class_controller.get_all_abs_connections()) > 0:
-                        if cur_scenario_or_setup in self._all_scenarios or cur_scenario_or_setup in self._all_setups:
-                            # this element is a collected one -> throw warning
-                            logger.warning(
-                                f"the collected `{cur_scenario_or_setup.__name__}` class overwrites devices, but does "
-                                f"not define connections between them by its own - please provide them in case you "
-                                f"overwrite devices")
+                        logger.warning(
+                            f"the collected `{cur_scenario_or_setup.__name__}` class overwrites devices, but does "
+                            f"not define connections between them by its own - please provide them in case you "
+                            f"overwrite devices")
             else:
                 # otherwise, use data from current layer, because there is no parent, no devices or this item overwrites
                 # the connections from higher classes
