@@ -35,7 +35,13 @@ def _console_balder_debug(cmd_args: Optional[List[str]] = None, working_dir: Uni
         elif balder_session.executor_tree.executor_result == ResultState.SUCCESS:
             exit(ExitCode.SUCCESS.value)
         elif balder_session.executor_tree.executor_result in [ResultState.ERROR, ResultState.FAILURE]:
-            exit(ExitCode.TESTS_FAILED.value)
+            # check if a BalderException was thrown too -> would be a balder environment error -> special exit code
+            balder_exceptions = [cur_exc for cur_exc in balder_session.executor_tree.get_all_recognized_exception()
+                                 if isinstance(cur_exc, BalderException)]
+            if len(balder_exceptions) > 0:
+                exit(ExitCode.BALDER_USAGE_ERROR.value)
+            else:
+                exit(ExitCode.TESTS_FAILED.value)
 
     except BalderException as exc:
         # a balder usage error occurs
