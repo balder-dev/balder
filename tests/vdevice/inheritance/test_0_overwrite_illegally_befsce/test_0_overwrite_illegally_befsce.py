@@ -22,6 +22,10 @@ class Test0OverwriteIllegallyBefsce(Base0EnvtesterClass):
     def expected_data(self) -> tuple:
         return ()
 
+    @property
+    def expected_exit_code(self) -> int:
+        return 4
+
     @staticmethod
     def handle_balder_exception(exc: BalderException):
         assert isinstance(exc, VDeviceOverwritingError), 'unexpected exception type'
