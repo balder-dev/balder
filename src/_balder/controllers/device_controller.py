@@ -397,6 +397,34 @@ class DeviceController(BaseDeviceController, ABC):
                         f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
                         f"feature `{cur_feature.__class__.__name__}`")
 
+    def validate_inheritance_of_instantiated_features(self):
+        """
+        This method validates instantiated features and check that they are inherited correctly. It checks that the
+        feature of a child device is also a child class of the feature of the parent device (in case they use the same
+        property name).
+        """
+
+        all_instantiated_feature_objs = self.get_all_instantiated_feature_objects()
+        # only one match possible, because we already have checked it before
+        next_base_device = self.get_next_parent_class()
+        if next_base_device is not None:
+            next_base_device_controller = DeviceController.get_for(next_base_device)
+            # also execute this method for the base device
+            next_base_device_controller.validate_inheritance_of_instantiated_features()
+            all_parent_instantiated_feature_objs = next_base_device_controller.get_all_instantiated_feature_objects()
+        else:
+            all_parent_instantiated_feature_objs = {}
+
+        for cur_attr_name, cur_feature in all_instantiated_feature_objs.items():
+            if cur_attr_name in all_parent_instantiated_feature_objs.keys():
+                # attribute name also exists before -> check if the feature is a parent of the current one
+                if not isinstance(cur_feature, all_parent_instantiated_feature_objs[cur_attr_name].__class__):
+                    raise FeatureOverwritingError(
+                        f"the feature `{cur_feature.__class__.__name__}` with the attribute name `{cur_attr_name}` "
+                        f"of the device `{self.related_cls.__name__}` you are trying to overwrite is no child class of "
+                        f"the feature `{all_parent_instantiated_feature_objs[cur_attr_name].__class__.__name__}` "
+                        f"that was assigned to this property before")
+
     def resolve_mapped_vdevice_strings(self):
         """
         This method updates the inner VDevice-Device mappings for every instantiated :class:`.Feature`, if the
