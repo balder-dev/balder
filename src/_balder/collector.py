@@ -752,6 +752,103 @@ class Collector:
         for cur_setup in setups:
             SetupController.get_for(cur_setup).validate_feature_possibility()
 
+    def _set_original_device_features(self):
+        """
+        This method ensures that the original features (that are instantiated in the
+        :class:`Scenario`/:class:`Setup` devices or in the :class:`VDevice`) are saved inside their controllers.
+        """
+        all_scenario_features = self.get_all_scenario_feature_classes()
+        all_setup_features = self.get_all_setup_feature_classes()
+
+        self.set_original_device_features_for(self._all_scenarios)
+        self.set_original_device_features_for(self._all_setups)
+        Collector.set_original_device_features_for_all_vdevices_of(all_scenario_features)
+        Collector.set_original_device_features_for_all_vdevices_of(all_setup_features)
+
+    def _exchange_strings_with_objects(self):
+        """
+        This method exchanges all strings (that can be used in decorators) are exchanged with their real objects. It
+        secures this for all :class:`Device` and :class:`VDevice` references inside the session.
+        """
+        self.exchange_device_connection_device_strings()
+        self.exchange_vdevice_mapping_device_strings()
+
+    def _validate_scenario_and_setups(self):
+        """
+        This method validates the scenario and setups that are collected.
+        """
+        Collector.validate_inheritance_of(self._all_scenarios)
+        Collector.validate_inheritance_of(self._all_setups)
+
+    def _validate_features_and_their_vdevices(self):
+        """
+        This method validates the correct usage of features and their vDevices. It secures that the feature inheritance
+        inside devices is correct and validates that inner referenced features inside other feature are correct. In
+        addition to that it secures that inner vDevice classes of features are inherited and are used correctly.
+        """
+        all_scenario_features = self.get_all_scenario_feature_classes()
+        all_setup_features = self.get_all_setup_feature_classes()
+
+        Collector.validate_feature_inheritance_of(devices=self.get_all_scenario_device_classes())
+        Collector.validate_feature_inheritance_of(devices=self.get_all_setup_device_classes())
+        Collector.validate_inner_referenced_features(self.get_all_scenario_device_classes())
+        Collector.validate_inner_referenced_features(self.get_all_setup_device_classes())
+        Collector.feature_validate_inner_classes(all_scenario_features)
+        Collector.feature_validate_inner_classes(all_setup_features)
+        Collector.feature_validate_vdevice_inheritance(all_scenario_features)
+        Collector.feature_validate_vdevice_inheritance(all_setup_features)
+
+    def _determine_class_based_values_for_all_features(self):
+        """
+        This method determines the absolute class based values for `@for_vdevice`. It will not update any internal
+        values if the class-based-value was already set by an explicit class based `@for_vdevice` decorator. Otherwise,
+        it determines the class based `@for_vdevice` value through analysing the method-based-decorators and sets this
+        determined value. If the method finds a better value, it throws a warning with a suggestion for the (nicer)
+        class based decorator.
+
+        In both cases the method will secure that every given vDevice class is a real part of the current
+        :class:`Feature` class (will be returned by direct call of method `Feature.get_inner_vdevice_classes()`).
+
+
+        .. note::
+            This method automatically updates the values for the parent classes, too. Every time it searches for the
+            values it also considers the parent values for the vDevice or the parent class of the vDevice.
+        """
+        all_scenario_features = self.get_all_scenario_feature_classes()
+        all_setup_features = self.get_all_setup_feature_classes()
+
+        Collector.feature_determine_class_for_vdevice_values(all_scenario_features)
+        Collector.feature_determine_class_for_vdevice_values(all_setup_features)
+
+    def _validate_vdevice_feature_references(self):
+        """
+        This method validates that VDevice references are used correctly.
+        """
+        all_scenario_features = self.get_all_scenario_feature_classes()
+
+        Collector.check_vdevice_feature_existence(self.all_scenarios)
+        Collector.check_vdevice_feature_existence(self.all_setups)
+        Collector.validate_inherited_class_based_vdevice_cnn_subset(all_scenario_features)
+        self.validate_feature_clearance_for_parallel_connections_for_scenarios(self.all_scenarios)
+
+    def _determine_absolute_device_connections(self):
+        """
+        This method manages the absolute connections for all collected :class:`Scenario` and :class:`Setup` objects. It
+        determines the raw absolute connections for scenarios and setups and also creates the real device connections
+        for all scenarios.
+        """
+        self.determine_raw_absolute_device_connections_for(self.all_scenarios)
+        self.determine_raw_absolute_device_connections_for(self.all_setups)
+        self.determine_absolute_device_connections_for_scenarios(self.all_scenarios)
+
+    def _validate_feature_connections_in_setup(self):
+        """
+        This method validates that the connections of setup features are valid.
+        It ensures, that every feature connection (that already has a vDevice<->Device mapping on setup level)
+        has a connection that is CONTAINED-IN the connection between the related setup devices.
+        """
+        Collector.validate_feature_possibility_in_setups(self.all_setups)
+
     def collect(self, plugin_manager: PluginManager):
         """
         This method manages the entire collection process.
@@ -780,40 +877,24 @@ class Collector:
         self._all_scenarios = Collector.filter_parent_classes_of(items=self._all_scenarios)
         self._all_setups = Collector.filter_parent_classes_of(items=self._all_setups)
 
-        all_scenario_features = self.get_all_scenario_feature_classes()
-        all_setup_features = self.get_all_setup_feature_classes()
-
         Collector.rework_method_variation_decorators()
 
-        Collector.validate_inheritance_of(self._all_scenarios)
-        Collector.validate_inheritance_of(self._all_setups)
-
         # do some further stuff after everything was read
-        self.set_original_device_features_for(self._all_scenarios)
-        self.set_original_device_features_for(self._all_setups)
-        Collector.set_original_device_features_for_all_vdevices_of(all_scenario_features)
-        Collector.set_original_device_features_for_all_vdevices_of(all_setup_features)
-        self.exchange_device_connection_device_strings()
-        self.exchange_vdevice_mapping_device_strings()
+        self._set_original_device_features()
+        self._exchange_strings_with_objects()
+
+        # todo move this implementation in related controller
         self.set_run_skip_ignore_of_test_methods_in_scenarios()
 
-        Collector.validate_feature_inheritance_of(devices=self.get_all_scenario_device_classes())
-        Collector.validate_feature_inheritance_of(devices=self.get_all_setup_device_classes())
+        self._validate_scenario_and_setups()
 
-        Collector.validate_inner_referenced_features(self.get_all_scenario_device_classes())
-        Collector.validate_inner_referenced_features(self.get_all_setup_device_classes())
+        self._validate_features_and_their_vdevices()
 
-        Collector.feature_validate_inner_classes(all_scenario_features)
-        Collector.feature_validate_inner_classes(all_setup_features)
-        Collector.feature_validate_vdevice_inheritance(all_scenario_features)
-        Collector.feature_validate_vdevice_inheritance(all_setup_features)
-        Collector.feature_determine_class_for_vdevice_values(all_scenario_features)
-        Collector.feature_determine_class_for_vdevice_values(all_setup_features)
-        Collector.check_vdevice_feature_existence(self.all_scenarios)
-        Collector.check_vdevice_feature_existence(self.all_setups)
-        Collector.validate_inherited_class_based_vdevice_cnn_subset(all_scenario_features)
-        self.validate_feature_clearance_for_parallel_connections_for_scenarios(self.all_scenarios)
-        self.determine_raw_absolute_device_connections_for(self.all_scenarios)
-        self.determine_raw_absolute_device_connections_for(self.all_setups)
-        self.determine_absolute_device_connections_for_scenarios(self.all_scenarios)
-        Collector.validate_feature_possibility_in_setups(self.all_setups)
+        self._determine_class_based_values_for_all_features()
+
+        self._validate_vdevice_feature_references()
+
+        self._determine_absolute_device_connections()
+
+        self._validate_feature_connections_in_setup()
+
