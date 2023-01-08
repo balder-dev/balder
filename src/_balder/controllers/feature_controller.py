@@ -627,3 +627,64 @@ class FeatureController(Controller):
                  exists on this feature class level
         """
         return self._current_active_method_variation.get(method_name, tuple([None, None, None]))
+
+    def get_inherited_method_variation(self, parent_class: Type[Feature], method_var_name: str):
+        """
+        This method will determine the correct inherited method-variation for the current object. For this, it searches
+        in the base classes of the given `parent_class` (which has to be a parent class of `self`) for the
+        method-variation that should be called.
+        It automatically detects if the parent class has a method-variation or is a single normal method. In case that
+        the method is a single normal method, it will directly return it, otherwise it searches the correct
+        method-variation according to the vDevice mapping of the current object and return the current active
+        method-variation.
+
+        .. note::
+            If this method finds the method names in more than one possible parents, it will throw an exception.
+
+        :param parent_class: the parent class of this object, the method should start searching for the
+                             `method_var_name` method (it searches in this class and all parents)
+
+        :param method_var_name: the name of the method or of the method variation that should be returned
+        """
+
+        parent_class_controller = FeatureController.get_for(parent_class)
+        if parent_class_controller.get_method_based_for_vdevice() is not None and \
+                method_var_name in parent_class_controller.get_method_based_for_vdevice().keys():
+            # the parent class has a method-variation -> get the current active version of it
+
+            # first get the active data for the instantiated feature object
+            active_vdevice, active_cnn_intersection, _ = self.get_active_method_variation(method_var_name)
+            # get the vDevice object that is used in the given parent class
+            if hasattr(parent_class, active_vdevice.__name__):
+                parent_vdevice = getattr(parent_class, active_vdevice.__name__)
+            else:
+                return None
+
+            # then determine the correct method variation according to the data of the instantiated object
+            cur_method_variation = parent_class_controller.get_method_variation(
+                of_method_name=method_var_name, for_vdevice=parent_vdevice,
+                with_connection=active_cnn_intersection, ignore_no_findings=True)
+            return cur_method_variation
+
+        if hasattr(parent_class, method_var_name):
+            # we found one normal method in this object
+            return getattr(parent_class, method_var_name)
+
+        # execute this method for all based and check if there is exactly one
+        parent_of_parent_methods = {}
+        for cur_base in parent_class.__bases__:
+            meth = self.get_inherited_method_variation(cur_base, method_var_name)
+            if meth is not None:
+                parent_of_parent_methods[cur_base] = meth
+        if len(parent_of_parent_methods) > 1:
+            raise UnclearMethodVariationError(
+                f"found multiple parent classes of `{parent_class.__name__}`, that provides a method with the "
+                f"name `{method_var_name}` (base classes "
+                f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
+                f"please note, that we do not support multiple inheritance")
+
+        if len(parent_of_parent_methods) == 1:
+            return list(parent_of_parent_methods.values())[0]
+
+        # otherwise do not found one of the methods
+        return None

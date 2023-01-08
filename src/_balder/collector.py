@@ -472,12 +472,12 @@ class Collector:
             def owner_wrapper(the_owner_of_this_method, the_name, wrap_fn):
                 @functools.wraps(wrap_fn)
                 def method_variation_multiplexer(this, *args, **kwargs):
+                    controller = FeatureController.get_for(this.__class__)
                     if this.__class__ == the_owner_of_this_method:
-                        controller = FeatureController.get_for(this.__class__)
                         # this is no parent class call -> use the set method-variation (set by VariationExecutor before)
                         _, _, func = controller.get_active_method_variation(the_name)
                     else:
-                        func = this._get_inherited_method_variation(the_owner_of_this_method, the_name)
+                        func = controller.get_inherited_method_variation(the_owner_of_this_method, the_name)
                         if func is None:
                             raise AttributeError(f'there exists no method/method variation in class '
                                                  f'`{the_owner_of_this_method.__name__}` or its parent classes')
