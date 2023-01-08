@@ -376,3 +376,28 @@ class DeviceController(BaseDeviceController, ABC):
                         f"found more than one matching feature in the device `{self.related_cls.__name__}` that "
                         f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
                         f"feature `{cur_feature.__class__.__name__}`")
+
+    def resolve_mapped_vdevice_strings(self):
+        """
+        This method updates the inner VDevice-Device mappings for every instantiated :class:`.Feature`, if the
+        mapped device (value in constructor) was given as a string. It secures that this device has a real
+        :class:`VDevice` reference for its mapped VDevice.
+        """
+        all_instanced_features = self.get_original_instanced_feature_objects()
+        scenario_or_setup_controller = self.__get_outer_class_controller()
+        if all_instanced_features is None:
+            # has no features -> skip
+            return
+        for _, cur_feature in all_instanced_features.items():
+            if cur_feature.active_vdevices != {}:
+                # do something only if there exists an internal mapping
+                for cur_mapped_vdevice, cur_mapped_device in cur_feature.active_vdevices.items():
+                    if isinstance(cur_mapped_device, str):
+                        resolved_device = \
+                            scenario_or_setup_controller.get_inner_device_class_by_string(cur_mapped_device)
+                        if resolved_device is None:
+                            raise RuntimeError(
+                                f"found no possible matching name while trying to resolve "
+                                f"the given vDevice string `{cur_mapped_vdevice}` in feature "
+                                f"`{cur_feature.__class__.__name__}`")
+                        cur_feature.active_vdevices[cur_mapped_vdevice] = resolved_device

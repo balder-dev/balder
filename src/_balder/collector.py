@@ -522,33 +522,15 @@ class Collector:
         VDevice-Device mappings for every instantiated :class:`.Feature`, if the mapped device (value in constructor)
         is given as a string.
         """
-        def exchange_string_for_vdevice_class_in(device: Type[Device], in_classes: List[Type[Device]]):
-            all_instanced_features = DeviceController.get_for(device).get_original_instanced_feature_objects()
-            if all_instanced_features is None:
-                # has no features -> skip
-                return
-            for _, cur_feature in all_instanced_features.items():
-                if cur_feature.active_vdevices != {}:
-                    # do something only if there exists an internal mapping
-                    for cur_mapped_vdevice, cur_mapped_device in cur_feature.active_vdevices.items():
-                        if isinstance(cur_mapped_device, str):
-                            resolved_device = [cur_possible_device for cur_possible_device in in_classes
-                                               if cur_possible_device.__name__ == cur_mapped_device]
-                            if len(resolved_device) != 1:
-                                raise RuntimeError(
-                                    f"found none or more than one possible name matching while trying to resolve "
-                                    f"the given vDevice string `{cur_mapped_vdevice}` in feature "
-                                    f"`{cur_feature.__class__.__name__}`")
-                            cur_feature.active_vdevices[cur_mapped_vdevice] = resolved_device[0]
 
         for cur_scenario in self._all_scenarios:
             scenario_devices = ScenarioController.get_for(cur_scenario).get_all_abs_inner_device_classes()
             for cur_device in scenario_devices:
-                exchange_string_for_vdevice_class_in(device=cur_device, in_classes=scenario_devices)
+                DeviceController.get_for(cur_device).resolve_mapped_vdevice_strings()
         for cur_setup in self._all_setups:
             setup_devices = SetupController.get_for(cur_setup).get_all_abs_inner_device_classes()
             for cur_device in setup_devices:
-                exchange_string_for_vdevice_class_in(device=cur_device, in_classes=setup_devices)
+                DeviceController.get_for(cur_device).resolve_mapped_vdevice_strings()
 
     def get_all_scenario_feature_classes(self) -> List[Type[Feature]]:
         """
