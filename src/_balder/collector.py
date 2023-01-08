@@ -585,42 +585,6 @@ class Collector:
             cur_feature_controller = FeatureController.get_for(cur_feature)
             cur_feature_controller.validate_inner_vdevice_inheritance()
 
-    @staticmethod
-    def check_vdevice_feature_existence(items: Union[List[Type[Scenario]], List[Type[Setup]]]):
-        """
-        This method validates that the :class:`Feature` property set of a :class:`Device` holds all required
-        :class:`Feature` objects of the related :class:`VDevice`. For this the method checks that every feature (that
-        is used in a mapped :class:`VDevice`) also exists as a child :class:`Feature` property in the related
-        :class:`Device` class.
-
-        .. note::
-            Variations are not related to this and will not be checked here.
-
-        """
-        for cur_scenario_or_setup in items:
-            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
-            cur_scenario_or_setup_controller.check_vdevice_feature_existence()
-
-    @staticmethod
-    def validate_inherited_class_based_vdevice_cnn_subset(features: List[Type[Feature]]):
-        """
-        This method checks that the class based for_vdevice values of a child :class:`Feature` class are contained_in
-        the related VDevice defined in a parent :class:`Feature` class.
-        """
-
-        for cur_feature in features:
-            FeatureController.get_for(cur_feature).validate_inherited_class_based_vdevice_cnn_subset()
-
-    def validate_feature_clearance_for_parallel_connections_for_scenarios(self, scenarios: List[Type[Scenario]]):
-        """
-        This method validates for every active class-based feature (only the ones that have a active VDevice<->Device
-        mapping), that there exist a clear scenario-device-connection for this feature. The method throws an
-        :class:`UnclearAssignableFeatureConnectionError` if there exists more than one possible device-connection
-        for the related devices and the method is not able to determine a clear connection.
-        """
-        for cur_scenario in scenarios:
-            ScenarioController.get_for(cur_scenario).validate_feature_clearance_for_parallel_connections()
-
     def _set_original_device_features(self):
         """
         This method ensures that the original features (that are instantiated in the
@@ -712,12 +676,20 @@ class Collector:
         """
         This method validates that VDevice references are used correctly.
         """
-        all_scenario_features = self.get_all_scenario_feature_classes()
+        # check feature (referenced from VDevice) exists in the related VDevice
+        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            cur_scenario_or_setup_controller.check_vdevice_feature_existence()
 
-        Collector.check_vdevice_feature_existence(self.all_scenarios)
-        Collector.check_vdevice_feature_existence(self.all_setups)
-        Collector.validate_inherited_class_based_vdevice_cnn_subset(all_scenario_features)
-        self.validate_feature_clearance_for_parallel_connections_for_scenarios(self.all_scenarios)
+        # secure for all scenario features that the class based for_vdevice values of a child :class:`Feature` class
+        # are contained_in the related VDevice defined in a parent :class:`Feature` class.
+        for cur_feature in self.get_all_scenario_feature_classes():
+            FeatureController.get_for(cur_feature).validate_inherited_class_based_vdevice_cnn_subset()
+
+        # validates for every active class-based feature (only the ones that have an active VDevice<->Device mapping),
+        # that a clear scenario-device-connection exists for this feature
+        for cur_scenario in self.all_scenarios:
+            ScenarioController.get_for(cur_scenario).validate_feature_clearance_for_parallel_connections()
 
     def _determine_absolute_device_connections(self):
         """
