@@ -488,45 +488,6 @@ class Collector:
             setattr(owner, name, new_callback)
             owner_feature_controller.set_method_based_for_vdevice(owner_for_vdevice)
 
-    def exchange_device_connection_device_strings(self):
-        """
-        This method ensures that device names that are provided as strings within connections are resolved for each
-        connection object of a device. Since the `@connect` marker makes it possible to specify the other device as a
-        string, this method matches all connection objects of this device to convert the strings into the correct
-        device types.
-
-        In some cases you have to provide the devices for the decorator as a string (since the outer class is imported
-        later than the execution of the decorator). Balder knows this information after the decorator has been executed,
-        so it is required to convert these strings now.
-        """
-        all_devices = []
-        for cur_setup in self._all_setups:
-            for cur_device in SetupController.get_for(cur_setup).get_all_inner_device_classes():
-                all_devices.append(cur_device)
-        for cur_scenario in self._all_scenarios:
-            for cur_device in ScenarioController.get_for(cur_scenario).get_all_inner_device_classes():
-                all_devices.append(cur_device)
-
-        for cur_device in all_devices:
-            cur_device_controller = DeviceController.get_for(cur_device)
-            cur_device_controller.resolve_connection_device_strings()
-
-    def exchange_vdevice_mapping_device_strings(self):
-        """
-        This method iterates over every collected :class:`.Setup` and :class:`.Scenario` device and updates the inner
-        VDevice-Device mappings for every instantiated :class:`.Feature`, if the mapped device (value in constructor)
-        is given as a string.
-        """
-
-        for cur_scenario in self._all_scenarios:
-            scenario_devices = ScenarioController.get_for(cur_scenario).get_all_abs_inner_device_classes()
-            for cur_device in scenario_devices:
-                DeviceController.get_for(cur_device).resolve_mapped_vdevice_strings()
-        for cur_setup in self._all_setups:
-            setup_devices = SetupController.get_for(cur_setup).get_all_abs_inner_device_classes()
-            for cur_device in setup_devices:
-                DeviceController.get_for(cur_device).resolve_mapped_vdevice_strings()
-
     def get_all_scenario_feature_classes(self) -> List[Type[Feature]]:
         """
         This method returns a list with all :class:`Feature` classes that are being instantiated in one or more
@@ -756,8 +717,17 @@ class Collector:
         This method exchanges all strings (that can be used in decorators) are exchanged with their real objects. It
         secures this for all :class:`Device` and :class:`VDevice` references inside the session.
         """
-        self.exchange_device_connection_device_strings()
-        self.exchange_vdevice_mapping_device_strings()
+        # resolve connection Device strings (for all devices that are directly defined inside the scenario/setup)
+        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            for cur_device in cur_scenario_or_setup_controller.get_all_inner_device_classes():
+                DeviceController.get_for(cur_device).resolve_connection_device_strings()
+
+        # resolve connection VDevice strings (for all absolute devices of this scenario/setup)
+        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            for cur_device in cur_scenario_or_setup_controller.get_all_abs_inner_device_classes():
+                DeviceController.get_for(cur_device).resolve_mapped_vdevice_strings()
 
     def _validate_scenario_and_setups(self):
         """
@@ -883,4 +853,3 @@ class Collector:
         self._determine_absolute_device_connections()
 
         self._validate_feature_connections_in_setup()
-
