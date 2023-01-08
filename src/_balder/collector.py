@@ -647,30 +647,14 @@ class Collector:
     @staticmethod
     def feature_validate_inner_classes(features: List[Type[Feature]]):
         """
-        This method validates all inner classes and secures that these classes are subclasses from :class:`VDevice` or
-        no subclasses from :class:`Device` only! Of course other inner-classes that are not required for balder are
-        allowed too.
+        This method validates all inner classes of the given features and secures that none of these subclasses are
+        subclass of :class:`Device` but not subclasses from :class:`VDevice`. Of course other inner-classes that are not
+        required for balder are allowed too.
 
         :param features: a list of all feature classes that should be validated here
         """
         for cur_feature in features:
-            all_inner_classes = inspect.getmembers(cur_feature, inspect.isclass)
-            for cur_inner_name, cur_inner_class in all_inner_classes:
-                if issubclass(cur_inner_class, Device):
-                    # do only check the inner classes that inherits from `Device`
-                    if not issubclass(cur_inner_class, VDevice):
-                        raise VDeviceResolvingError(
-                            f"the inner class `{cur_inner_class.__name__}` with name `{cur_inner_name}` is a child "
-                            f"class of `Device` but not from `VDevice` as expected")
-                    cur_inner_class_instantiated_features = \
-                        VDeviceController.get_for(cur_inner_class).get_all_instantiated_feature_objects()
-                    for _, cur_vdevice_feature in cur_inner_class_instantiated_features.items():
-                        if cur_vdevice_feature.active_vdevices != {}:
-                            raise IllegalVDeviceMappingError(
-                                f"the feature `{cur_vdevice_feature.__class__.__name__}` you have instantiated in your "
-                                f"vDevice `{cur_inner_class.__name__}` of feature `{cur_feature.__name__}` "
-                                f"has a own vDevice mapping - vDevice mappings are allowed for features on Devices "
-                                f"only")
+            FeatureController.get_for(cur_feature).validate_inner_classes()
 
     @staticmethod
     def feature_validate_vdevice_inheritance(features: List[Type[Feature]]):
