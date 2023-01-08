@@ -670,15 +670,6 @@ class Collector:
         for cur_scenario in items:
             ScenarioController.get_for(cur_scenario).determine_absolute_device_connections()
 
-    @staticmethod
-    def validate_feature_possibility_in_setups(setups: List[Type[Setup]]):
-        """
-        This method validates that every feature connection (that already has a vDevice<->Device mapping on setup level)
-        has a connection that is CONTAINED-IN the connection of the related setup devices.
-        """
-        for cur_setup in setups:
-            SetupController.get_for(cur_setup).validate_feature_possibility()
-
     def _set_original_device_features(self):
         """
         This method ensures that the original features (that are instantiated in the
@@ -795,7 +786,8 @@ class Collector:
         It ensures, that every feature connection (that already has a vDevice<->Device mapping on setup level)
         has a connection that is CONTAINED-IN the connection between the related setup devices.
         """
-        Collector.validate_feature_possibility_in_setups(self.all_setups)
+        for cur_setup in self.all_setups:
+            SetupController.get_for(cur_setup).validate_feature_possibility()
 
     def collect(self, plugin_manager: PluginManager):
         """
