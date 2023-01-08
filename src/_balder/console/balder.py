@@ -31,27 +31,27 @@ def _console_balder_debug(cmd_args: Optional[List[str]] = None, working_dir: Uni
             cb_run_finished(balder_session)
 
         if balder_session.executor_tree is None:
-            exit(ExitCode.SUCCESS.value)
+            sys.exit(ExitCode.SUCCESS.value)
         elif balder_session.executor_tree.executor_result == ResultState.SUCCESS:
-            exit(ExitCode.SUCCESS.value)
+            sys.exit(ExitCode.SUCCESS.value)
         elif balder_session.executor_tree.executor_result in [ResultState.ERROR, ResultState.FAILURE]:
             # check if a BalderException was thrown too -> would be a balder environment error -> special exit code
             balder_exceptions = [cur_exc for cur_exc in balder_session.executor_tree.get_all_recognized_exception()
                                  if isinstance(cur_exc, BalderException)]
             if len(balder_exceptions) > 0:
-                exit(ExitCode.BALDER_USAGE_ERROR.value)
+                sys.exit(ExitCode.BALDER_USAGE_ERROR.value)
             else:
-                exit(ExitCode.TESTS_FAILED.value)
+                sys.exit(ExitCode.TESTS_FAILED.value)
 
     except BalderException as exc:
         # a balder usage error occurs
         if cb_balder_exc:
             cb_balder_exc(exc)
         traceback.print_exception(*sys.exc_info())
-        exit(ExitCode.BALDER_USAGE_ERROR.value)
+        sys.exit(ExitCode.BALDER_USAGE_ERROR.value)
     except Exception as exc:
         # a unexpected error occurs
         if cb_unexpected_exc:
             cb_unexpected_exc(exc)
         traceback.print_exception(*sys.exc_info())
-        exit(ExitCode.UNEXPECTED_ERROR.value)
+        sys.exit(ExitCode.UNEXPECTED_ERROR.value)
