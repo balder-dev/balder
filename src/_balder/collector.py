@@ -636,16 +636,6 @@ class Collector:
         for cur_feature in features:
             FeatureController.get_for(cur_feature).validate_inherited_class_based_vdevice_cnn_subset()
 
-    def determine_raw_absolute_device_connections_for(self, items: Union[List[Type[Scenario]], List[Type[Setup]]]):
-        """
-        This method determines and creates the basic `_absolute_connections` for the given scenarios or setups. Note,
-        that this method only creates the class attribute and adds the synchronized connections (same on both sides if
-        they are bidirectional). It does not analyse or take :class:`Feature` classes into consideration.
-        """
-
-        for cur_scenario_or_setup in items:
-            NormalScenarioSetupController.get_for(cur_scenario_or_setup).determine_raw_absolute_device_connections()
-
     def validate_feature_clearance_for_parallel_connections_for_scenarios(self, scenarios: List[Type[Scenario]]):
         """
         This method validates for every active class-based feature (only the ones that have a active VDevice<->Device
@@ -655,20 +645,6 @@ class Collector:
         """
         for cur_scenario in scenarios:
             ScenarioController.get_for(cur_scenario).validate_feature_clearance_for_parallel_connections()
-
-    def determine_absolute_device_connections_for_scenarios(self, items: List[Type[Scenario]]):
-        """
-        This method determines the real possible Sub-Connections for every element of the scenarios. For this the method
-        will create a possible intersection connection, for the :class:´Connection´ between two devices and
-        all :class:`Connection`-Subtrees that are allowed for the mapped vDevices in the used :class:`Feature`
-        classes.
-        The data will be saved in the :class:`Device` property ``_absolute_connections``. If the method detects an empty
-        intersection between two devices that are connected through a VDevice-Device mapping, the method will throw an
-        exception.
-        """
-
-        for cur_scenario in items:
-            ScenarioController.get_for(cur_scenario).determine_absolute_device_connections()
 
     def _set_original_device_features(self):
         """
@@ -776,9 +752,13 @@ class Collector:
         determines the raw absolute connections for scenarios and setups and also creates the real device connections
         for all scenarios.
         """
-        self.determine_raw_absolute_device_connections_for(self.all_scenarios)
-        self.determine_raw_absolute_device_connections_for(self.all_setups)
-        self.determine_absolute_device_connections_for_scenarios(self.all_scenarios)
+        # determine the raw absolute device connections for all scenarios and setups
+        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+            NormalScenarioSetupController.get_for(cur_scenario_or_setup).determine_raw_absolute_device_connections()
+
+        # determine all absolute device connections (only for scenarios)
+        for cur_scenario in self.all_scenarios:
+            ScenarioController.get_for(cur_scenario).determine_absolute_device_connections()
 
     def _validate_feature_connections_in_setup(self):
         """
