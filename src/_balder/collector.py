@@ -19,7 +19,7 @@ from _balder.connection import Connection
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import VDeviceResolvingError, IllegalVDeviceMappingError, DuplicateForVDeviceError, \
-    UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError
+    UnknownVDeviceException, FeatureOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
 
 if TYPE_CHECKING:
@@ -329,9 +329,7 @@ class Collector:
                                             f"`{cur_class.__name__}.IGNORE` is no valid test method")
                         if cur_ignore_method not in cur_class.__dict__.values() and next_parent is None or \
                                 cur_ignore_method not in cur_class.__dict__.values() and next_parent is not None \
-                                and cur_ignore_method not in next_parent.RUN \
-                                and cur_ignore_method not in next_parent.SKIP \
-                                and cur_ignore_method not in next_parent.IGNORE:
+                                and cur_ignore_method not in next_parent.RUN + next_parent.SKIP + next_parent.IGNORE:
                             raise ValueError(f"the element `{cur_ignore_method.__name__}` given at class attribute "
                                              f"`{cur_class.__name__}.IGNORE` is not a test method of this scenario")
                 else:
