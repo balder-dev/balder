@@ -71,3 +71,21 @@ class BaseDeviceController(Controller, ABC):
             self._original_instanced_features = None
         else:
             self._original_instanced_features = data
+
+    def save_all_original_instanced_features(self):
+        """
+        This property sets the internal dictionary about the original instantiated features of this
+        :class:`Device`/:class:`VDevice`. This is done, to ensure that balder has saved an original copy of the original
+        instantiated abstract features. The real features will be overwritten for each new variation by the
+        :class:`ExecutorTree`!
+        """
+        new_originals = self.get_all_instantiated_feature_objects()
+
+        if self.get_original_instanced_feature_objects():
+            if self.get_original_instanced_feature_objects() != new_originals:
+                # todo we should use a balder exception here!!
+                raise EnvironmentError(
+                    f"the `{self.__class__.__name__}` for the item `{self.related_cls.__name__}` already has a static "
+                    f"attribute value for its original instanced feature objects - can not overwrite it again")
+
+        self.set_original_instanced_feature_objects(new_originals)
