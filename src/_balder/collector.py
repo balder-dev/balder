@@ -424,8 +424,8 @@ class Collector:
             name = cur_fn.__name__
 
             owner_for_vdevice = owner_feature_controller.get_method_based_for_vdevice()
-            if owner_for_vdevice is None:
-                owner_for_vdevice = {}
+            owner_for_vdevice = owner_for_vdevice if owner_for_vdevice is not None else {}
+
             for cur_decorator_vdevice, cur_decorator_with_connections in cur_decorator_data_list:
 
                 if owner is None:
@@ -453,8 +453,7 @@ class Collector:
 
                 cur_decorator_cleaned_cnns = []
                 for cur_cnn in cur_decorator_with_connections:
-                    if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection):
-                        cur_cnn = cur_cnn()
+                    cur_cnn = cur_cnn() if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection) else cur_cnn
                     cur_decorator_cleaned_cnns.append(cur_cnn)
 
                 if cur_fn in owner_for_vdevice[name].keys():
