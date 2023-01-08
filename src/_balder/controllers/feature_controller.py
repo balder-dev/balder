@@ -398,6 +398,23 @@ class FeatureController(Controller):
 
         return filtered_classes
 
+    def get_inner_vdevice_class_by_string(self, device_str: str) -> Union[Type[VDevice], None]:
+        """
+        This method returns the inner VDevice class for the given string.
+
+        :param device_str: the name string of the VDevice that should be returned
+
+        :return: the VDevice class or None, if the method has not found any class with this name
+        """
+        possible_vdevs = [cur_vdevice for cur_vdevice in self.get_inner_vdevice_classes()
+                          if cur_vdevice.__name__ == device_str]
+        if len(possible_vdevs) == 0:
+            return None
+        if len(possible_vdevs) > 1:
+            raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
+        return possible_vdevs[0]
+
     def get_abs_inner_vdevice_classes(self) -> List[Type[VDevice]]:
         """
         This is a method that determines the inner VDevice classes for the feature class. If the method can not find

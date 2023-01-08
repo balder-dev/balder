@@ -437,18 +437,12 @@ class Collector:
 
                 if isinstance(cur_decorator_vdevice, str):
                     # vDevice is a string, so we have to convert it to the correct class
-                    relevant_vdevices = [cur_vdevice for cur_vdevice
-                                         in owner_feature_controller.get_abs_inner_vdevice_classes()
-                                         if cur_vdevice.__name__ == cur_decorator_vdevice]
+                    cur_decorator_vdevice = \
+                        owner_feature_controller.get_inner_vdevice_class_by_string(cur_decorator_vdevice)
 
-                    if len(relevant_vdevices) == 0:
+                    if cur_decorator_vdevice is None:
                         raise ValueError(f"can not find a matching inner VDevice class for the given vdevice string "
                                          f"`{cur_decorator_vdevice}` in the feature class `{owner.__name__}`")
-
-                    if len(relevant_vdevices) > 1:
-                        raise RuntimeError("found more than one possible vDevices - something unexpected happened")
-
-                    cur_decorator_vdevice = relevant_vdevices[0]
 
                 if cur_decorator_vdevice not in owner_feature_controller.get_abs_inner_vdevice_classes():
                     raise UnknownVDeviceException(f"the given vDevice `{cur_decorator_vdevice.__name__}` is not a "
