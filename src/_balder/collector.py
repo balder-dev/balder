@@ -673,15 +673,7 @@ class Collector:
             vdevices = cur_feature_controller.get_abs_inner_vdevice_classes()
             for cur_vdevice in vdevices:
                 cur_vdevice_controller = VDeviceController.get_for(cur_vdevice)
-                new_originals = cur_vdevice_controller.get_all_instantiated_feature_objects()
-
-                if cur_vdevice_controller.get_original_instanced_feature_objects():
-                    if cur_vdevice_controller.get_original_instanced_feature_objects() != new_originals:
-                        raise EnvironmentError(
-                            f"the vDevice `{cur_vdevice.__name__}` already has a static attribute value in "
-                            f"`Device.__original_instanced_features`")
-
-                cur_vdevice_controller.set_original_instanced_feature_objects(new_originals)
+                cur_vdevice_controller.save_all_original_instanced_features()
 
     @staticmethod
     def feature_validate_inner_classes(features: List[Type[Feature]]):
