@@ -49,6 +49,10 @@ class FeatureController(Controller):
         #: executor)
         self._for_vdevice: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None] = None
 
+        #: contains the current active method variations for the related feature class - for every key (method name str)
+        #: a tuple with the VDevice type, the valid connection and the callable itself will be returned
+        self._current_active_method_variation: Dict[str, Tuple[Type[VDevice], Connection, Callable]] = {}
+
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     @staticmethod
@@ -600,3 +604,26 @@ class FeatureController(Controller):
 
         # we have no parent class
         return None
+
+    def set_active_method_variation(self, method_selection: Dict[str, Tuple[Type[VDevice], Connection, Callable]]):
+        """
+        This method sets the active method variation selection for the related feature class.
+        :param method_selection: the method selection that should be set
+        """
+        self._current_active_method_variation = method_selection
+
+    def get_active_method_variation(self, method_name: str) \
+            -> Union[Tuple[Type[VDevice], Connection, Callable], Tuple[None, None, None]]:
+        """
+        This method returns the current active method variation for the given `method_name` for the related fixture.
+
+        .. note::
+            Please note, this method only returns the set active method variation for this related feature only. It does
+            not check parent classes of this feature.
+
+        :param method_name: the name of the method the current active method variation should be returned
+
+        :return: a tuple with the current active method selection or a tuple with `None` if no active method variation
+                 exists on this feature class level
+        """
+        return self._current_active_method_variation.get(method_name, tuple([None, None, None]))

@@ -473,8 +473,9 @@ class Collector:
                 @functools.wraps(wrap_fn)
                 def method_variation_multiplexer(this, *args, **kwargs):
                     if this.__class__ == the_owner_of_this_method:
+                        controller = FeatureController.get_for(this.__class__)
                         # this is no parent class call -> use the set method-variation (set by VariationExecutor before)
-                        _, _, func = this._active_method_variations.get(the_name, None)
+                        _, _, func = controller.get_active_method_variation(the_name)
                     else:
                         func = this._get_inherited_method_variation(the_owner_of_this_method, the_name)
                         if func is None:

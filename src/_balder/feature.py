@@ -99,7 +99,8 @@ class Feature:
             # the parent class has a method-variation -> get the current active version of it
 
             # first get the active data for the instantiated feature object
-            active_vdevice, active_cnn_intersection, _ = self._active_method_variations[method_var_name]
+            active_vdevice, active_cnn_intersection, _ = \
+                FeatureController.get_for(self.__class__).get_active_method_variation(method_var_name)
             # get the vDevice object that is used in the given parent class
             if hasattr(parent_class, active_vdevice.__name__):
                 parent_vdevice = getattr(parent_class, active_vdevice.__name__)
