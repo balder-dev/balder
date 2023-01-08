@@ -476,8 +476,8 @@ class Collector:
                     new_dict = {cur_decorator_vdevice: cur_decorator_cleaned_cnns}
                     owner_for_vdevice[name][cur_fn] = new_dict
 
-            def owner_wrapper(the_owner_of_this_method, the_name):
-                @functools.wraps(cur_fn)
+            def owner_wrapper(the_owner_of_this_method, the_name, wrap_fn):
+                @functools.wraps(wrap_fn)
                 def method_variation_multiplexer(this, *args, **kwargs):
                     if this.__class__ == the_owner_of_this_method:
                         # this is no parent class call -> use the set method-variation (set by VariationExecutor before)
@@ -495,7 +495,7 @@ class Collector:
 
                 return method_variation_multiplexer
 
-            new_callback = owner_wrapper(owner, name)
+            new_callback = owner_wrapper(owner, name, cur_fn)
             setattr(owner, name, new_callback)
             owner_feature_controller.set_method_based_for_vdevice(owner_for_vdevice)
 
