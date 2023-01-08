@@ -3,13 +3,14 @@ from typing import Type, Dict, Union, List, Callable, Tuple
 
 import logging
 import inspect
+from _balder.device import Device
 from _balder.vdevice import VDevice
 from _balder.feature import Feature
 from _balder.controllers import Controller
 from _balder.controllers.vdevice_controller import VDeviceController
 from _balder.connection import Connection
 from _balder.exceptions import UnclearMethodVariationError, MultiInheritanceError, VDeviceOverwritingError, \
-    VDeviceResolvingError, FeatureOverwritingError
+    VDeviceResolvingError, FeatureOverwritingError, IllegalVDeviceMappingError
 
 logger = logging.getLogger(__file__)
 
@@ -673,3 +674,29 @@ class FeatureController(Controller):
             return None
 
         return self.get_inherited_method_variation(next_base_feature_class, method_var_name)
+
+    def validate_inner_classes(self):
+        """
+        This method validates all inner classes of the related feature and secures that none of these subclasses are
+        subclass of :class:`Device` but not subclasses from :class:`VDevice`. Of course other inner-classes that are not
+        required for balder are allowed too.
+        """
+        all_inner_classes = inspect.getmembers(self.related_cls, inspect.isclass)
+        for cur_inner_name, cur_inner_class in all_inner_classes:
+            if not issubclass(cur_inner_class, Device):
+                # ignore this element
+                continue
+            # do only check the inner classes that inherits from `Device`
+            if not issubclass(cur_inner_class, VDevice):
+                raise VDeviceResolvingError(
+                    f"the inner class `{cur_inner_class.__name__}` with name `{cur_inner_name}` is a child "
+                    f"class of `Device` but not from `VDevice` as expected")
+            cur_inner_class_instantiated_features = \
+                VDeviceController.get_for(cur_inner_class).get_all_instantiated_feature_objects()
+            for _, cur_vdevice_feature in cur_inner_class_instantiated_features.items():
+                if cur_vdevice_feature.active_vdevices != {}:
+                    raise IllegalVDeviceMappingError(
+                        f"the feature `{cur_vdevice_feature.__class__.__name__}` you have instantiated in your "
+                        f"vDevice `{cur_inner_class.__name__}` of feature `{self.related_cls.__name__}` "
+                        f"has a own vDevice mapping - vDevice mappings are allowed for features on Devices "
+                        f"only")
