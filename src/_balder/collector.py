@@ -531,60 +531,6 @@ class Collector:
             all_setup_devices += SetupController.get_for(cur_setup).get_all_abs_inner_device_classes()
         return all_setup_devices
 
-    @staticmethod
-    def validate_feature_inheritance_of(devices: List[Type[Device]]):
-        """
-        This method validates instantiated features and check that they are inherited correctly. It checks that the
-        feature of a child device is also a child class of the feature of the parent device (in case they use the same
-        property name).
-        """
-        for cur_device in devices:
-            DeviceController.get_for(cur_device).validate_inheritance_of_instantiated_features()
-
-    @staticmethod
-    def validate_inner_referenced_features(devices: List[Type[Device]]):
-        """
-        This method validates that every :class:`Feature` that is referenced from another :class:`Feature` also exists
-        in the definition list of the current :class:`Scenario`-Device.
-        """
-        for cur_outer_device in devices:
-            DeviceController.get_for(cur_outer_device).validate_inner_referenced_features()
-
-    @staticmethod
-    def feature_validate_inner_classes(features: List[Type[Feature]]):
-        """
-        This method validates all inner classes of the given features and secures that none of these subclasses are
-        subclass of :class:`Device` but not subclasses from :class:`VDevice`. Of course other inner-classes that are not
-        required for balder are allowed too.
-
-        :param features: a list of all feature classes that should be validated here
-        """
-        for cur_feature in features:
-            FeatureController.get_for(cur_feature).validate_inner_classes()
-
-    @staticmethod
-    def feature_validate_vdevice_inheritance(features: List[Type[Feature]]):
-        """
-        This method validates all inner :class:`VDevice` classes and secures that the inheritance of them is correct.
-
-        It secures that new :class:`VDevice` classes are added or existing :class:`VDevice` classes are completely being
-        overwritten for one feature level. The method only allows the overwriting of :class:`VDevices`, which are child
-        classes of another :class:`VDevice` that is defined in a parent :class:`Feature` class. In addition, the
-        class has to have the same name as its parent class.
-
-        The method also secures that the user overwrites instantiated :class:`Feature` classes in the VDevice (class
-        property name is the same) only with subclasses of the element that is being overwritten. New Features can be
-        added without consequences.
-
-        :param features: those are all feature classes that are being checked if their inner vDevices classes were
-                         inherited
-        """
-
-        # validate that all parent VDevices are overwritten if one or more VDevice(s) are defined in current feature
-        for cur_feature in features:
-            cur_feature_controller = FeatureController.get_for(cur_feature)
-            cur_feature_controller.validate_inner_vdevice_inheritance()
-
     def _set_original_device_features(self):
         """
         This method ensures that the original features (that are instantiated in the
@@ -640,17 +586,25 @@ class Collector:
         inside devices is correct and validates that inner referenced features inside other feature are correct. In
         addition to that it secures that inner vDevice classes of features are inherited and are used correctly.
         """
-        all_scenario_features = self.get_all_scenario_feature_classes()
-        all_setup_features = self.get_all_setup_feature_classes()
+        all_features = self.get_all_scenario_feature_classes() + self.get_all_setup_feature_classes()
+        all_devices = self.get_all_scenario_device_classes() + self.get_all_setup_device_classes()
 
-        Collector.validate_feature_inheritance_of(devices=self.get_all_scenario_device_classes())
-        Collector.validate_feature_inheritance_of(devices=self.get_all_setup_device_classes())
-        Collector.validate_inner_referenced_features(self.get_all_scenario_device_classes())
-        Collector.validate_inner_referenced_features(self.get_all_setup_device_classes())
-        Collector.feature_validate_inner_classes(all_scenario_features)
-        Collector.feature_validate_inner_classes(all_setup_features)
-        Collector.feature_validate_vdevice_inheritance(all_scenario_features)
-        Collector.feature_validate_vdevice_inheritance(all_setup_features)
+        # validate inheritance for all features
+        for cur_device in all_devices:
+            DeviceController.get_for(cur_device).validate_inheritance_of_instantiated_features()
+
+        # validate inner references of features inside features
+        for cur_outer_device in all_devices:
+            DeviceController.get_for(cur_outer_device).validate_inner_referenced_features()
+
+        # validate all inner classes of all features and secure that Device subclasses are correctly used
+        for cur_feature in all_features:
+            FeatureController.get_for(cur_feature).validate_inner_classes()
+
+        # validate that all parent VDevices are overwritten if one or more VDevice(s) are defined in current feature
+        for cur_feature in all_features:
+            cur_feature_controller = FeatureController.get_for(cur_feature)
+            cur_feature_controller.validate_inner_vdevice_inheritance()
 
     def _determine_class_based_values_for_all_features(self, print_warning=True):
         """
