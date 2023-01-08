@@ -586,31 +586,6 @@ class Collector:
             cur_feature_controller.validate_inner_vdevice_inheritance()
 
     @staticmethod
-    def feature_determine_class_for_vdevice_values(features: List[Type[Feature]], print_warning=True):
-        """
-        This method determines the absolute class based values for `@for_vdevice`. It will do nothing if the value was
-        already set by an explicit class based `@for_vdevice` decorator. In this case the method only checks that
-        every given vDevice class is a real part of the current :class:`Feature` class (will be returned by direct call
-        of method `Feature.get_inner_vdevice_classes()`). Otherwise, it determines the class based `@for_vdevice`
-        value through analysing of the method based decorators and sets this determined value. If the method has to
-        determine the value, it throws a warning with a suggestion for a nice class based decorator. Also, here the
-        method will analyse the given vDevice classes and secures that they are defined in the current :class:`Feature`
-        class.
-
-        .. note::
-            This method automatically updates the values for the parent classes, too. Every time it searches for the
-            values it considers the parent values for the vDevice or the parent class of the vDevice, too.
-
-        .. note::
-            This method can throw a user warning (`throw_warning` has to be True for that), but only on the given list
-            of :class:`Feature` classes. All parent :class:`Feature` classes will be determined correctly, but will not
-            throw a waring.
-        """
-        for cur_feature in features:
-            cur_feature_controller = FeatureController.get_for(cur_feature)
-            cur_feature_controller.get_absolute_class_based_for_vdevice(print_warning)
-
-    @staticmethod
     def check_vdevice_feature_existence(items: Union[List[Type[Scenario]], List[Type[Setup]]]):
         """
         This method validates that the :class:`Feature` property set of a :class:`Device` holds all required
@@ -713,7 +688,7 @@ class Collector:
         Collector.feature_validate_vdevice_inheritance(all_scenario_features)
         Collector.feature_validate_vdevice_inheritance(all_setup_features)
 
-    def _determine_class_based_values_for_all_features(self):
+    def _determine_class_based_values_for_all_features(self, print_warning=True):
         """
         This method determines the absolute class based values for `@for_vdevice`. It will not update any internal
         values if the class-based-value was already set by an explicit class based `@for_vdevice` decorator. Otherwise,
@@ -729,11 +704,9 @@ class Collector:
             This method automatically updates the values for the parent classes, too. Every time it searches for the
             values it also considers the parent values for the vDevice or the parent class of the vDevice.
         """
-        all_scenario_features = self.get_all_scenario_feature_classes()
-        all_setup_features = self.get_all_setup_feature_classes()
-
-        Collector.feature_determine_class_for_vdevice_values(all_scenario_features)
-        Collector.feature_determine_class_for_vdevice_values(all_setup_features)
+        for cur_feature in self.get_all_scenario_feature_classes() + self.get_all_setup_feature_classes():
+            cur_feature_controller = FeatureController.get_for(cur_feature)
+            cur_feature_controller.get_absolute_class_based_for_vdevice(print_warning)
 
     def _validate_vdevice_feature_references(self):
         """
