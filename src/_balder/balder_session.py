@@ -134,32 +134,32 @@ class BalderSession:
         """returns all collected pyfiles"""
         try:
             return self.collector.all_pyfiles
-        except AttributeError:
-            raise RuntimeError("this property is only available after the collecting process was executed")
+        except AttributeError as exc:
+            raise RuntimeError("this property is only available after the collecting process was executed") from exc
 
     @property
     def all_collected_setups(self) -> List[Type[Setup]]:
         """returns all collected :class:`Setup` classes"""
         try:
             return self.collector.all_setups
-        except AttributeError:
-            raise RuntimeError("this property is only available after the collecting process was executed")
+        except AttributeError as exc:
+            raise RuntimeError("this property is only available after the collecting process was executed") from exc
 
     @property
     def all_collected_scenarios(self) -> List[Type[Scenario]]:
         """returns all collected :class:`Scenario` classes"""
         try:
             return self.collector.all_scenarios
-        except AttributeError:
-            raise RuntimeError("this property is only available after the collecting process was executed")
+        except AttributeError as exc:
+            raise RuntimeError("this property is only available after the collecting process was executed") from exc
 
     @property
     def all_collected_connections(self) -> List[Type[Connection]]:
         """returns all collected :class:`Connection` classes"""
         try:
             return self.collector.all_connections
-        except AttributeError:
-            raise RuntimeError("this property is only available after the collecting process was executed")
+        except AttributeError as exc:
+            raise RuntimeError("this property is only available after the collecting process was executed") from exc
 
     @property
     def all_resolved_mappings(self) -> List[Tuple[Type[Setup], Type[Scenario], Dict[Type[Device], Type[Device]]]]:
@@ -167,8 +167,8 @@ class BalderSession:
         :class:`Setup`"""
         try:
             return self.solver.all_mappings
-        except AttributeError:
-            raise RuntimeError("this property is only available after the resolving process was executed")
+        except AttributeError as exc:
+            raise RuntimeError("this property is only available after the resolving process was executed") from exc
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 

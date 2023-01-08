@@ -2,6 +2,9 @@ from enum import Enum
 
 
 class ExitCode(Enum):
+    """
+    This enum describes the balder exit codes.
+    """
     #: tests were collected and all tests and fixtures terminates with success
     SUCCESS = 0
     #: tests were collected but some tests failed

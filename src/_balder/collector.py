@@ -51,7 +51,7 @@ class Collector:
         # add the working directory to the official python path
         sys.path.insert(0, str(self.working_dir.parent.absolute()))
 
-        self._all_py_files: Union[List[Type[pathlib.Path]], None] = None
+        self._all_py_files: Union[List[pathlib.Path], None] = None
         self._all_scenarios: Union[List[Type[Scenario]], None] = None
         self._all_setups: Union[List[Type[Setup]], None] = None
         self._all_connections: Union[List[Type[Connection]], None] = None
@@ -59,7 +59,7 @@ class Collector:
         self.balderglob_was_loaded = False
 
     @property
-    def all_pyfiles(self) -> List[Type[pathlib.Path]]:
+    def all_pyfiles(self) -> List[pathlib.Path]:
         """returns a list of all python files that were be found by the collector"""
         if self._all_py_files is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
