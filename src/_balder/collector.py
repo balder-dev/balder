@@ -276,20 +276,6 @@ class Collector:
                 result.append(cur_class)
         return result
 
-    @staticmethod
-    def validate_inheritance_of(items: List[Union[Type[Setup], Type[Scenario]]]):
-        """
-        This method validates that the inheritance of `Setup`/`Scenario` classes were being done correctly. It checks
-        that all devices that are inherited has the same naming as their parents and also that every reused name (that
-        is already be used for a device in parent class) does also inherit from the parent scenario/setup device.
-
-        In addition to that, the method checks that either every device of higher class is defined (and overwritten) in
-        the current class or non device
-        """
-        for cur_scenario_or_setup in items:
-            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
-            cur_scenario_or_setup_controller.validate_inheritance()
-
     def set_run_skip_ignore_of_test_methods_in_scenarios(self):
         """
         This method secures that the scenario classes have a valid RUN, SKIP and IGNORE attribute.
@@ -731,10 +717,16 @@ class Collector:
 
     def _validate_scenario_and_setups(self):
         """
-        This method validates the scenario and setups that are collected.
+        This method validates that the inheritance of `Setup`/`Scenario` classes were being done correctly. It checks
+        that all devices that are inherited has the same naming as their parents and also that every reused name (that
+        is already be used for a device in parent class) does also inherit from the parent scenario/setup device.
+
+        In addition to that, the method checks that either every device of higher class is defined (and overwritten) in
+        the current class or non device
         """
-        Collector.validate_inheritance_of(self._all_scenarios)
-        Collector.validate_inheritance_of(self._all_setups)
+        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            cur_scenario_or_setup_controller.validate_inheritance()
 
     def _validate_features_and_their_vdevices(self):
         """
