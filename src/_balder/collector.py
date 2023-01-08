@@ -18,8 +18,7 @@ from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
-from _balder.exceptions import VDeviceResolvingError, IllegalVDeviceMappingError, DuplicateForVDeviceError, \
-    UnknownVDeviceException, FeatureOverwritingError
+from _balder.exceptions import DuplicateForVDeviceError, UnknownVDeviceException
 from _balder.utils import get_scenario_inheritance_list_of
 
 if TYPE_CHECKING:
@@ -596,28 +595,8 @@ class Collector:
         feature of a child device is also a child class of the feature of the parent device (in case they use the same
         property name).
         """
-
         for cur_device in devices:
-            all_instantiated_feature_objs = DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
-            # only one match possible, because we already have checked it before
-            next_base_device = [base_device for base_device in cur_device.__bases__ if issubclass(base_device, Device)]
-            if next_base_device[0] != Device:
-                # also execute this method for the base device
-                Collector.validate_feature_inheritance_of(next_base_device)
-                all_parent_instantiated_feature_objs = \
-                    DeviceController.get_for(next_base_device[0]).get_all_instantiated_feature_objects()
-            else:
-                all_parent_instantiated_feature_objs = {}
-
-            for cur_attr_name, cur_feature in all_instantiated_feature_objs.items():
-                if cur_attr_name in all_parent_instantiated_feature_objs.keys():
-                    # attribute name also exists before -> check if the feature is a parent of the current one
-                    if not isinstance(cur_feature, all_parent_instantiated_feature_objs[cur_attr_name].__class__):
-                        raise FeatureOverwritingError(
-                            f"the feature `{cur_feature.__class__.__name__}` with the attribute name `{cur_attr_name}` "
-                            f"of the device `{cur_device.__name__}` you are trying to overwrite is no child class of "
-                            f"the feature `{all_parent_instantiated_feature_objs[cur_attr_name].__class__.__name__}` "
-                            f"that was assigned to this property before")
+            DeviceController.get_for(cur_device).validate_inheritance_of_instantiated_features()
 
     @staticmethod
     def validate_inner_referenced_features(devices: List[Type[Device]]):

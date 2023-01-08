@@ -11,7 +11,8 @@ from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.controllers.feature_controller import FeatureController
-from _balder.exceptions import DeviceScopeError, DeviceResolvingException, InnerFeatureResolvingError
+from _balder.exceptions import DeviceScopeError, DeviceResolvingException, InnerFeatureResolvingError, \
+    FeatureOverwritingError, MultiInheritanceError
 if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.controllers import ScenarioController, SetupController
@@ -115,6 +116,25 @@ class DeviceController(BaseDeviceController, ABC):
         return outer_class_controller
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def get_next_parent_class(self) -> Union[Type[Device], None]:
+        """
+        This method returns the next parent class which is a subclass of the :class:`Device` itself.
+
+        :return: returns the next parent class or None if the next parent class is :class:`Device`
+                 itself
+        """
+        next_base_class = None
+        for cur_base in self.related_cls.__bases__:
+            if issubclass(cur_base, Device):
+                if next_base_class is not None:
+                    raise MultiInheritanceError(
+                        f"found more than one Devuce parent classes for `{self.related_cls.__name__}` "
+                        f"- multi inheritance is not allowed for Device classes")
+                next_base_class = cur_base
+        if next_base_class == Device:
+            return None
+        return next_base_class
 
     def add_new_raw_connection(self, connection: Connection):
         """
@@ -376,6 +396,34 @@ class DeviceController(BaseDeviceController, ABC):
                         f"found more than one matching feature in the device `{self.related_cls.__name__}` that "
                         f"could be assigned to the inner feature reference `{cur_ref_feature_name}` of the "
                         f"feature `{cur_feature.__class__.__name__}`")
+
+    def validate_inheritance_of_instantiated_features(self):
+        """
+        This method validates instantiated features and check that they are inherited correctly. It checks that the
+        feature of a child device is also a child class of the feature of the parent device (in case they use the same
+        property name).
+        """
+
+        all_instantiated_feature_objs = self.get_all_instantiated_feature_objects()
+        # only one match possible, because we already have checked it before
+        next_base_device = self.get_next_parent_class()
+        if next_base_device is not None:
+            next_base_device_controller = DeviceController.get_for(next_base_device)
+            # also execute this method for the base device
+            next_base_device_controller.validate_inheritance_of_instantiated_features()
+            all_parent_instantiated_feature_objs = next_base_device_controller.get_all_instantiated_feature_objects()
+        else:
+            all_parent_instantiated_feature_objs = {}
+
+        for cur_attr_name, cur_feature in all_instantiated_feature_objs.items():
+            if cur_attr_name in all_parent_instantiated_feature_objs.keys():
+                # attribute name also exists before -> check if the feature is a parent of the current one
+                if not isinstance(cur_feature, all_parent_instantiated_feature_objs[cur_attr_name].__class__):
+                    raise FeatureOverwritingError(
+                        f"the feature `{cur_feature.__class__.__name__}` with the attribute name `{cur_attr_name}` "
+                        f"of the device `{self.related_cls.__name__}` you are trying to overwrite is no child class of "
+                        f"the feature `{all_parent_instantiated_feature_objs[cur_attr_name].__class__.__name__}` "
+                        f"that was assigned to this property before")
 
     def resolve_mapped_vdevice_strings(self):
         """
