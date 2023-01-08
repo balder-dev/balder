@@ -809,4 +809,4 @@ class VariationExecutor(BasicExecutor):
                     method_var_selection[cur_method_name] = \
                         (mapped_vdevice, absolute_feature_method_var_cnn, cur_method_variation)
 
-                cur_setup_feature._active_method_variations = method_var_selection
+                cur_setup_feature_controller.set_active_method_variation(method_selection=method_var_selection)

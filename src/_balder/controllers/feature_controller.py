@@ -49,6 +49,10 @@ class FeatureController(Controller):
         #: executor)
         self._for_vdevice: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None] = None
 
+        #: contains the current active method variations for the related feature class - for every key (method name str)
+        #: a tuple with the VDevice type, the valid connection and the callable itself will be returned
+        self._current_active_method_variation: Dict[str, Tuple[Type[VDevice], Connection, Callable]] = {}
+
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     @staticmethod
@@ -398,6 +402,23 @@ class FeatureController(Controller):
 
         return filtered_classes
 
+    def get_inner_vdevice_class_by_string(self, device_str: str) -> Union[Type[VDevice], None]:
+        """
+        This method returns the inner VDevice class for the given string.
+
+        :param device_str: the name string of the VDevice that should be returned
+
+        :return: the VDevice class or None, if the method has not found any class with this name
+        """
+        possible_vdevs = [cur_vdevice for cur_vdevice in self.get_inner_vdevice_classes()
+                          if cur_vdevice.__name__ == device_str]
+        if len(possible_vdevs) == 0:
+            return None
+        if len(possible_vdevs) > 1:
+            raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
+        return possible_vdevs[0]
+
     def get_abs_inner_vdevice_classes(self) -> List[Type[VDevice]]:
         """
         This is a method that determines the inner VDevice classes for the feature class. If the method can not find
@@ -583,3 +604,72 @@ class FeatureController(Controller):
 
         # we have no parent class
         return None
+
+    def set_active_method_variation(self, method_selection: Dict[str, Tuple[Type[VDevice], Connection, Callable]]):
+        """
+        This method sets the active method variation selection for the related feature class.
+        :param method_selection: the method selection that should be set
+        """
+        self._current_active_method_variation = method_selection
+
+    def get_active_method_variation(self, method_name: str) \
+            -> Union[Tuple[Type[VDevice], Connection, Callable], Tuple[None, None, None]]:
+        """
+        This method returns the current active method variation for the given `method_name` for the related fixture.
+
+        .. note::
+            Please note, this method only returns the set active method variation for this related feature only. It does
+            not check parent classes of this feature.
+
+        :param method_name: the name of the method the current active method variation should be returned
+
+        :return: a tuple with the current active method selection or a tuple with `None` if no active method variation
+                 exists on this feature class level
+        """
+        return self._current_active_method_variation.get(method_name, tuple([None, None, None]))
+
+    def get_inherited_method_variation(self, parent_class: Type[Feature], method_var_name: str):
+        """
+        This method will determine the correct inherited method-variation for the current object. For this, it searches
+        in the base classes of the given `parent_class` (which has to be a parent class of `self`) for the
+        method-variation that should be called.
+        It automatically detects if the parent class has a method-variation or is a single normal method. In case that
+        the method is a single normal method, it will directly return it, otherwise it searches the correct
+        method-variation according to the vDevice mapping of the current object and return the current active
+        method-variation.
+
+        :param parent_class: the parent class of this object, the method should start searching for the
+                             `method_var_name` method (it searches in this class and all parents)
+
+        :param method_var_name: the name of the method or of the method variation that should be returned
+        """
+
+        parent_class_controller = FeatureController.get_for(parent_class)
+        if parent_class_controller.get_method_based_for_vdevice() is not None and \
+                method_var_name in parent_class_controller.get_method_based_for_vdevice().keys():
+            # the parent class has a method-variation -> get the current active version of it
+
+            # first get the active data for the instantiated feature object
+            active_vdevice, active_cnn_intersection, _ = self.get_active_method_variation(method_var_name)
+            # get the vDevice object that is used in the given parent class
+            if hasattr(parent_class, active_vdevice.__name__):
+                parent_vdevice = getattr(parent_class, active_vdevice.__name__)
+            else:
+                return None
+
+            # then determine the correct method variation according to the data of the instantiated object
+            cur_method_variation = parent_class_controller.get_method_variation(
+                of_method_name=method_var_name, for_vdevice=parent_vdevice,
+                with_connection=active_cnn_intersection, ignore_no_findings=True)
+            return cur_method_variation
+
+        if hasattr(parent_class, method_var_name):
+            # we found one normal method in this object
+            return getattr(parent_class, method_var_name)
+
+        # execute this method for all based and check if there is exactly one
+        next_base_feature_class = parent_class_controller.get_next_parent_feature()
+        if next_base_feature_class is None:
+            return None
+
+        return self.get_inherited_method_variation(next_base_feature_class, method_var_name)

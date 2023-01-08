@@ -424,8 +424,8 @@ class Collector:
             name = cur_fn.__name__
 
             owner_for_vdevice = owner_feature_controller.get_method_based_for_vdevice()
-            if owner_for_vdevice is None:
-                owner_for_vdevice = {}
+            owner_for_vdevice = owner_for_vdevice if owner_for_vdevice is not None else {}
+
             for cur_decorator_vdevice, cur_decorator_with_connections in cur_decorator_data_list:
 
                 if owner is None:
@@ -437,18 +437,12 @@ class Collector:
 
                 if isinstance(cur_decorator_vdevice, str):
                     # vDevice is a string, so we have to convert it to the correct class
-                    relevant_vdevices = [cur_vdevice for cur_vdevice
-                                         in owner_feature_controller.get_abs_inner_vdevice_classes()
-                                         if cur_vdevice.__name__ == cur_decorator_vdevice]
+                    cur_decorator_vdevice = \
+                        owner_feature_controller.get_inner_vdevice_class_by_string(cur_decorator_vdevice)
 
-                    if len(relevant_vdevices) == 0:
+                    if cur_decorator_vdevice is None:
                         raise ValueError(f"can not find a matching inner VDevice class for the given vdevice string "
                                          f"`{cur_decorator_vdevice}` in the feature class `{owner.__name__}`")
-
-                    if len(relevant_vdevices) > 1:
-                        raise RuntimeError("found more than one possible vDevices - something unexpected happened")
-
-                    cur_decorator_vdevice = relevant_vdevices[0]
 
                 if cur_decorator_vdevice not in owner_feature_controller.get_abs_inner_vdevice_classes():
                     raise UnknownVDeviceException(f"the given vDevice `{cur_decorator_vdevice.__name__}` is not a "
@@ -459,8 +453,7 @@ class Collector:
 
                 cur_decorator_cleaned_cnns = []
                 for cur_cnn in cur_decorator_with_connections:
-                    if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection):
-                        cur_cnn = cur_cnn()
+                    cur_cnn = cur_cnn() if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection) else cur_cnn
                     cur_decorator_cleaned_cnns.append(cur_cnn)
 
                 if cur_fn in owner_for_vdevice[name].keys():
@@ -476,14 +469,15 @@ class Collector:
                     new_dict = {cur_decorator_vdevice: cur_decorator_cleaned_cnns}
                     owner_for_vdevice[name][cur_fn] = new_dict
 
-            def owner_wrapper(the_owner_of_this_method, the_name):
-                @functools.wraps(cur_fn)
+            def owner_wrapper(the_owner_of_this_method, the_name, wrap_fn):
+                @functools.wraps(wrap_fn)
                 def method_variation_multiplexer(this, *args, **kwargs):
+                    controller = FeatureController.get_for(this.__class__)
                     if this.__class__ == the_owner_of_this_method:
                         # this is no parent class call -> use the set method-variation (set by VariationExecutor before)
-                        _, _, func = this._active_method_variations.get(the_name, None)
+                        _, _, func = controller.get_active_method_variation(the_name)
                     else:
-                        func = this._get_inherited_method_variation(the_owner_of_this_method, the_name)
+                        func = controller.get_inherited_method_variation(the_owner_of_this_method, the_name)
                         if func is None:
                             raise AttributeError(f'there exists no method/method variation in class '
                                                  f'`{the_owner_of_this_method.__name__}` or its parent classes')
@@ -495,7 +489,7 @@ class Collector:
 
                 return method_variation_multiplexer
 
-            new_callback = owner_wrapper(owner, name)
+            new_callback = owner_wrapper(owner, name, cur_fn)
             setattr(owner, name, new_callback)
             owner_feature_controller.set_method_based_for_vdevice(owner_for_vdevice)
 
