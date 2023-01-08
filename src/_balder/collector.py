@@ -598,14 +598,15 @@ class Collector:
         """
 
         for cur_device in devices:
-            all_instantiated_feature_objs = DeviceController.get_for(cur_device).get_all_instantiated_feature_objects()
+            controller = DeviceController.get_for(cur_device)
+            all_instantiated_feature_objs = controller.get_all_instantiated_feature_objects()
             # only one match possible, because we already have checked it before
-            next_base_device = [base_device for base_device in cur_device.__bases__ if issubclass(base_device, Device)]
-            if next_base_device[0] != Device:
+            next_base_device = controller.get_next_parent_class()
+            if next_base_device is not None:
                 # also execute this method for the base device
-                Collector.validate_feature_inheritance_of(next_base_device)
+                Collector.validate_feature_inheritance_of([next_base_device])
                 all_parent_instantiated_feature_objs = \
-                    DeviceController.get_for(next_base_device[0]).get_all_instantiated_feature_objects()
+                    DeviceController.get_for(next_base_device).get_all_instantiated_feature_objects()
             else:
                 all_parent_instantiated_feature_objs = {}
 

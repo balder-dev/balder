@@ -11,7 +11,8 @@ from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.controllers.feature_controller import FeatureController
-from _balder.exceptions import DeviceScopeError, DeviceResolvingException, InnerFeatureResolvingError
+from _balder.exceptions import DeviceScopeError, DeviceResolvingException, InnerFeatureResolvingError, \
+    FeatureOverwritingError, MultiInheritanceError
 if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.controllers import ScenarioController, SetupController
@@ -115,6 +116,25 @@ class DeviceController(BaseDeviceController, ABC):
         return outer_class_controller
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def get_next_parent_class(self) -> Union[Type[Device], None]:
+        """
+        This method returns the next parent class which is a subclass of the :class:`Device` itself.
+
+        :return: returns the next parent class or None if the next parent class is :class:`Device`
+                 itself
+        """
+        next_base_class = None
+        for cur_base in self.related_cls.__bases__:
+            if issubclass(cur_base, Device):
+                if next_base_class is not None:
+                    raise MultiInheritanceError(
+                        f"found more than one Devuce parent classes for `{self.related_cls.__name__}` "
+                        f"- multi inheritance is not allowed for Device classes")
+                next_base_class = cur_base
+        if next_base_class == Device:
+            return None
+        return next_base_class
 
     def add_new_raw_connection(self, connection: Connection):
         """
