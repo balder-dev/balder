@@ -638,9 +638,6 @@ class FeatureController(Controller):
         method-variation according to the vDevice mapping of the current object and return the current active
         method-variation.
 
-        .. note::
-            If this method finds the method names in more than one possible parents, it will throw an exception.
-
         :param parent_class: the parent class of this object, the method should start searching for the
                              `method_var_name` method (it searches in this class and all parents)
 
@@ -671,20 +668,8 @@ class FeatureController(Controller):
             return getattr(parent_class, method_var_name)
 
         # execute this method for all based and check if there is exactly one
-        parent_of_parent_methods = {}
-        for cur_base in parent_class.__bases__:
-            meth = self.get_inherited_method_variation(cur_base, method_var_name)
-            if meth is not None:
-                parent_of_parent_methods[cur_base] = meth
-        if len(parent_of_parent_methods) > 1:
-            raise UnclearMethodVariationError(
-                f"found multiple parent classes of `{parent_class.__name__}`, that provides a method with the "
-                f"name `{method_var_name}` (base classes "
-                f"`{'`, `'.join([cur_parent.__name__ for cur_parent in parent_of_parent_methods.keys()])}`) - "
-                f"please note, that we do not support multiple inheritance")
+        next_base_feature_class = parent_class_controller.get_next_parent_feature()
+        if next_base_feature_class is None:
+            return None
 
-        if len(parent_of_parent_methods) == 1:
-            return list(parent_of_parent_methods.values())[0]
-
-        # otherwise do not found one of the methods
-        return None
+        return self.get_inherited_method_variation(next_base_feature_class, method_var_name)
