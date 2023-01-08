@@ -77,6 +77,23 @@ class NormalScenarioSetupController(Controller, ABC):
             filtered_classes.append(cur_class)
         return filtered_classes
 
+    def get_inner_device_class_by_string(self, device_str: str) -> Union[Type[Device], None]:
+        """
+        This method returns the inner Device class for the given string.
+
+        :param device_str: the name string of the Device that should be returned
+
+        :return: the Device class or None, if the method has not found any class with this name
+        """
+        possible_devs = [cur_vdevice for cur_vdevice in self.get_all_inner_device_classes()
+                         if cur_vdevice.__name__ == device_str]
+        if len(possible_devs) == 0:
+            return None
+        if len(possible_devs) > 1:
+            raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
+        return possible_devs[0]
+
     def get_all_abs_inner_device_classes(self) -> List[Type[Device]]:
         """
         This method provides a list of all :meth:`Device` classes that are valid for the related scenario or setup
@@ -94,6 +111,23 @@ class NormalScenarioSetupController(Controller, ABC):
             return self.__class__.get_for(base_class).get_all_abs_inner_device_classes()
 
         return cls_devices
+
+    def get_abs_inner_device_class_by_string(self, device_str: str) -> Union[Type[Device], None]:
+        """
+        This method returns the absolute inner Device class for the given string.
+
+        :param device_str: the name string of the Device that should be returned
+
+        :return: the Device class or None, if the method has not found any class with this name
+        """
+        possible_devs = [cur_vdevice for cur_vdevice in self.get_all_abs_inner_device_classes()
+                         if cur_vdevice.__name__ == device_str]
+        if len(possible_devs) == 0:
+            return None
+        if len(possible_devs) > 1:
+            raise RuntimeError("found more than one possible vDevices - something unexpected happened")
+
+        return possible_devs[0]
 
     @abstractmethod
     def get_next_parent_class(self) -> Union[Type[Scenario], Type[Setup], None]:
