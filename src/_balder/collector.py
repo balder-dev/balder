@@ -79,6 +79,16 @@ class Collector:
         return self._all_setups
 
     @property
+    def all_scenarios_and_setups(self) -> List[Union[Type[Scenario], Type[Setup]]]:
+        """
+        returns a list of all scenarios and setups that were found by the collector
+        """
+        new_list: List[Union[Type[Scenario], Type[Setup]]] = []
+        new_list += self.all_scenarios
+        new_list += self.all_setups
+        return new_list
+
+    @property
     def all_connections(self) -> List[Type[Connection]]:
         """returns a list of all connections that were found by the collector"""
         if self._all_connections is None:
@@ -265,20 +275,6 @@ class Collector:
             if not a_child_class_exists:
                 result.append(cur_class)
         return result
-
-    def set_original_device_features_for(self, scenarios_or_setups):
-        """
-        This method sets the important property `Device.__original_instanced_features` to ensure that the device
-        retains an original representation of its abstract features. The real features are overwritten for each new
-        variation by the :class:`ExecutorTree`!
-        """
-        for cur_scenario_or_setup in scenarios_or_setups:
-            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
-
-            devices = cur_scenario_or_setup_controller.get_all_abs_inner_device_classes()
-            for cur_device in devices:
-                cur_device_controller = DeviceController.get_for(cur_device)
-                cur_device_controller.save_all_original_instanced_features()
 
     @staticmethod
     def validate_inheritance_of(items: List[Union[Type[Setup], Type[Scenario]]]):
@@ -608,22 +604,6 @@ class Collector:
             DeviceController.get_for(cur_outer_device).validate_inner_referenced_features()
 
     @staticmethod
-    def set_original_device_features_for_all_vdevices_of(features: List[Type[Feature]]):
-        """
-        This method sets the important property `VDevice.__original_instanced_features` to ensure that the
-        :class:`.VDevice` retains an original representation of its abstract features. The real features are
-        overwritten for each new variation by the :class:`ExecutorTree`!
-
-        :param features: all features the vDevices-Features should be saved for
-        """
-        for cur_feature in features:
-            cur_feature_controller = FeatureController.get_for(cur_feature)
-            vdevices = cur_feature_controller.get_abs_inner_vdevice_classes()
-            for cur_vdevice in vdevices:
-                cur_vdevice_controller = VDeviceController.get_for(cur_vdevice)
-                cur_vdevice_controller.save_all_original_instanced_features()
-
-    @staticmethod
     def feature_validate_inner_classes(features: List[Type[Feature]]):
         """
         This method validates all inner classes of the given features and secures that none of these subclasses are
@@ -757,13 +737,19 @@ class Collector:
         This method ensures that the original features (that are instantiated in the
         :class:`Scenario`/:class:`Setup` devices or in the :class:`VDevice`) are saved inside their controllers.
         """
-        all_scenario_features = self.get_all_scenario_feature_classes()
-        all_setup_features = self.get_all_setup_feature_classes()
 
-        self.set_original_device_features_for(self._all_scenarios)
-        self.set_original_device_features_for(self._all_setups)
-        Collector.set_original_device_features_for_all_vdevices_of(all_scenario_features)
-        Collector.set_original_device_features_for_all_vdevices_of(all_setup_features)
+        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+            cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
+            devices = cur_scenario_or_setup_controller.get_all_abs_inner_device_classes()
+            for cur_device in devices:
+                cur_device_controller = DeviceController.get_for(cur_device)
+                cur_device_controller.save_all_original_instanced_features()
+
+        for cur_feature in self.get_all_scenario_feature_classes() + self.get_all_setup_feature_classes():
+            vdevices = FeatureController.get_for(cur_feature).get_abs_inner_vdevice_classes()
+            for cur_vdevice in vdevices:
+                cur_vdevice_controller = VDeviceController.get_for(cur_vdevice)
+                cur_vdevice_controller.save_all_original_instanced_features()
 
     def _exchange_strings_with_objects(self):
         """
