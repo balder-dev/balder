@@ -19,7 +19,7 @@ from _balder.connection import Connection
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import VDeviceResolvingError, IllegalVDeviceMappingError, DuplicateForVDeviceError, \
-    UnknownVDeviceException, MultiInheritanceError, FeatureOverwritingError
+    UnknownVDeviceException, FeatureOverwritingError
 from _balder.utils import get_scenario_inheritance_list_of
 
 if TYPE_CHECKING:
