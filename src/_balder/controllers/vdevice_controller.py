@@ -1,14 +1,12 @@
 from __future__ import annotations
-from typing import Type, Dict, Union, TYPE_CHECKING
+from typing import Type, Dict, Union
 
 import logging
 import inspect
 from _balder.vdevice import VDevice
+from _balder.feature import Feature
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.exceptions import DeviceScopeError, VDeviceResolvingError
-
-if TYPE_CHECKING:
-    from _balder.feature import Feature
 
 logger = logging.getLogger(__file__)
 
@@ -71,7 +69,6 @@ class VDeviceController(BaseDeviceController):
         """
         This method delivers the outer class of this device. In Balder, this has to be a :class:`Feature`.
         """
-        from _balder.feature import Feature
 
         if self.related_cls.__qualname__.count('.') == 0:
             raise DeviceScopeError("the current device class is no inner class")
