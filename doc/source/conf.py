@@ -12,14 +12,17 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../src'))
-
 from balder import __version__
+
+sys.path.insert(0, os.path.abspath('../../src'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'balder'
 version = __version__
+# only use major/minor here
+release = ".".join(version.split(".")[:2])
+
 copyright = '2021, Max Stahlschmidt'
 author = 'Max Stahlschmidt'
 

@@ -1,3 +1,4 @@
+from _balder import __version__, __version_tuple__
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.vdevice import VDevice
@@ -14,6 +15,10 @@ from _balder.decorator_insert_into_tree import insert_into_tree
 
 
 __all__ = [
+    '__version__',
+
+    '__version_tuple__',
+
     'connect',
 
     'fixture',
@@ -40,5 +45,3 @@ __all__ = [
 
     'BalderSettings'
 ]
-
-__version__ = '0.0.1b2'
