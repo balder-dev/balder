@@ -6,7 +6,7 @@ import inspect
 from _balder.scenario import Scenario
 from _balder.exceptions import InheritanceError
 
-METHOD_TYPE = Literal["function", "classmethod", "staticmethod", "instancemethod"]
+MethodLiteralType = Literal["function", "classmethod", "staticmethod", "instancemethod"]
 
 
 def get_scenario_inheritance_list_of(scenario: Type[Scenario]) -> List[Type[Scenario]]:
@@ -45,7 +45,7 @@ def get_class_that_defines_method(meth):
     return None  # not required since None would have been implicitly returned anyway
 
 
-def inspect_method(func) -> Tuple[Union[type, None], METHOD_TYPE]:
+def inspect_method(func) -> Tuple[Union[type, None], MethodLiteralType]:
     """
     This helper function returns the related class and the type of the method (`staticmethod`, `classmethod`,
     `instancemethod` or `function`) as tuple.
