@@ -103,17 +103,10 @@ class DeviceController(BaseDeviceController, ABC):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     def __get_outer_class_controller(self) -> Union[ScenarioController, SetupController]:
-        from _balder.controllers.scenario_controller import ScenarioController
-        from _balder.controllers.setup_controller import SetupController
+        from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
 
         outer_class = self.get_outer_class()
-        if issubclass(outer_class, Setup):
-            outer_class_controller = SetupController.get_for(outer_class)
-        elif issubclass(outer_class, Scenario):
-            outer_class_controller = ScenarioController.get_for(outer_class)
-        else:
-            raise TypeError(f"type `{outer_class.__name__}` given from `get_outer_class()` is wrong")
-        return outer_class_controller
+        return NormalScenarioSetupController.get_for(outer_class)
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
