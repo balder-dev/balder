@@ -3,7 +3,6 @@ from typing import Type, Dict, Tuple, Union
 
 from _balder.device import Device
 from _balder.vdevice import VDevice
-from _balder.exceptions import UnclearMethodVariationError
 
 
 class Feature:
