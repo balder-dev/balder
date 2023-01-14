@@ -14,7 +14,7 @@ from _balder.exceptions import LostInExecutorTreeException, FixtureReferenceErro
     UnclearUniqueClassReference
 
 if TYPE_CHECKING:
-    from _balder.utils import METHOD_TYPE
+    from _balder.utils import MethodLiteralType
     from _balder.executor.executor_tree import ExecutorTree
 
 
@@ -25,12 +25,12 @@ class FixtureManager:
     #: the ordering for the execution levels
     EXECUTION_LEVEL_ORDER = ['session', 'setup', 'scenario', 'variation', 'testcase']
 
-    def __init__(self, fixtures: Dict[str, Dict[Union[type, None], List[Tuple[METHOD_TYPE, Callable]]]]):
+    def __init__(self, fixtures: Dict[str, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]]):
 
         # The first key is the fixture level, the second key is the namespace in which the fixture is defined (for
         # example the scenario class), which describes the definition-scope. As value a list with tuples is returned.
         #  The first element is the type of the method/function and the second is the callable itself.
-        self.fixtures: Dict[str, Dict[Union[type, None], List[Tuple[METHOD_TYPE, Callable]]]] = fixtures
+        self.fixtures: Dict[str, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]] = fixtures
 
         # contains all active fixtures with their namespace, their func_type, their callable, the generator object
         # (otherwise an empty generator, if the fixture is not a generator) and the result according to the fixture's
