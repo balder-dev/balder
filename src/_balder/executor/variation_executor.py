@@ -399,7 +399,7 @@ class VariationExecutor(BasicExecutor):
                     # get vDevice and device mapping
                     partner_scenario_vdevice, partner_scenario_device = \
                         related_scenario_feature_obj.active_vdevice_device_mapping
-                    if partner_scenario_device is not None and partner_scenario_device is not None:
+                    if partner_scenario_device is not None:
                         partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_vdevice)
                         # get the related vDevice on setup view that is currently active
                         mapped_setup_vdevices = [
