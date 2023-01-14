@@ -47,7 +47,9 @@ class NormalScenarioSetupController(Controller, ABC):
             This method automatically returns the correct controller type, depending on the class you provide with
             `related_cls`.
         """
+        # pylint: disable-next=import-outside-toplevel
         from _balder.controllers.setup_controller import SetupController
+        # pylint: disable-next=import-outside-toplevel
         from _balder.controllers.scenario_controller import ScenarioController
 
         if issubclass(related_cls, Scenario):
