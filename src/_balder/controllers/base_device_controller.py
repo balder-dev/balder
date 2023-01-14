@@ -5,11 +5,11 @@ import logging
 import inspect
 from abc import ABC, abstractmethod
 from _balder.controllers.controller import Controller
+from _balder.feature import Feature
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
     from _balder.setup import Setup
-    from _balder.feature import Feature
 
 logger = logging.getLogger(__file__)
 
@@ -47,7 +47,6 @@ class BaseDeviceController(Controller, ABC):
 
         :return: supplies a dictionary with the name of the attribute as key and the current feature class as value
         """
-        from _balder.feature import Feature
 
         results = {}
         for cur_attr_name, cur_elem in inspect.getmembers(self.related_cls, lambda elem: isinstance(elem, Feature)):
