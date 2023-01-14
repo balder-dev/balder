@@ -394,36 +394,38 @@ class VariationExecutor(BasicExecutor):
             #  mapped vDevice
             for _, cur_setup_feature_obj in all_inner_setup_features.items():
                 # only check if there is a requirement of this feature (the feature is required by the Scenario)
-                if cur_setup_feature_obj.__class__ in new_to_old_feature_mapping.keys():
-                    related_scenario_feature_obj = new_to_old_feature_mapping[cur_setup_feature_obj.__class__]
-                    # get vDevice and device mapping
-                    partner_scenario_vdevice, partner_scenario_device = \
-                        related_scenario_feature_obj.active_vdevice_device_mapping
-                    if partner_scenario_device is not None:
-                        partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_vdevice)
-                        # get the related vDevice on setup view that is currently active
-                        mapped_setup_vdevices = [
-                            cur_vdevice for cur_vdevice
-                            in FeatureController.get_for(
-                                cur_setup_feature_obj.__class__).get_abs_inner_vdevice_classes()
-                            if issubclass(cur_vdevice, partner_scenario_vdevice)]
-                        if len(mapped_setup_vdevices) != 1:
-                            # find no mapping for the vDevice -> not possible
+                if cur_setup_feature_obj.__class__ not in new_to_old_feature_mapping.keys():
+                    # ignore this, because no requirement for this feature
+                    continue
+                related_scenario_feature_obj = new_to_old_feature_mapping[cur_setup_feature_obj.__class__]
+                # get vDevice and device mapping
+                partner_scenario_vdevice, partner_scenario_device = \
+                    related_scenario_feature_obj.active_vdevice_device_mapping
+                if partner_scenario_device is not None:
+                    partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_vdevice)
+                    # get the related vDevice on setup view that is currently active
+                    mapped_setup_vdevices = [
+                        cur_vdevice for cur_vdevice
+                        in FeatureController.get_for(
+                            cur_setup_feature_obj.__class__).get_abs_inner_vdevice_classes()
+                        if issubclass(cur_vdevice, partner_scenario_vdevice)]
+                    if len(mapped_setup_vdevices) != 1:
+                        # find no mapping for the vDevice -> not possible
+                        return False
+                    # now check that the setup partner device has all features implemented that are required
+                    # features from the VDevice
+                    partner_setup_device_features = \
+                        DeviceController.get_for(partner_setup_device).get_all_instantiated_feature_objects()
+                    mapped_setup_vdevices_instantiated_features = \
+                        VDeviceController.get_for(mapped_setup_vdevices[0]).get_all_instantiated_feature_objects()
+                    for _, cur_vdevice_feature in mapped_setup_vdevices_instantiated_features.items():
+                        # check that there exists a child feature in the setup device for every used feature in the
+                        # vDevice class
+                        matchings = [
+                            cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
+                            if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]
+                        if len(matchings) == 0:
                             return False
-                        # now check that the setup partner device has all features implemented that are required
-                        # features from the VDevice
-                        partner_setup_device_features = \
-                            DeviceController.get_for(partner_setup_device).get_all_instantiated_feature_objects()
-                        mapped_setup_vdevices_instantiated_features = \
-                            VDeviceController.get_for(mapped_setup_vdevices[0]).get_all_instantiated_feature_objects()
-                        for _, cur_vdevice_feature in mapped_setup_vdevices_instantiated_features.items():
-                            # check that there exists a child feature in the setup device for every used feature in the
-                            # vDevice class
-                            matchings = [
-                                cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
-                                if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]
-                            if len(matchings) == 0:
-                                return False
         return True
 
     def has_all_valid_routings(self) -> bool:
