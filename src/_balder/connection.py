@@ -1023,15 +1023,13 @@ class Connection:
             cur_elem for cur_elem in resolved_other.based_on_elements if isinstance(cur_elem, tuple)]
 
         # check single connection elements (if they match all in both directions)
-        if not check_elems_if(elems_from=self_based_on_elems, are_in_elems_from=other_based_on_elems):
-            return False
-        if not check_elems_if(elems_from=other_based_on_elems, are_in_elems_from=self_based_on_elems):
+        if not check_elems_if(elems_from=self_based_on_elems, are_in_elems_from=other_based_on_elems) or \
+                not check_elems_if(elems_from=other_based_on_elems, are_in_elems_from=self_based_on_elems):
             return False
 
         # check tuple connection elements (if they match all in both directions)
-        if not check_tuples_if(tuples_from=self_based_on_tuples, are_in_tuples_from=other_based_on_tuples):
-            return False
-        if not check_tuples_if(tuples_from=other_based_on_tuples, are_in_tuples_from=self_based_on_tuples):
+        if not check_tuples_if(tuples_from=self_based_on_tuples, are_in_tuples_from=other_based_on_tuples) or \
+                not check_tuples_if(tuples_from=other_based_on_tuples, are_in_tuples_from=self_based_on_tuples):
             return False
 
         return True
