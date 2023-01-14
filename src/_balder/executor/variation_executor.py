@@ -425,10 +425,8 @@ class VariationExecutor(BasicExecutor):
                 for _, cur_vdevice_feature in mapped_setup_vdevices_instantiated_features.items():
                     # check that there exists a child feature in the setup device for every used feature in the
                     # vDevice class
-                    matchings = [
-                        cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
-                        if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]
-                    if len(matchings) == 0:
+                    if len([cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
+                            if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]) == 0:
                         return False
         return True
 
