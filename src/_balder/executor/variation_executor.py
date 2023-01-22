@@ -200,6 +200,9 @@ class VariationExecutor(BasicExecutor):
         for cur_scenario_device, cur_setup_device in self.base_device_mapping.items():
             cur_setup_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
 
+            if cur_scenario_device not in feature_replacement.keys():
+                feature_replacement[cur_scenario_device] = {}
+
             if cur_setup_device not in abs_setup_vdevice_mappings.keys():
                 abs_setup_vdevice_mappings[cur_setup_device] = {}
 
@@ -252,8 +255,6 @@ class VariationExecutor(BasicExecutor):
                             f'`{cur_scenario_device.__name__}`) in setup device `{cur_setup_device.__name__}`')
 
                 all_assigned_setup_features.append(cleanup_replacing_features[0])
-                if cur_scenario_device not in feature_replacement.keys():
-                    feature_replacement[cur_scenario_device] = {}
                 if cur_attr_name not in feature_replacement[cur_scenario_device].keys():
                     cleanup_feature = cleanup_replacing_features[0]
                     cleanup_feature_controller = FeatureController.get_for(cleanup_feature.__class__)
