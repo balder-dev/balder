@@ -145,13 +145,8 @@ class RoutingPath:
             # remove all routings which do not work because they have the wrong connection type
             for cur_routing in all_possible_routes.copy():
                 # check that one part connection matches the requirements of the given `scenario_connection`
-                found_possibility = False
-                for cur_virtual_conn in cur_routing.get_virtual_connection():
-                    if scenario_connection.contained_in(cur_virtual_conn, ignore_metadata=True):
-                        # find one part of the virtual connection that matches the requirement
-                        # -> do not delete this route
-                        found_possibility = True
-                if not found_possibility:
+                if not scenario_connection.contained_in(cur_routing.get_virtual_connection(), ignore_metadata=True):
+                    # the virtual connection doesn't match the requirement -> delete possibility
                     all_possible_routes.remove(cur_routing)
 
             # move all completely routed connections to `all_completed_routes`
@@ -311,17 +306,25 @@ class RoutingPath:
 
         self._routing_elems.append(elem)
 
-    def get_virtual_connection(self) -> List[Connection]:
+    def get_virtual_connection(self) -> Connection:
         """
         This method returns a virtual connection object that describes the connection type this routing
         supports for all of its elements.
         """
-        virtual_connection = [self.elements[0]]
+        virtual_connection = self.elements[0].clone()
+        virtual_connection.set_metadata_for_all_subitems(None)
         for cur_element in self.elements[1:]:
             if isinstance(cur_element, Connection):
-                virtual_connection = cur_element.intersection_with(virtual_connection)
+                cur_element_clone = cur_element.clone()
+                cur_element_clone.set_metadata_for_all_subitems(None)
+                virtual_connection = cur_element_clone.intersection_with(virtual_connection)
             else:
                 # is a gateway class
                 # todo
                 pass
+        # set metadata based on this routing
+        virtual_connection.set_devices(from_device=self.start_device, to_device=self.end_device)
+        virtual_connection.update_node_names(from_device_node_name=self.start_node_name,
+                                             to_device_node_name=self.end_node_name)
+
         return virtual_connection

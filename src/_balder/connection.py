@@ -1150,7 +1150,7 @@ class Connection:
                                     List[Connection, Type[Connection], Tuple[Connection]]]) \
             -> Union[Connection, None]:
         """
-        This method returns a list of sub trees that describe the intersection of this connection sub-tree and the
+        This method returns a list of subtrees that describe the intersection of this connection subtree and the
         given ones. Note that this method converts all connections in **single** **resolved** connections first.
         For these connections the method checks if there are common intersections between the elements of this object
         and the given connection elements.
