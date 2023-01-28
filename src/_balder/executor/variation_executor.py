@@ -753,10 +753,10 @@ class VariationExecutor(BasicExecutor):
                 virtual_cnn = cur_routing.get_virtual_connection()
 
                 if virtual_routing_cnns[cur_cnn] is None:
-                    virtual_routing_cnns[cur_cnn] = Connection.based_on(*virtual_cnn)
+                    virtual_routing_cnns[cur_cnn] = Connection.based_on(virtual_cnn)
                 else:
-                    virtual_routing_cnns[cur_cnn] = Connection.based_on(virtual_routing_cnns[cur_cnn], *virtual_cnn)
-                virtual_routing_cnns[cur_cnn].set_metadata_for_all_subitems(virtual_cnn[0].metadata)
+                    virtual_routing_cnns[cur_cnn] = Connection.based_on(virtual_routing_cnns[cur_cnn], virtual_cnn)
+                virtual_routing_cnns[cur_cnn].set_metadata_for_all_subitems(virtual_cnn.metadata)
 
         self._abs_variation_connections = []
         for cur_cnn in self._abs_variation_scenario_device_connections:
