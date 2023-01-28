@@ -278,31 +278,28 @@ class RoutingPath:
 
         if elem_before is not None:
             # check if device and nodes of the two elements are the same -> have to be a chain
-            if isinstance(elem_before, Connection):
-                before_device = elem_before.to_device
-                before_node_name = elem_before.to_node_name
-            else:
-                # is a gateway class
-                before_device = elem_before.device
-                before_node_name = elem_before.to_node_name
+            last_device, last_node_name = self._get_end_device_and_node()
 
             if isinstance(elem, Connection):
-                cur_device = elem.from_device
-                cur_node_name = elem.from_node_name
+                if (self.end_device, self.end_node_name) not in \
+                        [(elem.from_device, elem.from_node_name), (elem.to_device, elem.to_node_name)]:
+                    raise RoutingBrokenChainError(
+                        f"can not append connection, because neither the from-device/node "
+                        f"(device: `{elem.from_device.__name__}` | node: `{elem.from_node_name}`) nor the "
+                        f"to-device/node (device: `{elem.to_device.__name__}` | node: `{elem.to_node_name}`) of the "
+                        f"connection match with the latest end-device/node (device: `{self.end_device.__name__}` | "
+                        f"node: `{self.end_node_name}`) of this route")
             else:
                 # is a gateway class
-                cur_device = elem.device
-                cur_node_name = elem.from_node_name
-            if before_device != cur_device:
-                raise RoutingBrokenChainError(
-                    f"the to-device of the transferred element at position {len(self._routing_elems) - 1} "
-                    f"(`{before_device.__name__}`) does not match the from-device of the transferred element at "
-                    f"position {len(self._routing_elems)} (`{cur_device.__name__}`)")
-            if before_node_name != cur_node_name:
-                raise RoutingBrokenChainError(
-                    f"the to-device node name of the transferred element at position {len(self._routing_elems) - 1} "
-                    f"(`{before_device.__name__}`) does not match the from-device node name of the transferred element "
-                    f"at position {len(self._routing_elems)} (`{cur_device.__name__}`)")
+                if self.end_device != elem.device:
+                    raise RoutingBrokenChainError(
+                        f"can not append gateway, because the device of the gateway (`{elem.device}`) doesn't "
+                        f"match with the latest end-device (`{self.end_device}`) of this route")
+                elif self.end_node_name not in [elem.from_node_name, elem.to_node_name]:
+                    raise RoutingBrokenChainError(
+                        f"can not append gateway, because neither the from-node "
+                        f"(`{elem.from_node_name}`) nor the to-node (`{elem.to_node_name}`) of the gateway match with "
+                        f"the latest end-node (`{self.end_node_name}`) of this route")
 
         self._routing_elems.append(elem)
 

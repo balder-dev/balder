@@ -72,8 +72,10 @@ def test_invalid_route_wrong_node():
     try:
         path.append_element(cnn21_30)
     except RoutingBrokenChainError as exc:
-        assert exc.args[0] == "the to-device node name of the transferred element at position 0 (`Device2`) does not " \
-                              "match the from-device node name of the transferred element at position 1 (`Device2`)"
+        assert exc.args[0] == 'can not append connection, because neither the from-device/node ' \
+                              '(device: `Device2` | node: `1`) nor the to-device/node ' \
+                              '(device: `Device3` | node: `0`) of the connection match with the latest ' \
+                              'end-device/node (device: `Device2` | node: `0`) of this route'
 
 
 def test_invalid_route_wrong_node_with_inverse_def():
@@ -94,8 +96,10 @@ def test_invalid_route_wrong_node_with_inverse_def():
     try:
         path.append_element(cnn30_21)
     except RoutingBrokenChainError as exc:
-        assert exc.args[0] == "the to-device node name of the transferred element at position 0 (`Device2`) does not " \
-                              "match the from-device node name of the transferred element at position 1 (`Device2`)"
+        assert exc.args[0] == 'can not append connection, because neither the from-device/node ' \
+                              '(device: `Device3` | node: `0`) nor the to-device/node ' \
+                              '(device: `Device2` | node: `1`) of the connection match with the latest ' \
+                              'end-device/node (device: `Device2` | node: `0`) of this route'
 
 
 def test_invalid_route_no_dev():
@@ -113,8 +117,10 @@ def test_invalid_route_no_dev():
     try:
         path.append_element(cnn30_40)
     except RoutingBrokenChainError as exc:
-        assert exc.args[0] == "the to-device of the transferred element at position 0 (`Device2`) does not match the " \
-                              "from-device of the transferred element at position 1 (`Device3`)"
+        assert exc.args[0] == 'can not append connection, because neither the from-device/node ' \
+                              '(device: `Device3` | node: `0`) nor the to-device/node ' \
+                              '(device: `Device4` | node: `0`) of the connection match with the latest ' \
+                              'end-device/node (device: `Device2` | node: `0`) of this route'
 
 
 def test_invalid_route_diff_dev_and_diff_node():
@@ -132,5 +138,7 @@ def test_invalid_route_diff_dev_and_diff_node():
     try:
         path.append_element(cnn31_41)
     except RoutingBrokenChainError as exc:
-        assert exc.args[0] == "the to-device of the transferred element at position 0 (`Device2`) does not match the " \
-                              "from-device of the transferred element at position 1 (`Device3`)"
+        assert exc.args[0] == 'can not append connection, because neither the from-device/node ' \
+                              '(device: `Device3` | node: `1`) nor the to-device/node ' \
+                              '(device: `Device4` | node: `1`) of the connection match with the latest ' \
+                              'end-device/node (device: `Device2` | node: `0`) of this route'
