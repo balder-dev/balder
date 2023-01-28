@@ -190,12 +190,22 @@ class RoutingPath:
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def _get_end_device_and_node(self) -> Tuple[Type[Device], str]:
-        """helper method that determines the end_device and end_node_name"""
+    def _get_end_device_and_node(self, till_idx: int = None) -> Tuple[Type[Device], str]:
+        """
+        helper method that determines the end_device and end_node_name
+
+        :param till_idx: the index of the latest element that should be considered
+
+        :return: a tuple with the latest device and node
+        """
         cur_device = self._start_device
         cur_node_name = self._start_node_name
 
-        for cur_route_elem in self._routing_elems:
+        elements = self._routing_elems
+        if till_idx is not None:
+            elements = self._routing_elems[:till_idx+1]
+
+        for cur_route_elem in elements:
             if isinstance(cur_route_elem, NodeGateway):
                 if cur_node_name == cur_route_elem.from_node_name:
                     cur_node_name = cur_route_elem.to_node_name
@@ -220,31 +230,21 @@ class RoutingPath:
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def has_loop(self):
+    def has_loop(self) -> bool:
         """
-        This method returns True if it detects an internal loop. An internal loop is given, if one :class:`Device`
-        is mentioned twice (or more) in internal `routing_elements` while both elements are arriving at the same node of
-        this device.
+        This method returns True if it detects an internal loop. An internal loop is given, if one :class:`Device`/node
+        pair is mentioned twice (or more) in internal `routing_elements`.
         """
-        all_devices = []
-        all_nodes = []
-        for cur_elem in self._routing_elems:
-            if isinstance(cur_elem, NodeGateway):
-                all_devices.append(cur_elem.device)
-                all_nodes.append(cur_elem.from_node_name)
-            else:
-                # :class:`balder.Connection`
-                all_devices.append(cur_elem.from_device)
-                all_nodes.append(cur_elem.from_node_name)
-        if len(self._routing_elems) > 0:
-            last_elem = self._routing_elems[-1]
-            if isinstance(last_elem, NodeGateway):
-                all_devices.append(last_elem.device)
-                all_nodes.append(last_elem.to_node_name)
-            else:
-                # :class:`balder.Connection`
-                all_devices.append(last_elem.to_device)
-                all_nodes.append(last_elem.to_node_name)
+        all_contact_points = [(self.start_device, self.start_node_name)]
+
+        for idx in range(len(self._routing_elems)):
+            next_device, next_node = self._get_end_device_and_node(idx)
+            # now check if one point is mentioned twice
+            if (next_device, next_node) in all_contact_points:
+                return True
+            all_contact_points.append((next_device, next_node))
+
+        return False
 
     def is_bidirectional(self):
         """
