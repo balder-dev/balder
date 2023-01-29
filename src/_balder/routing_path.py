@@ -109,33 +109,6 @@ class RoutingPath:
         # now go through every possibility and add them - filter all Routes that ``has_loop() == True`` or
         # are completed
         while len(all_possible_routes) > 0:
-            for cur_routing in all_possible_routes.copy():
-                # add all existing connections
-                all_next_conns = [cur_cnn for cur_cnn in setup_devices_cnns
-                                  if ((cur_cnn.from_device == cur_routing.end_device and
-                                       cur_cnn.from_node_name == cur_routing.end_node_name)
-                                      or (cur_cnn.to_device == cur_routing.end_device and
-                                          cur_cnn.to_node_name == cur_routing.end_node_name))]
-                for cur_next_conn in all_next_conns:
-                    if cur_next_conn == cur_routing.elements[-1]:
-                        # is the same connection as the last of routing -> SKIP
-                        continue
-
-                    if cur_next_conn.has_connection_from_to(start_device=cur_routing.end_device):
-                        # the connection allows the direction the routing needs - only then add it
-                        copied_routing = cur_routing.copy()
-                        copied_routing.append_element(cur_next_conn)
-                        all_possible_routes.append(copied_routing)
-                # add all possible gateways
-                # for cur_next_gateway in cur_routing.end_device._get_all_gateways():
-                #     if cur_next_gateway == cur_routing.elements[-1]:
-                #         # is the same gateway as the last one of the routing -> SKIP
-                #         continue
-                #     elif cur_next_gateway.has_connection_from_to(start_node=cur_routing.end_node_name):
-                #         # the gateway allows the direction the routing needs - only then add it
-                #         copied_routing = cur_routing.copy()
-                #         copied_routing.append_element(cur_next_gateway)
-                #         all_possible_routes.append(copied_routing)
 
             # remove all routings that have a loop
             for cur_routing in all_possible_routes.copy():
@@ -156,6 +129,36 @@ class RoutingPath:
                     # `scenario_connection`
                     all_completed_routes.append(cur_routing)
                     all_possible_routes.remove(cur_routing)
+
+            new_possible_routes = []
+            for cur_routing in all_possible_routes.copy():
+                # add all existing connections
+                all_next_conns = [cur_cnn for cur_cnn in setup_devices_cnns
+                                  if ((cur_cnn.from_device == cur_routing.end_device and
+                                       cur_cnn.from_node_name == cur_routing.end_node_name)
+                                      or (cur_cnn.to_device == cur_routing.end_device and
+                                          cur_cnn.to_node_name == cur_routing.end_node_name))]
+                for cur_next_conn in all_next_conns:
+                    if cur_next_conn == cur_routing.elements[-1]:
+                        # is the same connection as the last of routing -> SKIP
+                        continue
+
+                    if cur_next_conn.has_connection_from_to(start_device=cur_routing.end_device):
+                        # the connection allows the direction the routing needs - only then add it
+                        copied_routing = cur_routing.copy()
+                        copied_routing.append_element(cur_next_conn)
+                        new_possible_routes.append(copied_routing)
+                # add all possible gateways
+                # for cur_next_gateway in cur_routing.end_device._get_all_gateways():
+                #     if cur_next_gateway == cur_routing.elements[-1]:
+                #         # is the same gateway as the last one of the routing -> SKIP
+                #         continue
+                #     elif cur_next_gateway.has_connection_from_to(start_node=cur_routing.end_node_name):
+                #         # the gateway allows the direction the routing needs - only then add it
+                #         copied_routing = cur_routing.copy()
+                #         copied_routing.append_element(cur_next_gateway)
+                #         all_possible_routes.append(copied_routing)
+            all_possible_routes = new_possible_routes
 
         return all_completed_routes
 
