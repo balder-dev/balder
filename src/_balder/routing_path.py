@@ -264,7 +264,10 @@ class RoutingPath:
         """
         This method creates a copy of this routing.
         """
-        return copy.copy(self)
+        copied_elem = copy.copy(self)
+        # also copy list reference
+        copied_elem._routing_elems = self._routing_elems.copy()
+        return copied_elem
 
     def append_element(self, elem: Union[Connection, NodeGateway]) -> None:
         """
