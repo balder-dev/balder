@@ -573,7 +573,9 @@ class VariationExecutor(BasicExecutor):
                 if cur_vdevice is not None and cur_device is not None:
                     cur_vdevice_controller = VDeviceController.get_for(cur_vdevice)
                     cur_vdevice_all_features = cur_vdevice_controller.get_original_instanced_feature_objects()
-                    cur_device_all_features = cur_vdevice_controller.get_all_instantiated_feature_objects()
+
+                    cur_device_controller = DeviceController.get_for(cur_device)
+                    cur_device_all_features = cur_device_controller.get_all_instantiated_feature_objects()
                     for cur_vdevice_attr_name, cur_vdevice_feature in cur_vdevice_all_features.items():
                         # now search the used feature in the mapped device itself
                         potential_candidates = [
