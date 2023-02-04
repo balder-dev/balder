@@ -151,7 +151,7 @@ class FeatureController(Controller):
         """
         self._cls_for_vdevice = data
 
-    def get_absolute_class_based_for_vdevice(self, print_warning):
+    def determine_absolute_class_based_for_vdevice(self, print_warning):
         """
 
         This method determines the absolute class based `@for_vdevice` value for the related feature.
@@ -179,7 +179,7 @@ class FeatureController(Controller):
         # with the following recursive call we guarantee that the next parent class has the correct resolved class
         #  based @for_vdevice information
         if next_parent_feat:
-            FeatureController.get_for(next_parent_feat).get_absolute_class_based_for_vdevice(print_warning=False)
+            FeatureController.get_for(next_parent_feat).determine_absolute_class_based_for_vdevice(print_warning=False)
 
         # validate if all used vDevice references in method and class based `@for_vdevice` decorators can be used,
         # because they are members of this feature
