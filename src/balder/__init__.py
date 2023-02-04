@@ -7,6 +7,7 @@ from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.balder_plugin import BalderPlugin
 from _balder.balder_settings import BalderSettings
+from _balder.unmapped_vdevice import UnmappedVDevice
 from _balder.decorator_fixture import fixture
 from _balder.decorator_connect import connect
 from _balder.decorator_covered_by import covered_by
@@ -43,5 +44,7 @@ __all__ = [
 
     'BalderPlugin',
 
-    'BalderSettings'
+    'BalderSettings',
+
+    'UnmappedVDevice'
 ]
