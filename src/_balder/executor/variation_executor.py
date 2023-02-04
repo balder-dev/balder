@@ -10,7 +10,8 @@ from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.routing_path import RoutingPath
-from _balder.controllers import DeviceController, VDeviceController, FeatureController
+from _balder.unmapped_vdevice import UnmappedVDevice
+from _balder.controllers import DeviceController, VDeviceController, FeatureController, NormalScenarioSetupController
 from _balder.exceptions import NotApplicableVariationError, UnclearAssignableFeatureConnectionError
 
 if TYPE_CHECKING:
@@ -141,6 +142,7 @@ class VariationExecutor(BasicExecutor):
         self.update_scenario_device_feature_instances()
         self.update_active_vdevice_device_mappings_in_all_features()
         self.update_inner_referenced_feature_instances()
+        self.exchange_unmapped_vdevice_references()
         self.update_vdevice_referenced_feature_instances()
         self.set_conn_dependent_methods()
 
@@ -157,6 +159,7 @@ class VariationExecutor(BasicExecutor):
                 cur_testcase_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
 
     def _cleanup_execution(self):
+        self.restore_original_vdevice_references()
         self.revert_active_vdevice_device_mappings_in_all_features()
         self.revert_scenario_device_feature_instances()
 
@@ -555,6 +558,44 @@ class VariationExecutor(BasicExecutor):
                     # because `cur_feature` is only the object instance, the value will be overwritten only for this
                     # object
                     setattr(cur_feature, cur_ref_feature_name, replacing_candidate)
+
+    def exchange_unmapped_vdevice_references(self):
+        """
+        This method exchanges all :class:`VDevice` references to an instance of :class:`UnmappedVDevice` if the
+        :class:`VDevice` is not in an active VDevice-mapping.
+        """
+        all_devices = NormalScenarioSetupController.get_for(
+            self.cur_scenario_class.__class__).get_all_abs_inner_device_classes()
+        all_devices += NormalScenarioSetupController.get_for(
+            self.cur_setup_class.__class__).get_all_abs_inner_device_classes()
+
+        for cur_device in all_devices:
+            cur_device_controller = DeviceController.get_for(cur_device)
+            for _, cur_feature in cur_device_controller.get_all_instantiated_feature_objects().items():
+                for cur_vdevice in FeatureController.get_for(cur_feature.__class__).get_abs_inner_vdevice_classes():
+                    if cur_vdevice in cur_feature.active_vdevices.keys():
+                        # do not exchange something, because this one is the active one
+                        pass
+                    else:
+                        # set the `UnmappedVDevice` to this VDevice to ensure that it will not be accessed during this
+                        # variation
+                        setattr(cur_feature, cur_vdevice.__name__, UnmappedVDevice())
+
+    def restore_original_vdevice_references(self):
+        """
+        This method restores all previously exchanged :class:`VDevice` references to the original ones.
+        """
+        all_devices = NormalScenarioSetupController.get_for(
+            self.cur_scenario_class.__class__).get_all_abs_inner_device_classes()
+        all_devices += NormalScenarioSetupController.get_for(
+            self.cur_setup_class.__class__).get_all_abs_inner_device_classes()
+
+        for cur_device in all_devices:
+            cur_device_controller = DeviceController.get_for(cur_device)
+            for _, cur_feature in cur_device_controller.get_all_instantiated_feature_objects().items():
+                original_vdevices = FeatureController.get_for(cur_feature.__class__).get_original_vdevice_definitions()
+                for cur_vdevice_name, cur_original_vdevice in original_vdevices.items():
+                    setattr(cur_feature, cur_vdevice_name, cur_original_vdevice)
 
     def update_vdevice_referenced_feature_instances(self):
         """
