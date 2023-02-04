@@ -657,7 +657,7 @@ class VariationExecutor(BasicExecutor):
                 # here)
                 feature_cnns = \
                     FeatureController.get_for(
-                        cur_setup_feature.__class__).get_class_based_for_vdevice()[cur_setup_feature_vdevice]
+                        cur_setup_feature.__class__).get_abs_class_based_for_vdevice()[cur_setup_feature_vdevice]
                 # connection that are relevant for this feature
                 relevant_cnns = abs_var_scenario_device_cnns[cur_scenario_device][cur_mapped_scenario_device]
 
