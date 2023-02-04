@@ -624,7 +624,7 @@ class Collector:
         """
         for cur_feature in self.get_all_scenario_feature_classes() + self.get_all_setup_feature_classes():
             cur_feature_controller = FeatureController.get_for(cur_feature)
-            cur_feature_controller.get_absolute_class_based_for_vdevice(print_warning)
+            cur_feature_controller.determine_absolute_class_based_for_vdevice(print_warning)
 
     def _validate_vdevice_feature_references(self):
         """
