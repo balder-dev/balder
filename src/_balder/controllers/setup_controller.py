@@ -107,7 +107,7 @@ class SetupController(NormalScenarioSetupController):
                     continue
 
                 cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
-                feature_class_based_for_vdevice = cur_feature_controller.get_class_based_for_vdevice()
+                feature_class_based_for_vdevice = cur_feature_controller.get_abs_class_based_for_vdevice()
                 if not feature_class_based_for_vdevice or mapped_vdevice not in feature_class_based_for_vdevice.keys():
                     # there exists no class based for vdevice information (at least for the current active vdevice)
                     continue

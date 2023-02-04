@@ -42,9 +42,13 @@ class FeatureController(Controller):
         # contains a reference to the related class this controller instance belongs to
         self._related_cls = related_cls
 
-        #: is a static member, that contains the **Class-Based-Binding** information for the related feature class
-        #: sorted by feature types (will be automatically set by executor)
-        self._cls_for_vdevice: Union[Dict[Type[VDevice], List[Connection, Type[Connection]]], None] = None
+        #: holds the defined **Class-Based-Binding** for the related feature class sorted by VDevice types
+        self._cls_for_vdevice: Dict[Type[VDevice], List[Connection, Type[Connection]]] = {}
+
+        #: holds the absolute calculated **Class-Based-Binding** for the related feature class sorted by VDevice types
+        #: (will be calculated by :meth:`FeatureController.determine_absolute_class_based_for_vdevice`, which will be
+        #: called during collecting)
+        self._abs_cls_for_vdevice: Union[Dict[Type[VDevice], List[Connection]], None] = None
 
         #: contains the **Method-Based-Binding** information for the current feature type (will be automatically set by
         #: executor)
@@ -116,33 +120,36 @@ class FeatureController(Controller):
                             # clean metadata here because this is no connection between real devices
                             cur_cnn.set_metadata_for_all_subitems(None)
                             intersection.append(cur_cnn)
-        else:
-            # there exists no method-variations
-            if self.get_class_based_for_vdevice() is None:
-                # there exists also no class based decorator -> set the gobal tree
-                intersection.append(Connection())
+        if len(intersection) == 0:
+            return [Connection()]
         return intersection
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_class_based_for_vdevice(self) -> Union[Dict[Type[VDevice], List[Union[Connection]]], None]:
+    def get_class_based_for_vdevice(self) -> Union[Dict[Type[VDevice], List[Connection]], None]:
         """
         This method returns the class based data for the `@for_vdevice` decorator or None, if there is no decorator
         given
         """
-
         result = {}
-        if self._cls_for_vdevice is not None:
-            for cur_device, cnn_list in self._cls_for_vdevice.items():
-                result[cur_device] = []
-                for cur_cnn in cnn_list:
-                    if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection):
-                        result[cur_device].append(cur_cnn())
-                    else:
-                        result[cur_device].append(cur_cnn)
-            return result
 
-        return None
+        for cur_device, cnn_list in self._cls_for_vdevice.items():
+            result[cur_device] = []
+            for cur_cnn in cnn_list:
+                if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection):
+                    result[cur_device].append(cur_cnn())
+                else:
+                    result[cur_device].append(cur_cnn)
+        return result
+
+    def get_abs_class_based_for_vdevice(self) -> Dict[Type[VDevice], List[Union[Connection]]]:
+        """
+        This method returns the absolute calculated class-based-for-vdevice data for this feature.
+        """
+        if self._abs_cls_for_vdevice is None:
+            # todo we should use a balder exception here!!
+            raise EnvironmentError('can not access the absolute class based for-vdevices because they are not set')
+        return self._abs_cls_for_vdevice
 
     def set_class_based_for_vdevice(
             self, data: Union[Dict[Type[VDevice], List[Union[Connection, Type[Connection]]]], None]):
@@ -162,8 +169,8 @@ class FeatureController(Controller):
         returned by direct call of method `Feature.get_inner_vdevice_classes()`). Otherwise, it determines the class
         based `@for_vdevice` value through analysing of the method based decorators and sets this determined value. If
         the method has to determine the value, it throws a warning with a suggestion for a nice class based decorator.
-        Also, here the method will analyse the given vDevice classes and secures that they are defined in the current :
-        class:`Feature` class.
+        Also, here the method will analyse the given vDevice classes and secures that they are defined in the current
+        :class:`Feature` class.
 
         .. note::
             This method automatically updates the values for the parent classes, too. Every time it searches for the
@@ -218,7 +225,7 @@ class FeatureController(Controller):
             # parent class)
             if vdevice_of_interest is not None and next_parent_feat is not None:
                 next_parent_feat_cls_based_for_vdevice = \
-                    FeatureController.get_for(next_parent_feat).get_class_based_for_vdevice()
+                    FeatureController.get_for(next_parent_feat).get_abs_class_based_for_vdevice()
                 next_parent_feat_cls_based_for_vdevice = {} if next_parent_feat_cls_based_for_vdevice is None else \
                     next_parent_feat_cls_based_for_vdevice
                 if vdevice_of_interest in next_parent_feat_cls_based_for_vdevice.keys():
@@ -232,10 +239,6 @@ class FeatureController(Controller):
             # determine the class value automatically by discovering all method variations for this vDevice only
             this_vdevice_intersection += self._get_method_based_for_vdevice_intersection(for_vdevice=cur_vdevice)
 
-            # set the determined data into the class based `@for_vdevice` class property
-            cls_based_for_vdevice[cur_vdevice] = this_vdevice_intersection
-            self.set_class_based_for_vdevice(cls_based_for_vdevice)
-
             # print warning only if the printing is enabled and there is a sub connection tree (otherwise, the
             #  decorator is not necessary)
             if print_warning and len(this_vdevice_intersection) > 0:
@@ -247,6 +250,11 @@ class FeatureController(Controller):
                         f"Balder has determined a possible marker:\n\n"
                         f'@balder.for_vdevice("{cur_vdevice.__name__}", '
                         f'{", ".join([cur_cnn.get_tree_str() for cur_cnn in this_vdevice_intersection])})\n\n')
+
+            # set the determined data into the class based `@for_vdevice` class property
+            cls_based_for_vdevice[cur_vdevice] = this_vdevice_intersection
+
+        self._abs_cls_for_vdevice = cls_based_for_vdevice
 
     def get_method_based_for_vdevice(self) -> \
             Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None]:
@@ -542,7 +550,7 @@ class FeatureController(Controller):
 
         feature_vdevices = self.get_abs_inner_vdevice_classes()
         for cur_vdevice in feature_vdevices:
-            cur_vdevice_cls_cnn = self.get_class_based_for_vdevice().get(cur_vdevice)
+            cur_vdevice_cls_cnn = self.get_abs_class_based_for_vdevice().get(cur_vdevice)
             # get parent class of vdevice
             relevant_parent_class = VDeviceController.get_for(cur_vdevice).get_next_parent_vdevice()
 
@@ -557,7 +565,7 @@ class FeatureController(Controller):
                 to_checking_parent_features.append(parent_vdevice_feature)
             parent_vdevice_cnn = \
                 FeatureController.get_for(
-                    parent_vdevice_feature).get_class_based_for_vdevice()[relevant_parent_class]
+                    parent_vdevice_feature).get_abs_class_based_for_vdevice()[relevant_parent_class]
             # check if VDevice connection elements are all contained in the parent connection
             for cur_element in cur_vdevice_cls_cnn:
                 if isinstance(cur_element, tuple):
