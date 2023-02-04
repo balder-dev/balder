@@ -68,6 +68,12 @@ class VDeviceOverwritingError(BalderException):
     """
 
 
+class AccessToUnmappedVDeviceException(BalderException):
+    """
+    is thrown if an unmapped vdevice is accessed
+    """
+
+
 class DeviceOverwritingError(BalderException):
     """
     is thrown if the device is not overwritten correctly
