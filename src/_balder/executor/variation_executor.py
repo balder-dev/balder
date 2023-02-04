@@ -157,7 +157,7 @@ class VariationExecutor(BasicExecutor):
                 cur_testcase_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
 
     def _cleanup_execution(self):
-        self.revert_active_vdevice_device_mappings_in_scenario_and_setup_devices()
+        self.revert_active_vdevice_device_mappings_in_all_features()
         self.revert_scenario_device_feature_instances()
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
@@ -519,7 +519,7 @@ class VariationExecutor(BasicExecutor):
                         cur_scenario_feature.active_vdevices = \
                             {cur_scenario_feature_vdevice[0]: self.get_scenario_device_for(cur_mapped_setup_device)}
 
-    def revert_active_vdevice_device_mappings_in_scenario_and_setup_devices(self):
+    def revert_active_vdevice_device_mappings_in_all_features(self):
         """
         This method ensures that the `active_vdevices` property that was changed with
         `update_active_vdevice_device_mappings()` will be reverted correctly.
