@@ -531,6 +531,15 @@ class Collector:
             all_setup_devices += SetupController.get_for(cur_setup).get_all_abs_inner_device_classes()
         return all_setup_devices
 
+    def _set_original_vdevice_in_features(self):
+        """
+        This method ensures that the original VDevice classes (that are defined in the :class:`Feature` classes) are
+        saved inside their controllers.
+        """
+        for cur_feature in self.get_all_scenario_feature_classes() + self.get_all_setup_feature_classes():
+            cur_feature_controller = FeatureController.get_for(cur_feature)
+            cur_feature_controller.save_all_current_vdevice_references_as_originals()
+
     def _set_original_device_features(self):
         """
         This method ensures that the original features (that are instantiated in the
@@ -699,6 +708,7 @@ class Collector:
         Collector.rework_method_variation_decorators()
 
         # do some further stuff after everything was read
+        self._set_original_vdevice_in_features()
         self._set_original_device_features()
         self._exchange_strings_with_objects()
 

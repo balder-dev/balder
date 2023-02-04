@@ -54,6 +54,10 @@ class FeatureController(Controller):
         #: executor)
         self._for_vdevice: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None] = None
 
+        #: contains the original defined :class:`VDevice` objects for this feature (will be automatically set by
+        #:  :class:`Collector`)
+        self._original_vdevice_definitions: Union[Dict[str, Type[VDevice]], None] = None
+
         #: contains the current active method variations for the related feature class - for every key (method name str)
         #: a tuple with the VDevice type, the valid connection and the callable itself will be returned
         self._current_active_method_variation: Dict[str, Tuple[Type[VDevice], Connection, Callable]] = {}
@@ -708,3 +712,20 @@ class FeatureController(Controller):
                         f"vDevice `{cur_inner_class.__name__}` of feature `{self.related_cls.__name__}` "
                         f"has a own vDevice mapping - vDevice mappings are allowed for features on Devices "
                         f"only")
+
+    def get_original_vdevice_definitions(self) -> Dict[str, Type[VDevice]]:
+        """
+        This method returns the :class:`VDevice` definitions that are the original definitions for this feature.
+        """
+        if self._original_vdevice_definitions is None:
+            # todo we should use a balder exception here!!
+            raise EnvironmentError('can not access the original VDevice definitions before they were set with '
+                                   '`save_all_current_vdevice_references_as_originals`')
+        return self._original_vdevice_definitions
+
+    def save_all_current_vdevice_references_as_originals(self):
+        """
+        This method saves the current existing :class:`VDevice` definitions inside this feature as originals.
+        """
+        new_originals = self.get_abs_inner_vdevice_classes()
+        self._original_vdevice_definitions = {cur_vdevice.__name__: cur_vdevice for cur_vdevice in new_originals}
