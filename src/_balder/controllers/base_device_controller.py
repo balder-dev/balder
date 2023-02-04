@@ -57,19 +57,11 @@ class BaseDeviceController(Controller, ABC):
         """
         This method returns the original instanced feature objects of the related device
         """
+        if self._original_instanced_features is None:
+            # todo we should use a balder exception here!!
+            raise EnvironmentError('can not access the original instantiated features before they were set with '
+                                   '`save_all_original_instanced_features`')
         return self._original_instanced_features
-
-    def set_original_instanced_feature_objects(self, data: Union[Dict[str, Feature], None]):
-        """
-        This method sets the original instantiated feature object in the related device.
-
-        :param data: the features that should be added (dictionary with the attribute name as key and
-                     the instantiated feature object as value)
-        """
-        if data is None:
-            self._original_instanced_features = None
-        else:
-            self._original_instanced_features = data
 
     def save_all_original_instanced_features(self):
         """
@@ -78,13 +70,4 @@ class BaseDeviceController(Controller, ABC):
         instantiated abstract features. The real features will be overwritten for each new variation by the
         :class:`ExecutorTree`!
         """
-        new_originals = self.get_all_instantiated_feature_objects()
-
-        if self.get_original_instanced_feature_objects():
-            if self.get_original_instanced_feature_objects() != new_originals:
-                # todo we should use a balder exception here!!
-                raise EnvironmentError(
-                    f"the `{self.__class__.__name__}` for the item `{self.related_cls.__name__}` already has a static "
-                    f"attribute value for its original instanced feature objects - can not overwrite it again")
-
-        self.set_original_instanced_feature_objects(new_originals)
+        self._original_instanced_features = self.get_all_instantiated_feature_objects()
