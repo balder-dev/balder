@@ -139,7 +139,7 @@ class VariationExecutor(BasicExecutor):
         print(' | '.join(device_map_str))
         self.determine_abs_variation_connections()
         self.update_scenario_device_feature_instances()
-        self.update_active_vdevice_device_mappings_in_scenario_and_setup_devices()
+        self.update_active_vdevice_device_mappings_in_all_features()
         self.update_inner_referenced_feature_instances()
         self.update_vdevice_referenced_feature_instances()
         self.set_conn_dependent_methods()
@@ -470,7 +470,7 @@ class VariationExecutor(BasicExecutor):
                 old_instantiated_feature_obj, _ = cur_replacement_tuple
                 setattr(cur_scenario_device, cur_attr_name, old_instantiated_feature_obj)
 
-    def update_active_vdevice_device_mappings_in_scenario_and_setup_devices(self):
+    def update_active_vdevice_device_mappings_in_all_features(self):
         """
         This method ensures that the correct `active_vdevices` property in all feature classes of the related setup and
         scenario-device classes are set correctly.
