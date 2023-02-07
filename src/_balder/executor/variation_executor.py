@@ -641,16 +641,17 @@ class VariationExecutor(BasicExecutor):
         """
         try:
             self.determine_feature_replacement_and_vdevice_mappings()
+
+            if not self.has_feature_implementation_matching():
+                return False
+            if not self.has_vdevice_feature_implementation_matching():
+                return False
+            if not self.has_all_valid_routings():
+                return False
         except NotApplicableVariationError:
             # this variation can not be used, because the features can not be resolved correctly!
             return False
 
-        if not self.has_feature_implementation_matching():
-            return False
-        if not self.has_vdevice_feature_implementation_matching():
-            return False
-        if not self.has_all_valid_routings():
-            return False
         return True
 
     def determine_absolute_scenario_device_connections(self):
@@ -695,6 +696,12 @@ class VariationExecutor(BasicExecutor):
                 cur_scenario_feature: Feature = feature_replacement[cur_setup_feature]
                 cur_setup_feature_vdevice = list(mapping_dict.keys())[0]
                 cur_mapped_setup_device = list(mapping_dict.values())[0]
+
+                if cur_mapped_setup_device not in self.base_device_mapping.values():
+                    raise NotApplicableVariationError(
+                        f'the mapped setup device `{cur_mapped_setup_device.__qualname__}` which is mapped to the '
+                        f'VDevice `{cur_setup_feature_vdevice.__qualname__}` is no part of this variation')
+
                 cur_mapped_scenario_device = self.get_scenario_device_for(cur_mapped_setup_device)
 
                 # get relevant class based connections for the current feature on setup level (this is really be used
