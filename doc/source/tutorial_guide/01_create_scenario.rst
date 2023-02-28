@@ -431,7 +431,8 @@ same matter, all of our methods should raise a ``NotImplementedError`` here.
     If you are writing ``balderhub`` projects or if you are creating common scenarios that are used from other people
     it is highly recommended to add nice comments of all the classes and methods. In addition to that it is highly
     recommended to use type definitions. This makes the code more readable and nice structured. If you take a look in
-    the example of this code in the `balder github repository <link to balder github test file this project is described>`_
+    the example of this code in the
+    `balder github repository <https://github.com/balder-dev/balderexample-loginserver/tree/single-setup>`_
     you find these comments and type definitions, for the sake of clarity, however, we have not done it here in the
     example code.
 
