@@ -298,8 +298,8 @@ Client Feature
 --------------
 
 We want to start with the method ``MyValidRegisteredUserFeature.get_user()``. This method should return a tuple with the
-username and the password. According to the ``README.md`` file of the
-`balderexample-loginserver repository <https://github.com/balder-dev/balder>`_,
+username and the password. According to the
+`README.md file of the balderexample-loginserver repository <https://github.com/balder-dev/balderexample-loginserver/blob/main/README.md#users>`_,
 the server provides static credentials:
 
 Username: ``guest``
