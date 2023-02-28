@@ -1,9 +1,10 @@
 API
 ***
 
+Here you can find the full API documentation of the Balder Framework.
+
 .. toctree::
     :maxdepth: 2
-    :hidden:
     :caption: API
 
     decorator.rst
