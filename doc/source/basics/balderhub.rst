@@ -4,13 +4,13 @@ BalderHub - the share place of tests
 .. note::
     The main navigation web page for BalderHub projects is currently under development, but will be released shortly.
 
-Balder' grand vision is to create a open-source, share place for testing-projects. We call them ``BalderHub`` packages.
+Balder' grand vision is to create a open-source, share place for testing-projects. We call them **BalderHub** packages.
 These packages are normal python packages. You can easily install them like normal python package and simply include
 them into your specific project. That allows you to reuse scenario and feature implementation by your own. You only have
 to provide your custom implementation that really depends on your device, but not the general test logic.
 
 
-Along the way these ``BalderHub`` packages provide some common implementation too, so you only need to implement your
+Along the way these ``balderhub-*`` packages provide some common implementation too, so you only need to implement your
 application specific code, but you can reuse different test devices. The idea is that you can access a wide range of
 different tests where a lot of clever minds has already think about. You simply have to inherit from their scenarios,
 add the specific setup-device feature code for your device and go for it. Different mock functions, helper devices or
@@ -26,25 +26,26 @@ provided in these balderhub project. This helps you and your team to develop tes
     exactly these experts we need here.
 
     Do you know one area really well? Do you like the concept of balder? Think about to initiate an own
-    BalderHub project. Take a look into our `Balder GitHub Group <ht>`_ and feel free to contribute to an existing
-    project or create your own one. If you are not secure if your subject already exist or if you are searching for some
-    colleagues to develop a BalderHub project within a group, fell free to
-    `create an issue <ht>`_ or
-    `start a new discussion <ht>`_.
+    BalderHub project. Take a look into our `Balder GitHub Group <https://github.com/balder-dev>`_ and feel free to
+    contribute to an existing project or create your own one. If you are not secure if your subject already exist or
+    if you are searching for some colleagues to develop a BalderHub project within a group, fell free to
+    `create an issue <https://github.com/balder-dev/hub.balder.dev/issues>`_ or
+    `start a new discussion <https://github.com/balder-dev/hub.balder.dev/discussions>`_.
 
     Of course you could develop the project by your own too. But if you want to release it, we would really like to add
     it into our group. Currently, we are working on a specific section in our documentation that should provide a big
     overview about all existing BalderHub projects. We will release this shortly. If you provide your package within the
-    `Balder GitHub Group <ht>`_, we can secure to add your package as soon as possible. Of course you will remain
-    maintainer of the project.
+    `Balder GitHub Group <https://github.com/balder-dev>`_, we can secure to add your package as soon as possible. Of
+    course you will remain maintainer of the project.
 
 Where can I search for?
 =======================
 
-Our idea is that all public BalderHub packages are contained in our `BalderHub GitHub Group <ht>`_. Of course you
-can create a package by your own too, but if you want to share it easily with the community it is the best way to
-move your repository to our `BalderHub GitHub Group <ht>`_. With this it is also available on the
-`official BalderHub <htp>`_ webpage (will be released shortly) and under ``https://hub.balder.dev/<your project>``.
+Our idea is that all public BalderHub packages are contained in our
+`BalderHub GitHub Group <https://github.com/balder-dev>`_. Of course you can create a package by your own too, but if
+you want to share it easily with the community it is the best way to move your repository to our
+`BalderHub GitHub Group <https://github.com/balder-dev>`_. With this it is also available on the
+`BalderHub Entry Page <https://hub.balder.dev>`_ webpage and under ``https://hub.balder.dev/projects/<your project>``.
 
 How can I use them?
 ===================
@@ -88,5 +89,7 @@ used. Of course your setup-devices have to implement the features of the scenari
 How create my own BalderHub project?
 ====================================
 
-If you want to contribute to a existing BalderHub project or if you want to create a new BalderHub project, feel free
-to `create an issue <ht>`_ or `start a new discussion <ht>`_. Your contribution is really appreciated.
+If you want to contribute to a existing BalderHub project or if you want to create a new BalderHub project, but still
+have some questions, feel free to `create an issue <https://github.com/balder-dev/hub.balder.dev/issues>`_ or
+`start a new discussion <https://github.com/balder-dev/hub.balder.dev/discussions>`_. Your contribution is really
+appreciated.
