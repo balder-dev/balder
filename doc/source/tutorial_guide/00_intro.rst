@@ -8,7 +8,7 @@ test scenarios also for a REST API that allows us to check the available users.
 
 The project we are using in this tutorial is the ``balderexample-loginserver``. You can find it
 `on GitHub <https://github.com/balder-dev/balderexample-loginserver>`_. It is a
-`Django Application <https://https://www.djangoproject.com/>`_ that has a graphical login interface to login into a
+`Django Application <https://www.djangoproject.com/>`_ that has a graphical login interface to login into a
 internal backend area. In addition to that, the project also implements a REST interface, which allows to get a JSON
 representation of all registered users and permission groups. This REST application supports a
 `Basic Authentication <https://datatracker.ietf.org/doc/html/rfc7617>`_ (with username and password).
