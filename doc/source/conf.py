@@ -12,9 +12,11 @@
 #
 import os
 import sys
-from balder import __version__
 
 sys.path.insert(0, os.path.abspath('../../src'))
+
+from balder import __version__
+
 
 # -- Project information -----------------------------------------------------
 
