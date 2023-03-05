@@ -8,9 +8,9 @@ efficiently as possible for different but similar platforms/devices/applications
 being a platform for combining the single steps of defining, developing and documenting the entire test 
 process while using test scenarios which can be reused across different projects.
 
-You can share your own testcode by creating a new BalderHub project, or you use an existing BalderHub project, by simply 
-installing and using it. This makes the test development for your project much faster, since it is often times enough to 
-only provide the user-specific code.
+You can share your own testcode by creating a new BalderHub project, or you use an 
+[existing BalderHub project](https://hub.balder.dev), by simply installing and using it. This makes the test development 
+for your project much faster, since it is often times enough to only provide the user-specific code.
 
 Be part of the progress and share your tests with others, your company or the whole world.
 
@@ -42,8 +42,8 @@ balder --working-dir /path/to/working/dir
 Any help is appreciated. If you want to contribute to balder, take a look into the 
 [contribution guidelines](https://github.com/balder-dev/balder/blob/main/CONTRIBUTING.md).
 
-Balder is still in its early steps. Unfortunately, this also means that we don't have a broad variety of BalderHub 
-projects at the moment.
+Balder is still in its early steps. Unfortunately, this also means that we don't have a broad variety of 
+[BalderHub projects](https://hub.balder.dev) at the moment. 
 
 Are you an expert in your field? Do you enjoy the concept of balder? How about you create your own
 BalderHub project? Take a look into our [Balder GitHub Group](https://github.com/balder-dev) and feel free to share 
