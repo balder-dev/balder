@@ -14,7 +14,7 @@ Difference Setup and Scenario
 
 The basis of Balder is based on individual scenarios and setups that are in a fixed relationship to each other.
 Scenarios define a situation under which individual tests are carried out. Setups, on the other hand, describe how a
-test environment currently looks like. It is important that the following definition is understood:
+test environment currently looks like. Two of the most important statements in Balder are:
 
 **Scenario:** Describes what you need
 
@@ -37,13 +37,14 @@ It is different when we look at the :ref:`Setups`. In a setup you define everyth
 relevant in the environment, the particular setup is for. So for example, if you have your computer, the router and the
 server of company X in your influenceable spectrum of devices you can add all of them to your setup. Also if the
 scenario is written later only for the router and the server, it will work out, because balder will automatically match
-these components.
+scenario-devices with compatible setup-devices.
 
 What are devices?
 =================
 
 A device can be a component of a :ref:`Setup <Setups>` or of a :ref:`Scenario <Scenarios>`. In generally it describes
-a container object, which represents a test component, for example a browser or a server.
+a container object, which represents a test component, an application or a real physically device. Generally, a device
+can be everything which has functionality.
 
 In Balder, devices are inner-classes of :ref:`Setups` or :ref:`Scenarios`. These classes have class properties that
 describe instantiated feature classes (later more). This easily allows you to use these features
@@ -79,6 +80,10 @@ In Balder you have to define scenario-devices similar to the following example c
             addr = self.ServerDevice.provider.get_address()
             ...
 
+.. note::
+    Please note, that :class:`Scenario` classes must be defined inside files that start with `scenario_*.py`. In
+    addition their class name has to start with `Scenario*`. Otherwise the file will not be picked up by Balder.
+
 
 How to connect devices
 ======================
@@ -87,62 +92,28 @@ In the real world, devices are connected with each other. If you have a **Browse
 mentioned before, you could expect that these are connected with each other over something like a HTTP connection. For
 this, Balder provides :ref:`Connections`.
 
+Simple Connections
+------------------
+
+Balder is shipped with a lot of different connections (see :ref:`Connections API`). In addition, you can create your
+own ones, by simply inheriting from the master class :class:`Connection`.
+
+.. code-block:: python
+
+    from balder import Connection
+
+    class MyOwnConnection(Connection):
+        pass
+
 Connection-Trees
 ----------------
 
-Connections are represented as so called Connection-Trees. These trees describe a hierarchical structure, the connection
-object types are arranged with each other.
+The Connection-Tree is a global hierarchical structure, that describes how connections are arranged with each other. For
+example that a ``HttpConnection`` is based on a ``TcpConnection`` which itself is based on ``IpV4Connection`` or
+``IpV6Connection``.
 
-You can define such a connection tree with the static method ``based_on(..)``:
-
-.. code-block:: python
-
-    HttpConnection.based_on(IpV4Connection)
-
-This would determine the sub-tree of the global connection tree. In the standard balder configuration this is not the
-complete resolved tree because there is a TcpConnection between it. Balder always determines the resolved version, which
-would look like the following statement:
-
-.. code-block:: python
-
-    HttpConnection.based_on(TcpV4Connection.based_on(IpV4Connection))
-
-But how does balder know this? Balder holds a inner representation of the whole connection tree. This tree describes
-exactly how these connections are arranged among themselves. Balder always holds a default representation of this
-global-connection-tree, but you can also define one by your own. For more information, take a look into the
-:ref:`Connection-Trees` section.
-
-The objects ``TcpV4Connection`` and ``IpV4Connection`` describes only IPv4 based connections. You can also create a
-statement that supports IPv6, too. For this you can use the logical **OR**, balder uses for connections:
-
-.. code-block:: python
-
-    HttpConnection.based_on(
-            TcpV4Connection.based_on(IpV4Connection),
-            TcpV6Connection.based_on(IpV6Connection)
-        )
-
-In balder a logical **OR** is represented by a simple list or by multiple arguments. You can also provide **AND**
-connections. For this you have to use tuples. Take a look at the following example, which describes that a
-``DnsConnection`` needs a UDP and a TCP connection here:
-
-.. code-block:: python
-
-    DnsConnection.based_on(
-            (UdpConnection, TcpConnection)
-        )
-
-If you want to use the definition for IpV4 and IpV6 here, you can also add an additional **OR** there too:
-
-.. code-block:: python
-
-    DnsConnection.based_on(
-            (UdpV4Connection, TcpV4Connection),
-            (UdpV6Connection, TcpV6Connection)
-        )
-
-This statement describes that the ``DnsConnection`` has to be based on ``UdpV4Connection`` and ``TcpV4Connection`` or on
-``UdpV6Connection`` and ``TcpV6Connection``
+The whole thing allows you to define subtrees, that can be used to connect devices. You can read more about this in
+the section :ref:`Connections`.
 
 Connections between devices
 ---------------------------
@@ -169,17 +140,21 @@ It works the same way in setups.
 How setups work?
 ================
 
+So far we have defined the so-called scenario level (**what we need**). But of course we also have to define the actual
+real environment that we have. For this we use the :class:`Setup` classes.
+
 As mentioned earlier, **Setups always describe what you have**! Similar to :ref:`Scenarios` you define all your devices
 and add features to it. But here you can define everything you have or you want to use in the testenvironment. Balder
-will automatically determine (based on the feature set and the connections between the features) in which constellation
+will automatically determine (based on the feature set and the connections between the devices) in which constellation
 a scenario will fit to a setup.
 
 Implement features
 ------------------
 
-Often features are provided that don't have the whole implementation. In most cases, these features are abstract and
-a user specific implementation have to be provided for the setup devices. For this, you often add a new module
-`features_setup.py` into the `setups` directory, so you can implement your specific features there:
+Often scenario-features don't provide the whole implementation. In most cases, these features are abstract
+and a user specific implementation has to be provided on setup level (means, in a child feature that is instantiated
+inside a setup devices). For this, you can add a new module `features_setup.py` into the `setups` directory, that
+provides the specific setup level features:
 
 .. code-block:: none
 
@@ -258,13 +233,17 @@ like it is done in the scenario, but of course with the subclass, that really pr
 
         ...
 
+.. note::
+    Please note, that :class:`Setup` classes must be defined inside files that start with `setup_*.py`. In
+    addition their class name has to start with `Setup*`. Otherwise the file will not be picked up by Balder.
+
 You can implement more devices than in the scenario, balder doesn't care. It will search for devices that match the
 **requirement**, defined in scenario. If the matching candidates have a matching connection-tree and if all required
 features of a scenario-device are also implemented in the setup-device, balder will run the scenario-testcases with this
 constellation!
 
 .. note::
-    Note that a setup can not provide own testcases!
+    Note that test methods have to be defined in scenario classes only. Setups don't support own test methods!
 
 How does this work together?
 ============================
@@ -283,12 +262,11 @@ Then you think about **what you have**. How does your test rack or your test pc/
 defined in a setup. Add every device you have and implement your features for them. In the same way you have defined the
 scenarios, you have to instantiate your implemented features in the setup devices.
 
-After you have defined that, balder will create matchings.
-
 Matching process
 ----------------
 
-The matching process will determine which device-mappings (between scenarios and setups) match with each other. For
+When Balder is executed and after it has collected all relevant classes, the matching process takes place. It
+determines which device-mappings (between scenarios and setups) match with each other. For
 that, Balder is interested in the feature sets your devices have. Based on these feature sets, balder will automatically
 determine the possible mappings between the :ref:`Scenario <Scenarios>`-Devices and the
 :ref:`Setup <Setups>`-Devices.
@@ -364,35 +342,30 @@ connected with each other. For this, we check if the connection-tree, that has b
 contained in the connection tree, that has been defined in the setup. This will be done for every connection between
 the matching devices. Every matching with one or more device-connection that does not pass this, will be filtered.
 
-What means contained in?
-------------------------
-
-Imagine, you have the following connection tree between two devices in the setup:
-
-.. code-block:: python
-
-    TcpConnection.based_on(WifiConnection)
-
-Balder will first resolve the connection and fill all connection items that are defined between the connections.
-The example will be resolved in the following resolved-tree:
-
-.. code-block:: python
-
-    # RESOLVED VERSION
-    TcpConnection.based_on(IpConnection.based_on(WifiConnection))
-
-To check if a matching candidate really works out, every scenario-device connection has to be **CONTAINED IN** the
-related setup-device connection. Balder checks this by searching the expected smaller tree (so the scenario-device
-connection) in the expected bigger tree (the related setup device connection). So the connection
-``TcpConnection.based_on(IpConnection)`` for example is **CONTAINED IN** the setup connection
-``TcpConnection.based_on(IpConnection.based_on(WifiConnection))`` from above. To check this, the connection always has
-to be converted into the resolved version!
-
-This whole concept supports complex sub-trees that are connected over **OR**  (multiple attributes) and **AND** (tuples)
-connections. If you want to learn more about this, take a look at the :ref:`Basic: Connection <Connections>` section.
-
 Execution
 =========
 
-In the last step balder will execute the mappings. For every mapping all tests of their related scenarios will be
-executed.
+In the last step balder will execute the mappings. You can execute balder, by simply calling it inside the project
+directory:
+
+.. code-block:: none
+
+    $ balder
+
+    +----------------------------------------------------------------------------------------------------------------------+
+    | BALDER Testsystem                                                                                                    |
+    |  python version 3.9.5 (default, Nov 23 2021, 15:27:38) [GCC 9.3.0] | balder version 0.1.0b5                          |
+    +----------------------------------------------------------------------------------------------------------------------+
+    Collect 1 Setups and 1 Scenarios
+      resolve them to 1 mapping candidates
+
+    ================================================== START TESTSESSION ===================================================
+    SETUP SetupMy
+      SCENARIO ScenarioMyOwn
+        VARIATION ScenarioMyOwn.ClientDevice:SetupMy.Client | ScenarioMyOwn.ServerDevice:SetupMy.Server
+          TEST ScenarioMyOwn.test_webpage [.]
+    ================================================== FINISH TESTSESSION ==================================================
+    TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 1 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
+
+Balder automatically detects valid variations between every scenario and the existing setups. For every mapping all
+tests of the scenario will be executed.
