@@ -74,6 +74,9 @@ class BalderSession:
         if working_dir:
             self.working_dir = working_dir
 
+        # add the current working variable to sys.path
+        sys.path.insert(0, str(self.working_dir.absolute()))
+
         ##
         # instantiate and initialize all components to completely load the plugins (plugins could access the command
         # line argument parser)
