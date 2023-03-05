@@ -25,7 +25,7 @@ The test case could look like this, for example:
         coffee_machine = CoffeeMachine()
         tiered_developer.start_coffee_machine(coffee_machine)
         tiered_developer.place_cup()
-        tiered_developer.wait_till_machine_is_ready(coffee_machine)
+        tiered_developer.wait_until_machine_is_ready(coffee_machine)
         tiered_developer.press_coffee_button(coffee_machine)
         assert coffee_machine.has_started(), "The coffee machine did not start the process"
 
@@ -68,7 +68,7 @@ Generalize
 ==========
 
 Similar to the normal developing process, we can now think about generalization. Of course the DRY (don't repeat
-yourself) standard does not really counts in testing, but think about what happens if we forget something in our test
+yourself) standard does not really count in testing, but think about what happens if we forget something in our test
 concept (for example to try if the coffee tastes well) and have various different testcases where we have to add this.
 If we don't have an orderly test management system it can get hard to find all relevant testcases we have to fix here.
 So what about creating a little default structure how such a test should look like? **We start to generalize tests.**
@@ -131,9 +131,9 @@ How could such a Scenario look like? The following code shows how this test scen
 
         def test_create_coffee(self):
             self.Developer.cm_manager.start_coffee_machine()
-            self.Developer.cm_manager.wait_till_machine_is_ready()
+            self.Developer.cm_manager.wait_until_machine_is_ready()
             self.Developer.cup_manager.place_cup()
-            self.CoffeeMachine.creation.create_new_cup()
+            self.CoffeeMachine.creation.fill_cup()
 
             assert self.CoffeeMachine.cm_manager.creation.has_started(), "The coffee machine did not start the process"
 
@@ -145,10 +145,12 @@ How could such a Scenario look like? The following code shows how this test scen
 
 .. note::
     In a real implementation we would assign a mapping between some vDevices and the given devices here. But for now
-    this is not really important. You can read more about VDevices at :ref:`VDevices and method-variations`.
+    we ignore that. You can read more about VDevices at :ref:`VDevices and method-variations`.
 
-Here you don't see how the machine was started exactly. It could be started over an app or over the button on the coffee
-machine. All this information is setup specific. It is defined, where the features are implemented.
+Here you can't see exactly how the machine was started. It could have been started from an app or by pressing the
+button on the coffee machine. This information is not necessary here, because at scenario level we only define
+**what we need**. And we only need that the coffee machine is started, but it does not matter how. We will add this
+specific implementation to our setup-features later.
 
 Setups: the holder of the application specific code
 ---------------------------------------------------
@@ -178,7 +180,7 @@ So for example, the implementation of the ``ManageACupFeature`` could looks like
             return self.developer_brain.floor_still_clean()
 
 We can now replace the developer with every other person. We could replace the methods with code to control a robot or
-something like this. All this depends on the setup implementation. The scenario code is still the same.
+something like this. All this depends on the setup implementation. The scenario code doesn't change.
 
 **Why is this so helpful?** - You can reuse tests for similar devices, by changing only the code that is different. This
 makes it really easy to share tests with other similar project company-wide or world-wide. You can publish your scenario
