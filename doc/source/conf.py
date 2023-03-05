@@ -12,9 +12,11 @@
 #
 import os
 import sys
-from balder import __version__
 
 sys.path.insert(0, os.path.abspath('../../src'))
+
+from balder import __version__
+
 
 # -- Project information -----------------------------------------------------
 
@@ -23,7 +25,7 @@ version = __version__
 # only use major/minor here
 release = ".".join(version.split(".")[:2])
 
-copyright = '2021, Max Stahlschmidt'
+copyright = '2021-2023, Max Stahlschmidt'
 author = 'Max Stahlschmidt'
 
 
@@ -69,3 +71,11 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# -- mermaid
+
+mermaid_version = ""
+
+html_js_files = [
+   'js/mermaid.js',
+]
