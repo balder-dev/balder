@@ -16,17 +16,20 @@ Balder
    deeper/index.rst
    api/index.rst
 
-Balder is a very powerful, universal and flexible python test system that allows you to reuse a once written testcode as
-efficiently as possible for different but similar platforms/devices/applications. Balder's goal is
-being a platform for combining the single steps of defining, developing and documenting the entire test
-process while using test scenarios which can be reused across different projects.
+   BalderHub <https://hub.balder.dev>
 
-But how does this work? In the real world you have a lot of different projects that use the same interfaces, like
-interfaces for TCP or HTTP communication. Other processes like *login into backend* are being implemented multiple times as well.
-This works in the similar way for login with the app, over the api or directly over the web frontend. If you want to test these various
-possibilities, you have to provide similar tests, which are often times repetitive.
-For example if you have a backend system which you are testing on the login function, you would have three possible ways to login.
-You could use the mobile app, the normal web app and the api interface. For all of these possibilities you follow a similar pattern:
+Balder is a very powerful, universal and flexible python test system that allows you to reuse a once written testcode as
+efficiently as possible for different but similar platforms/devices/applications.
+
+In the real world you have a lot of different projects that use the same interfaces, like
+the SNMP, SMTP or HTTP protocol. Other processes like *login into backend* are being implemented multiple
+times as well. This often works in the similar way for login with the app, over the api or directly over the web
+frontend. If you want to test these various possibilities, you have to provide similar tests, which are often times
+repetitive.
+
+For example if you have a backend system which you are testing on the login function, you would have three possible
+ways to login. You could use the mobile app, the normal web app and the api interface. For all of these possibilities
+you follow a similar pattern:
 
 1. open the login area/create the login request
 2. insert the username
