@@ -16,6 +16,8 @@ Balder
    deeper/index.rst
    api/index.rst
 
+   BalderHub <https://hub.balder.dev>
+
 Balder is a very powerful, universal and flexible python test system that allows you to reuse a once written testcode as
 efficiently as possible for different but similar platforms/devices/applications.
 
