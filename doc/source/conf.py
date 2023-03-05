@@ -25,7 +25,7 @@ version = __version__
 # only use major/minor here
 release = ".".join(version.split(".")[:2])
 
-copyright = '2021, Max Stahlschmidt'
+copyright = '2021-2023, Max Stahlschmidt'
 author = 'Max Stahlschmidt'
 
 
