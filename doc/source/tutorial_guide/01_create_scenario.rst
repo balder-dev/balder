@@ -6,9 +6,13 @@ different aspects, that should be tested. For example scenarios for login are re
 and also an invalid. The same procedure for passwords. We could test the registration process, while checking if all
 required fields have to be given to create a valid account and also check if this newly created account works then. What
 happens if we try to reset the password. Do we get a mail and does the reset process works as expected? You can see,
-that there are a lot of different scenarios that could be created here.
+that there are a lot of different tests that should be created here.
 
-But we want to start with the most common scenario. This scenario looks like:
+Let's begin with the typical situation of a client and server. The server offers a login page and an exclusive section
+that requires authentication from the client before accessing it. Once authenticated, the client can enter this secure
+area and is also able to logs out itself.
+
+Our test should look like the following:
 
 * check that we have no access to the internal page
 * insert a valid username
@@ -18,7 +22,7 @@ But we want to start with the most common scenario. This scenario looks like:
 * logout
 * check that we have no access to the internal page
 
-With this scenario we secure, that it is possible to login with a valid username and a valid password. Then we can
+With this test we ensure, that it is possible to login with a valid username and a valid password. Then we can
 access the internal page and also check that we can logout again.
 
 Sounds nice, so let's do it.
@@ -39,9 +43,8 @@ In this newly created file, we have to create a new :class:`Scenario` class:
     class ScenarioSimpleLoginOut(balder.Scenario):
         ...
 
-It is recommended, that the class has the same name like the python file, but only in CamelCase writing. But this is not
-required, it is only recommended. The class name only have to start with ``Scenario*`` here too and has to inherit from
-the global balder class :class:`balder.Scenario`.
+You can name your class as you like, but it has to begin with ``Scenario*`` and has to inherit from the global Balder
+class :class:`balder.Scenario`.
 
 Add a new test method
 ---------------------
@@ -84,8 +87,8 @@ So we add these two devices. We call them ``ServerDevice`` and ``ClientDevice``.
         def test_valid_login_logout(self):
             pass
 
-The device classes are always inner-classes of the Scenario-Class, that uses the devices. They inherit from
-:class:`balder.Device`.
+The device classes are always inner-classes of the Scenario class, that uses the devices. In addition, they must inherit
+from :class:`balder.Device`.
 
 Connect the devices
 -------------------
@@ -97,7 +100,7 @@ Both devices should be connected over a :class:`HttpConnection`.
     This is the first stage we can think about to create a more generic scenario, because the two devices can be
     connected in every possible way to do an login process. You can also login over an :class:`SerialConnection` or
     over a :class:`BluetoothConnection`. But for now we can use this :class:`HttpConnection`, we come back to this
-    Generalization mechanism later.
+    generalization mechanism later.
 
 To connect two devices you can simply use the ``@balder.connect()`` decorator:
 
@@ -121,7 +124,7 @@ To connect two devices you can simply use the ``@balder.connect()`` decorator:
 .. note::
     Often it is easier to create the decorator on the second mentioned device, because python knows the reference only
     to the devices that are defined above. As an alternative Balder also supports the mentioning of the other device
-    with a string reference. To connect the both devices over a connection you can use the following decorator:
+    with a string reference. The following code is the same like the statement before:
 
     .. code-block:: python
 
@@ -138,7 +141,7 @@ To connect two devices you can simply use the ``@balder.connect()`` decorator:
                 pass
 
 .. note::
-    Please note, that currently balder only supports bidirectional connections. The support for non-bidirectional
+    Please note, that Balder currently only supports bidirectional connections. The support for non-bidirectional
     connections will be added in a later version of Balder.
 
 Think about device features
@@ -164,7 +167,9 @@ In addition to that we also need some features for our client device:
 * ``ViewInternalPageFeature``: this feature defines that the owner can access the internal page of another device
 
 
-Even though we have not defined the feature classes yet, we add them to our ``ScenarioSimpleLoginOut`` devices for now:
+Often it can be easier if we just write down, how we want to structure our scenario. For this just instantiate our
+future feature classes inside our ``ScenarioSimpleLoginOut`` devices, even though we have not defined the feature
+classes yet. We will add the necessary implementations and imports later.
 
 .. code-block:: python
 
@@ -174,7 +179,7 @@ Even though we have not defined the feature classes yet, we add them to our ``Sc
     class ScenarioSimpleLoginOut(balder.Scenario):
 
         class ServerDevice(balder.Device):
-             _autonomous = HasLoginSystemFeature()
+            _autonomous = HasLoginSystemFeature()
             user_credential = ValidRegisteredUserFeature()
 
         @balder.connect(ServerDevice, conn.HttpConnection)
@@ -223,7 +228,7 @@ imports for all of our features:
         def test_valid_login_logout(self):
             pass
 
-Maybe you recognized the constructor argument `server=ServerDevice`for the ``InsertCredentialsFeature`` and the
+Maybe you recognized the constructor argument ``server=ServerDevice`` for the ``InsertCredentialsFeature`` and the
 ``ViewInternalPageFeature``. This is a so called :ref:`VDevice mapping <VDevices and method-variations>`. We will need
 that for getting some server data without giving it over method arguments. It is quite enough to have the knowledge
 that such a thing exists. We will dive a little deeper into this later.
@@ -231,8 +236,9 @@ that such a thing exists. We will dive a little deeper into this later.
 Write the testcase
 ------------------
 
-Often it is really comfortable to freely write the test with the features you think they should contain. You can add the
-methods you need and freely write the testcase. The real implementation of the feature methods will be done later.
+Writing tests freestyle is often the most comfortable way to go about it. After the test is written, we can then add
+the used feature classes and methods later on. This helps streamline the writing process, making it easier to get the
+test down.
 
 So let's do it. Let us go back and read our scenario again:
 
@@ -311,8 +317,8 @@ Now let's take a look how the full scenario looks like. For this we take a look 
 
         @balder.connect(ServerDevice, conn.HttpConnection)
         class ClientDevice(balder.Device):
-            login_out = InsertCredentialsFeature(server=ServerDevice)
-            internal_page = ViewInternalPageFeature(server=ServerDevice)
+            login_out = InsertCredentialsFeature(server="ServerDevice")
+            internal_page = ViewInternalPageFeature(server="ServerDevice")
 
         def test_valid_login_logout(self):
             # secure that we are not logged in
@@ -340,7 +346,7 @@ Now let's take a look how the full scenario looks like. For this we take a look 
             assert not self.ClientDevice.internal_page.check_internal_page_viewable(), \
                 "can access internal data after user was logged out"
 
-That was it. This is the complete scenario code to implement a general login form for an backend area. But for now
+That was it. This is the complete scenario code for testing a general authentication process. But for now
 we don't have a real implementation for all the feature methods. So let us go to define them too.
 
 
@@ -369,8 +375,7 @@ too:
         pass
 
 
-So we can simply create the definitions here, like we have them already defined in the scenario. We already know exactly
-which functions we need. The same can be done with all their methods. So let us add the methods here too:
+We can add our previously used methods here too:
 
 
 .. code-block:: python
@@ -423,9 +428,10 @@ which functions we need. The same can be done with all their methods. So let us 
             raise NotImplementedError("this method has to be implemented on setup level")
 
 
-Now these methods do nothing, but we need implemented versions of these methods. Often we really don't need to implement
-them on the scenario level, because the most implementation often depends on the setup. In our example it is the
-same matter, all of our methods should raise a ``NotImplementedError`` here.
+When creating scenarios, it is often the case that only the interfaces are provided and not the implementation, as the
+implementation depends heavily on the real setup. In these cases, we typically add abstract methods and properties.
+However, it is still possible to provide some implementations in certain scenarios. The same applies here, which is why
+we make our methods abstract by adding ``NotImplementedError`` everywhere.
 
 .. note::
     If you are writing ``balderhub`` projects or if you are creating common scenarios that are used from other people
@@ -436,4 +442,5 @@ same matter, all of our methods should raise a ``NotImplementedError`` here.
     you find these comments and type definitions, for the sake of clarity, however, we have not done it here in the
     example code.
 
-Now we have successfully implemented the scenario. In the next session we will add a setup and try our first execution.
+Now we have successfully implemented the scenario. In the next session we will add a setup and execute Balder the first
+time.
