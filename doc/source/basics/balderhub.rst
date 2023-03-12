@@ -1,8 +1,11 @@
 BalderHub - the share place of tests
 ************************************
 
-.. note::
-    The main navigation web page for BalderHub projects is currently under development, but will be released shortly.
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
 Balder' grand vision is to create a open-source, share place for testing-projects. We call them **BalderHub** packages.
 These packages are normal python packages. You can easily install them like normal python package and simply include

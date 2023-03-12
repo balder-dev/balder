@@ -1,6 +1,12 @@
 Balder Execution mechanism
 **************************
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 After you start the execution in a balder project with the command line `balder ..`, balder will go through a procedure
 of tree steps. First balder collects all relevant items that can be found in the project directory (the current working
 directory) and imports their balder-related classes and functions. For this purpose balder keeps an internal overview

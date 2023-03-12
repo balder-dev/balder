@@ -1,6 +1,12 @@
 Connections
 ***********
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 :class:`Connection` objects can be used to define connections between :ref:`Scenario-Devices <Scenario-Device>` and
 :ref:`Setup-Devices <Setup-Device>`. This allows to specify the connections you need (Scenario-Devices) or which
 connections you have (Setup-Devices). So for example, if you have a scenario, that needs a serial connection between

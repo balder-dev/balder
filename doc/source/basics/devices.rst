@@ -1,6 +1,12 @@
 Devices
 *******
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 A Device describes a single component of a :ref:`Scenario <Scenarios>` or of a :ref:`Setup <Setups>`. Generally they are
 container classes for a collection of :ref:`Features`.
 

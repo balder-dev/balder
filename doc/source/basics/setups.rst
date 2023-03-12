@@ -1,6 +1,12 @@
 Setups
 ******
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 Setup classes describe your real-world test setup. It describes what you **have** (in contrast to the :ref:`Scenarios`,
 that describes what you need). A :class:`Setup` describes the structure of :ref:`Devices` and their relationship to each
 other. It also contains the final implementation of all :ref:`Features` the :ref:`Devices` should have.
