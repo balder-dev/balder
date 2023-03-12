@@ -217,17 +217,17 @@ The following table shows these scopes:
 | ``balderglob.py`` file |                        | specific testset is called. This fixture will be executed in       |
 |                        |                        | every test run.                                                    |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this Setup     | This fixture runs only if the Setup (the fixture is defined in)    |
+| as method in           | only in this setup     | This fixture runs only if the setup (the fixture is defined in)    |
 |                        |                        | will be executed in the current testrun. If the                    |
 | :ref:`Setups`          |                        | **execution-level** is ``session`` it will be executed as          |
-|                        |                        | session-fixture only if this Setup is in the executor tree. If the |
+|                        |                        | session-fixture only if this setup is in the executor tree. If the |
 |                        |                        | **execution-level** is ``setup`` or lower, this fixture will only  |
 |                        |                        | be called if the setup is currently active in the test run.        |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this Scenario  | This fixture runs only if the Scenario (the fixture is defined in) |
+| as method in           | only in this scenario  | This fixture runs only if the scenario (the fixture is defined in) |
 | :ref:`Scenarios`       |                        | will be executed in the current testrun. If the                    |
 |                        |                        | **execution-level** is ``session`` or `setup` it will be executed  |
-|                        |                        | as session-/ or setup-fixture only if this Scenario is in the      |
+|                        |                        | as session-/ or setup-fixture only if this scenario is in the      |
 |                        |                        | executor tree. If the  **execution-level** is ``scenario`` or      |
 |                        |                        | lower, this fixture will only be called if the scenario is         |
 |                        |                        | currently active in the test run.                                  |

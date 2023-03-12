@@ -11,10 +11,10 @@ A (test) scenario describes the environment that a test **needs** to be able to 
 :ref:`Setups` that describes what you **have**). A scenario allows to define a test environment first, after the
 individual test cases will be implemented.
 
-Create a Scenario
+Create a scenario
 =================
 
-Every Scenario class have to be located in a file that fulfils the naming ``scenario_*.py``. To keep it clear, it
+Every scenario class have to be located in a file that fulfils the naming ``scenario_*.py``. To keep it clear, it
 is often useful to create a own directory for the scenario which has the same name like the scenario python file. So you
 can define your related objects, you only use for your single scenario inside this directory.
 However Balder will load the python file (with naming ``scenario_*.py``) in its collecting process and searches for
@@ -69,12 +69,12 @@ You can also define some by your own.
 
 .. note::
     These connection objects are already in a relationship before you use them. They are included in a global
-    Connection-Tree. This tree defines a hierarchical structure of the connections (for example, that Ethernet can be
+    connection-tree. This tree defines a hierarchical structure of the connections (for example, that Ethernet can be
     transmitted over a ``CoaxialCableConnection`` or a ``OpticalFiberConnection``.
 
     It is also possible to expand this tree by your own or if necessary to use a complete custom tree.
 
-    You can read more about this :ref:`here <Connection-Trees>`.
+    You can read more about this :ref:`here <connection trees>`.
 
 In addition to define single connections, you can also select a part of the global connection tree or combine some
 connections with an OR or an AND relationship. So for example you could connect our devices and allow an Ethernet as
@@ -173,7 +173,7 @@ With that, we added two abstract methods without an implementation yet. We are g
 :class:`Feature` subclass of our :ref:`Setups` later.
 
 .. note::
-    In some cases it can be useful to provide a implementation in the Scenario-:class:`Feature` implementation too.
+    In some cases it can be useful to provide a implementation in the scenario-feature implementation too.
     You can find more details about that in the :ref:`Features section <Features>`.
 
 Use the features and write tests

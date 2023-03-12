@@ -24,7 +24,7 @@ To understand this more easily, let's take a look at the following example:
     class SenderFeature(balder.Feature):
 
         def send(msg):
-            raise NotImplementedError("this feature has to be implemented by feature class of Setup")
+            raise NotImplementedError("this feature has to be implemented by feature class of setup")
 
 
 .. code-block:: python
@@ -128,7 +128,7 @@ properties, they are only used to say:
 
 *This device has the feature ``IsRedFeature``*
 
-So we want to filter them, because we only want a match with a device that has the same Feature, but we can't or
+So we want to filter them, because we only want a match with a device that has the same feature, but we can't or
 don't want to influence or interact with this device over the autonomous :class:`.Feature`.
 
 The definition for such a autonomous feature, is really easy:
@@ -190,7 +190,7 @@ setup:
                 pass
 
 
-Bind Features
+Bind features
 =============
 
 A big advantage of Balder is that you are able to reuse components. This also applies to features. But mostly you will
@@ -207,10 +207,10 @@ to limit the allowed connections the feature is able to use with this :class:`VD
 This is the so called **class-based-binding**.
 
 In addition to that, it is also possible to bind single methods of your feature to a subset of the allowed sub-connection
-tree or/and for the usage with one VDevice only. This allows it to define a method multiple times with different
+tree or/and for the usage with one vDevice only. This allows it to define a method multiple times with different
 `@for_vdevice` bindings. So for example you can implement a method `send` that will be used if the device (that is
-assigned as VDevice) is connected over a TcpConnection. And additionally to that you have another method `send` that is
-bind to a `UdpConnection`. Depending on the current Scenario/Setup, Balder will use the correct method variation of
+assigned as vDevice) is connected over a TcpConnection. And additionally to that you have another method `send` that is
+bind to a `UdpConnection`. Depending on the current scenario/setup, Balder will use the correct method variation of
 `send`, after you call it in your testcase. This is the so called **method-based-binding**.
 
 This section describes how this mechanism generally works. You can find a lot of more detailed explanations in the
@@ -261,7 +261,7 @@ attribute ``OtherPipeVDevice="PipeDevice2"`` to the feature constructor to defin
 
 
 .. note::
-    Often you can not access the Device type objects inside the feature constructor. For this Balder also allows to use
+    Often you can not access the device type objects inside the feature constructor. For this Balder also allows to use
     simple strings, that contains the same name than the referencing device type.
 
 You can do this with different devices that could stand for different usages of this feature. So you can also add
@@ -294,7 +294,7 @@ way.
     Balder checks if the requirement that is given with the **Class-Based-Binding** is available. If the requirement
     doesn't match the class-based statement, it throws an error!
 
-How does that influence the Setup? - You are also able to define these vDevice-Device mapping in the setup. This is even
+How does that influence the setup? - You are also able to define these vDevice-Device mapping in the setup. This is even
 often the case, because your setup normally uses the specific functionality. Your scenario should be as universal as
 possible. You can also use this mechanism on scenario level. If you want to find out more about this, take a look at the
 :ref:`VDevices and method-variations` section.
@@ -305,7 +305,7 @@ Method-Based-Binding
 Often it is required to provide different implementations for different vDevices or different sub-connection-trees in a
 feature. For this you can use **Method-Based-Binding**.
 
-Let's assume, we have a Feature that could send a message to another device. For this case, the connection type
+Let's assume, we have a feature that could send a message to another device. For this case, the connection type
 does not really matter, because the feature should support this requirement generally for every possible connection.
 So it is only important to test that the device can send a message to another device. It does not matter, how the
 feature send this message (at least at scenario level).
@@ -335,15 +335,15 @@ Basically our scenario level implementation looks like:
 
 
 
-As you can see, we have defined the inner VDevice ``OtherVDevice`` here. We want to use the feature
+As you can see, we have defined the inner vDevice ``OtherVDevice`` here. We want to use the feature
 ``RecvMessengerFeature`` with this vDevice. For this we instantiate it as class property of the ``OtherVDevice``. This
 allows us, to define the requirement the mapped device should implement already in this feature.
 
 .. note::
-    The elements given in the inner VDevice class definition is a **MUST HAVE**, which means that the statement has to
+    The elements given in the inner vDevice class definition is a **MUST HAVE**, which means that the statement has to
     be available in the mapped device later, otherwise it would throw an error.
 
-Till now the Scenario-Feature doesn't use some **Method-Based-Bindings**. This will change in a few moments, when we
+Till now the scenario-feature doesn't use some **Method-Based-Bindings**. This will change in a few moments, when we
 implement the setup-level representation of this feature.
 
 Before we take action for the setup implementation, we want to create a :ref:`Scenario <Scenarios>` using this newly
@@ -375,7 +375,7 @@ created feature. For this, we want to implement a example scenario with two devi
             assert all_messages[0] == SEND_DATA, "have not received the sent data
 
 As you can see we have created a mapping for the inner :class:`VDevice` to an real defined scenario :class:`Device`
-by using the name of the inner VDevice as key and the name of the real device as value in the constructor. We also
+by using the name of the inner vDevice as key and the name of the real device as value in the constructor. We also
 implement a basic test, that should check the communication.
 
 So let's start to implement the setup level. We can implement our earlier defined feature by simply inheriting from it.

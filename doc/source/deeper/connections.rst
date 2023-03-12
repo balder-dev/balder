@@ -1,4 +1,4 @@
-Deeper look into Connections
+Deeper look into connections
 ****************************
 
 .. important::

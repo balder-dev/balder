@@ -11,7 +11,7 @@ see :ref:`Connections`.
 Basic ``Connection``
 ====================
 
-The basic :class:`Connection` class is the master class of every Connection. It can always be used as container for
+The basic :class:`Connection` class is the master class of every connection. It can always be used as container for
 your sub-tree connection too.
 
 .. autoclass:: balder.Connection

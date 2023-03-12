@@ -21,7 +21,7 @@ especially the :class:`Connection` trees between the devices are important.
 
 This section shows the basic functionality of connections and how you can use them in the Balder ecosystem.
 
-Global Connection-Trees
+Global connection-trees
 =======================
 
 Internally Balder knows exactly how the connections are arranged with each other. For this it refers to the global
@@ -65,7 +65,7 @@ structure:
 
 Balder will automatically resolve UNRESOLVED sub-trees according to its current active global-connection-tree.
 
-OR/AND Connection relations
+OR/AND connection relations
 ===========================
 
 You can combine connection objects with each other. This makes it possible that a connection is based on a connection or
@@ -112,12 +112,12 @@ easier by refactoring the both **AND** relations:
 
 This limitation makes it easier to read the logic.
 
-Using the base Connection object
+Using the base connection object
 ================================
 
-You can use the base Connection object for different use cases.
+You can use the base connection object for different use cases.
 
-General Connection
+General connection
 ------------------
 
 If you want to specify that you need a connection, but it doesn't matter which connection type, you can use
@@ -131,7 +131,7 @@ This is the universal connection that describes a **can-be-everything** connecti
 
 **A general connection does never have based-on elements!**
 
-Container Connection
+Container connection
 --------------------
 
 Sometimes you want to create a statement AConnection OR BConnection. This can easily defined with an container
@@ -143,7 +143,7 @@ connection:
 
 **A container connection always has based-on elements**.
 
-Defining your own Connection
+Defining your own connection
 ============================
 
 Balder allows to define own connections. For that you have to provide a `connections` module somewhere in your project.
@@ -194,10 +194,10 @@ implement this easily:
 
 You are now able to use this connection. It is integrated in the project global connection tree.
 
-Global-Connection-Tree
+Global connection tree
 ======================
 
-In Balder all connections are embedded in a so called global-connection-trees. This tree defines how the connections are
+In Balder all connections are embedded in a so called global connection trees. This tree defines how the connections are
 arranged to each other.
 
 The global connection tree
@@ -207,7 +207,7 @@ Balder provides an global connection tree. This tree is already specified for al
 `<Connections API>`_). Per default Balder uses this pre-defined tree.
 
 .. note::
-    COMING SOON - We are working on a graphical tool to show this global-connection-tree.
+    COMING SOON - We are working on a graphical tool to show this global connection tree.
 
 ..
     .. todo

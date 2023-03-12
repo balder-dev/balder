@@ -12,7 +12,7 @@ class.
 Basic ``Feature``
 =================
 
-The basic :class:`Feature` class is the master class of every Scenario.
+The basic :class:`Feature` class is the master class of every scenario.
 
 .. autoclass:: balder.Feature
     :members:
