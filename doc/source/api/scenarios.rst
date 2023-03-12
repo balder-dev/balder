@@ -8,7 +8,7 @@ Scenarios represents a abstract test setup, that is required to run a testmethod
 Basic ``Scenario``
 ==================
 
-The basic :class:`Scenario` class is the master class of every Scenario.
+The basic :class:`Scenario` class is the master class of every scenario.
 
 .. autoclass:: balder.Scenario
     :members:

@@ -1,4 +1,4 @@
-Part 1: Develop a Scenario
+Part 1: Develop a scenario
 **************************
 
 First of all we have to think about the test scenarios we want to create for such a login app. There are a lot of
@@ -87,7 +87,7 @@ So we add these two devices. We call them ``ServerDevice`` and ``ClientDevice``.
         def test_valid_login_logout(self):
             pass
 
-The device classes are always inner-classes of the Scenario class, that uses the devices. In addition, they must inherit
+The device classes are always inner-classes of the scenario class, that uses the devices. In addition, they must inherit
 from :class:`balder.Device`.
 
 Connect the devices

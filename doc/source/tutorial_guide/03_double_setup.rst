@@ -1,4 +1,4 @@
-Part 3: Expand Setup Code
+Part 3: Expand setup code
 *************************
 
 In this part we are going to learn one of the key concepts of Balder - reusing tests.
@@ -24,7 +24,7 @@ So let's go back to our example and restructure our earlier created project a li
 Prepare for the new setup
 =========================
 
-In :ref:`part 2 <Part 2: Implement Browser Setup>` we have already implemented a setup for our login server, that uses
+In :ref:`part 2 <Part 2: Implement browser setup>` we have already implemented a setup for our login server, that uses
 the web frontend to login to our internal page. Often we also need an API/REST interface to connect with internal
 components. Our loginserver also supports this. We want to add a new setup for this method now.
 
@@ -33,7 +33,7 @@ First of all, think about the features we need for it.
 Think about the devices
 -----------------------
 
-Similar to :ref:`part 2 <Part 2: Implement Browser Setup>` we could think about the required features we need for our
+Similar to :ref:`part 2 <Part 2: Implement browser setup>` we could think about the required features we need for our
 new setup class. If we go back to the scenario definition we need the following features:
 
 ``Loginserver``:
@@ -48,7 +48,7 @@ new setup class. If we go back to the scenario definition we need the following 
 
 As you can see we need the same features like we have used earlier in our first setup. Of course we need the same one,
 because we still have the same procedure. Similar to the webpage login, we need the procedure defined in
-:ref:`part 1 <Part 1: Develop a Scenario>`:
+:ref:`part 1 <Part 1: Develop a scenario>`:
 
 * check that we have no access to the internal page/data
 * insert a valid username
@@ -192,7 +192,7 @@ should look like the following:
                 |- __init__.py
                 |- setup_features.py
 
-Similar to :ref:`part 2 <Part 2: Implement Browser Setup>` we first define our new setup with the devices and all
+Similar to :ref:`part 2 <Part 2: Implement browser setup>` we first define our new setup with the devices and all
 imported features. Again we want to create two devices, one server devices that provides the rest api and one rest
 client device, that executes the requests with the basic authentication.
 
@@ -262,7 +262,7 @@ We have added two features that requires a own REST specific implementation. Let
             pass
 
 As you can see, we have also overwritten the vDevice instances, because we will need them in this features too.
-Similar to the :ref:`part 2 <Part 2: Implement Browser Setup>` we need a common feature that provides access to our api
+Similar to the :ref:`part 2 <Part 2: Implement browser setup>` we need a common feature that provides access to our api
 endpoint. Even though we don't really have a login area here, but actually send the access data with each request, we
 want to set up the whole thing similarly.
 

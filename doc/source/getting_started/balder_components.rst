@@ -4,12 +4,12 @@ Main Balder components
 The following section should help getting an overview over the available components in Balder. You will learn the key
 facts about :ref:`Scenarios` and :ref:`Setups` and how their :ref:`Devices` work. You will learn what
 :ref:`Features` are and how Balder matches these between :ref:`Scenarios` and :ref:`Setups`. You will also learn how to
-connect devices with each other over :ref:`Connections` and how :ref:`Connection-Trees` are defined.
+connect devices with each other over :ref:`Connections` and how :ref:`connection trees` are defined.
 
 Note that this section only provides an overview of the components. You can find a detailed description of each
 element in the :ref:`Basic Guide <Basic Guides>`.
 
-Difference Setup and Scenario
+Difference setup and scenario
 =============================
 
 The basis of Balder is based on individual scenarios and setups that are in a fixed relationship to each other.
@@ -92,7 +92,7 @@ In the real world, devices are connected with each other. If you have a **Browse
 mentioned before, you could expect that these are connected with each other over something like a HTTP connection. For
 this, Balder provides :ref:`Connections`.
 
-Simple Connections
+Simple connections
 ------------------
 
 Balder is shipped with a lot of different connections (see :ref:`Connections API`). In addition, you can create your
@@ -105,10 +105,10 @@ own ones, by simply inheriting from the master class :class:`Connection`.
     class MyOwnConnection(Connection):
         pass
 
-Connection-Trees
+Connection trees
 ----------------
 
-The Connection-Tree is a global hierarchical structure, that describes how connections are arranged with each other. For
+The connection-tree is a global hierarchical structure, that describes how connections are arranged with each other. For
 example that a ``HttpConnection`` is based on a ``TcpConnection`` which itself is based on ``IpV4Connection`` or
 ``IpV6Connection``.
 

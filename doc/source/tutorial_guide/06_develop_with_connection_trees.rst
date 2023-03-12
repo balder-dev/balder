@@ -1,4 +1,4 @@
-Part 6: Develop with Connection-Trees
+Part 6: Develop with connection-trees
 *************************************
 
 .. warning::

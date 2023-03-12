@@ -7,7 +7,7 @@ Every :class:`Scenario` and every :class:`Setup` describes a construction that c
 Basic ``Device``
 ================
 
-The basic :class:`Device` class is the master class of every Device object.
+The basic :class:`Device` class is the master class of every device object.
 
 .. autoclass:: balder.Device
     :members:

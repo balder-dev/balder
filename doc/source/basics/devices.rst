@@ -7,7 +7,7 @@ Devices
 
     Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
-A Device describes a single component of a :ref:`Scenario <Scenarios>` or of a :ref:`Setup <Setups>`. Generally they are
+A device describes a single component of a :ref:`Scenario <Scenarios>` or of a :ref:`Setup <Setups>`. Generally they are
 container classes for a collection of :ref:`Features`.
 
 Scenario-Device
@@ -17,7 +17,7 @@ A :ref:`Scenario-Device` is a device, that defines a subset of :ref:`Features`, 
 have. Balder searches for matches (see also :ref:`Matching process of setups and scenarios (SOLVING)`), where the
 potential :ref:`Setup-Device` has an implementation for the :ref:`Features` of the :ref:`Scenario-Device`.
 
-So when is a :class:`Device` a Scenario-Device? - This depends one the definition location. A :class:`Device` is
+So when is a :class:`Device` a scenario-device? - This depends one the definition location. A :class:`Device` is
 a :ref:`Scenario-Device` when it is an inner-class of a :class:`Scenario`.
 
 .. code-block:: py
@@ -68,7 +68,7 @@ inner-classes in :ref:`Setups` of course.
 
 Often the :ref:`Features` of a :ref:`Setup-Device` implement the complete logic, while the features of the
 :ref:`Scenario-Device` only describes the abstract architecture. This can be done, because the :ref:`Features` of the
-:ref:`Setup-Devices <Setup-Device>` are subclasses of the Scenario-Device :ref:`Features`. You can find more
+:ref:`Setup-Devices <Setup-Device>` are subclasses of the scenario-device :ref:`Features`. You can find more
 information about this in the sections :ref:`Features` and :ref:`Matching process of setups and scenarios (SOLVING)`.
 
 

@@ -112,7 +112,7 @@ This allows us to separate the test code from the application code. With these e
 ``Developer`` interacts with the ``CoffeeMachine``. We only want that the ``Developer`` starts the ``CoffeeMachine``
 without the knowledge how this is executed. Real specific code doesn't need to be implemented.
 
-How could such a Scenario look like? The following code shows how this test scenario would be implemented with Balder:
+How could such a scenario look like? The following code shows how this test scenario would be implemented with Balder:
 
 .. code-block:: python
 
@@ -145,7 +145,7 @@ How could such a Scenario look like? The following code shows how this test scen
 
 .. note::
     In a real implementation we would assign a mapping between some vDevices and the given devices here. But for now
-    we ignore that. You can read more about VDevices at :ref:`VDevices and method-variations`.
+    we ignore that. You can read more about vDevices at :ref:`VDevices and method-variations`.
 
 Here you can't see exactly how the machine was started. It could have been started from an app or by pressing the
 button on the coffee machine. This information is not necessary here, because at scenario level we only define

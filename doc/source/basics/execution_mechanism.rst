@@ -18,7 +18,7 @@ an execution-tree. In the last step Balder executes this tree with the inclusion
 To make it easier to understand the functionality of Balder, we will start to consider the differences between
 :ref:`Setup <Setups>` classes and :ref:`Scenario <Scenarios>` classes a little bit more in detail.
 
-Difference between Setup and Scenario
+Difference between setup and scenario
 =====================================
 
 Balder is based on individual :ref:`Scenario <Scenarios>` and :ref:`Setup <Setups>` classes.
@@ -59,7 +59,7 @@ Collecting process
 The collection process is the first stage of the Balder execution mechanism, directly after executing the ``balder ...``
 command. In this stage all available relevant Balder classes within the working directory are collected.
 
-Collect Setups and Scenarios
+Collect setups and scenarios
 ----------------------------
 
 First the collector begins to find all setup and scenario classes that are located directly in the Python files
@@ -70,7 +70,7 @@ classes, which are subclasses of the master :class:`Scenario` class and if their
 Only for classes that meet all these criteria, Balder will acknowledge these classes as valid scenarios and add
 them to the internal collection of executable scenarios.
 
-In the same way, Balder searches for scenarios, it will do that for Setups. These setups have to be in files that have
+In the same way, Balder searches for scenarios, it will do that for setups. These setups have to be in files that have
 the name ``setup_*.py` and whose classes have the name ``Setup*`` and are child classes of :class:`Setup`.
 
 .. note::
@@ -83,14 +83,14 @@ With the previous step, Balder has automatically loaded all defined testcase met
 testcases have to be defined as a method in a :ref:`Scenario <Scenarios>` class. The name of these test methods always
 has to start with ``test_ *``. A scenario could define as much test methods as you like.
 
-Collect Connections
+Collect connections
 -------------------
 
 :ref:`Connections` are objects that connects devices with each other. These objects will be included in a global
 connection tree, which is the general representation of usable Balder connections. In every project you can define your
 own connections within python modules/files with the name ``connections``. These files will be read by Balder
 automatically during the collecting process. They will be inserted into the
-:ref:`global Connection-Tree <The global connection tree>`.
+:ref:`global connection-tree <The global connection tree>`.
 
 Matching process of setups and scenarios (SOLVING)
 ==================================================
@@ -240,7 +240,7 @@ two elements do not go together..
 
 They need some :ref:`Features`!
 
-Devices with Features
+Devices with features
 =====================
 
 In the previous step all our devices doesn't have a real functionality, they only exist. For this Balder provides
@@ -248,7 +248,7 @@ In the previous step all our devices doesn't have a real functionality, they onl
 through the :ref:`Balder Intro Example` you have learned the basic functionality of features. For a full introduction
 to features, you can also discover the basic documentation section :ref:`Features`.
 
-Add Feature functionality
+Add feature functionality
 -------------------------
 
 So let us add some functionality to our scenario definition. For this we have to add some features. Get the rule back
@@ -302,7 +302,7 @@ the scenario can not be executed.
 Implement features in setup
 ---------------------------
 
-Of course we also need a feature implementation in our setups too. As you will see later, Features in
+Of course we also need a feature implementation in our setups too. As you will see later, features in
 :ref:`Scenario-Devices <Scenario-Device>` often only define the interface that is needed by the scenario-device, but we
 often do not provide a direct implementation of it there. Mostly the direct implementation is done on setup level.
 
@@ -484,14 +484,14 @@ of them. The following table shows them with the scope, they are valid.
 | ``balderglob.py`` file |                        | specific testset you are calling. This fixture will be executed in |
 |                        |                        | every test run.                                                    |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this Setup     | This fixture runs only if this Setup will be executed in the       |
+| as method in           | only in this setup     | This fixture runs only if this setup will be executed in the       |
 | :class:`Setup`         |                        | current testrun. If the **execution-level** is ``session`` it will |
-|                        |                        | be executed as session-fixture only if this Setup is in the        |
+|                        |                        | be executed as session-fixture only if this setup is in the        |
 |                        |                        | executor tree. If the  **execution-level** is ``setup`` or lower,  |
 |                        |                        | this fixture will only be called if the setup is currently active  |
 |                        |                        | in the test run.                                                   |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this Scenario  | This fixture runs only if this Scenario will be executed in the    |
+| as method in           | only in this scenario  | This fixture runs only if this scenario will be executed in the    |
 | :class:`Scenario`      |                        | current testrun. If the **execution-level** is ``session`` or      |
 |                        |                        | `setup` it will be executed as session-/ or setup-fixture only if  |
 |                        |                        | this Scenario is in the executor tree. If the  **execution-level** |

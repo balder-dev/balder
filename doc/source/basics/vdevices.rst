@@ -79,7 +79,7 @@ implements the functionality of the earlier example, but with vDevices:
 
         class Client(balder.Device):
             # we have to map the vDevice with our real device (use the class name of the vDevice as key and the
-            #  Device class you want to map as value)
+            #  device class you want to map as value)
             load = LoadSiteFeature(WebServerVDevice=ScenarioLoadWeb.Server)
 
         def test_load(self):
@@ -126,7 +126,7 @@ we can rework our feature class:
             # ???
             ...
 
-As you can see, we have three different VDevices in our feature implementation. Every vDevice works in another way:
+As you can see, we have three different vDevices in our feature implementation. Every vDevice works in another way:
 
 +----------------------------------+------------------------+----------------------------------------------------------+
 | Feature-VDevice                  | needs the features     | Description                                              |
@@ -164,7 +164,7 @@ If you use our feature in a scenario and add the following vDevice mapping:
 
         class Client(balder.Device):
             # we have to map the vDevice with our real device (for this use the class name of the vDevice and the
-            #  Device class we want to map)
+            #  device class we want to map)
             load = LoadSiteFeature(WebServerVDevice=ScenarioLoadWeb.Server)
 
         def test_check_title(self):
@@ -287,7 +287,7 @@ Nested method variation calls
 Often you want to call other methods from methods itself. You can freely do this. Balder will handle the correct calling
 of all methods in the feature, also for nested calls.
 
-Bind vDevice for Connection-Trees
+Bind vDevice for connection-trees
 =================================
 
 You can also narrow the method variations even further by specifying a specific connection tree in the

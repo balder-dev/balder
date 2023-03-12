@@ -41,7 +41,7 @@ You can create a new :class:`Device` in your setup by simply defining a new inne
         ...
 
 
-Add other Device
+Add other device
 ----------------
 
 Feel free to create more devices. You should add all devices you want to use in your tests within this setup. Balder

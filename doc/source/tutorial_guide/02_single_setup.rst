@@ -1,4 +1,4 @@
-Part 2: Implement Browser Setup
+Part 2: Implement browser setup
 *******************************
 
 Before we start to implement our first setup, let's take a look to the login-page. If you
@@ -58,7 +58,7 @@ We can now create the initial setup class in our newly created file:
         pass
 
 We want to create a setup, that matches with our scenario, we have created in
-:ref:`part 1 <Part 1: Develop a Scenario>`. In our scenario we defined two devices we need for the execution. These two
+:ref:`part 1 <Part 1: Develop a scenario>`. In our scenario we defined two devices we need for the execution. These two
 devices are needed in our setup too.
 
 Think about devices
@@ -70,7 +70,7 @@ with a scenario device if it implements at least all features (by inheriting fro
 .. note::
     This also means that a setup can have devices or features that are not mentioned in the scenario.
 
-So, according to our developed scenario we have developed in :ref:`part 1 <Part 1: Develop a Scenario>`, we need two
+So, according to our developed scenario we have developed in :ref:`part 1 <Part 1: Develop a scenario>`, we need two
 devices that implements the following features:
 
 ``MechanizeClient``:
@@ -101,7 +101,7 @@ scenario-device-connections have to BE IN the related connections of the setup d
 
 If you want to learn more about, how Balder works, check out the :ref:`Balder Execution mechanism`.
 
-Autonomous Feature
+Autonomous feature
 ------------------
 
 The autonomous feature ``HasLoginSystemFeature`` is a feature that doesn't contain some functional code, it simply
@@ -111,7 +111,7 @@ implementation, we can simply add it to every device that has this feature.
 
 You can find more about autonomous features :ref:`here <Autonomous-Features>`.
 
-Abstract Features
+Abstract features
 -----------------
 
 Most of the features we have implemented so far are abstract and have no implementation or at least have no complete
@@ -140,7 +140,7 @@ This newly created file ``features.py`` should contain our specific feature impl
 login.
 
 .. note::
-    In :ref:`Part 3: Expand Setup Code` we will expand this and use real hierarchy structured setup-feature code,
+    In :ref:`Part 3: Expand setup code` we will expand this and use real hierarchy structured setup-feature code,
     but for now this is quite sufficient.
 
 .. note::
@@ -150,7 +150,7 @@ login.
 Add the devices
 ---------------
 
-In the same way we have developed our scenario in :ref:`part 1 <Part 1: Develop a Scenario>`, we add the features
+In the same way we have developed our scenario in :ref:`part 1 <Part 1: Develop a scenario>`, we add the features
 before we really implement it. For an easier understanding, we use a simple name format for the features we will
 overwrite in our setup area. Every of these features will be named like ``My<scenario-feature-name>``.
 
@@ -227,9 +227,9 @@ the following:
 
 In the ``InsertCredentialsFeature`` constructor, that is used by the ``ClientDevice`` we have defined a mapping between
 our vDevice ``Server`` and our real device ``ServerDevice``. With this, we tell Balder that we want to use the
-``Server`` VDevice and that our real device ``ServerDevice`` should be mapped to it, thus representing it.
+``Server`` vDevice and that our real device ``ServerDevice`` should be mapped to it, thus representing it.
 
-By instantiating own features inside the VDevice, we define, that Balder should ensure that our mapped device (in our
+By instantiating own features inside the vDevice, we define, that Balder should ensure that our mapped device (in our
 case ``ServerDevice``) also provides an implementation for them.
 
 You can see this definition also inside the feature ``InsertCredentialsFeature``:
@@ -260,7 +260,7 @@ another device that provides this interface.
     from a peer device inside a feature.
 
 
-This VDevice-Device mapping also affects our setup, but we don't have to define the mapping again in the setup. It will
+This vDevice-Device mapping also affects our setup, but we don't have to define the mapping again in the setup. It will
 automatically secured by the device mapping algorithm.
 
 .. note::
@@ -269,7 +269,7 @@ automatically secured by the device mapping algorithm.
 This vDevice mechanism is very powerful. You are also able to define different methods for different mapped vDevices. If
 you want to find out more about that, check the section :ref:`VDevices and method-variations`.
 
-Implement the Setup-Features
+Implement the setup-features
 ============================
 
 Now let us implement the different features we have already imported. Open the file ``setups/features.py`` and add the
@@ -284,12 +284,12 @@ a feature belongs to another. We also add the abstract methods, we have defined 
         ValidRegisteredUserFeature
 
 
-    # Server Features
+    # Server features
     class MyValidRegisteredUserFeature(ValidRegisteredUserFeature):
         def get_valid_user(self):
             pass
 
-    # Client Features
+    # Client features
 
     class MyInsertCredentialsFeature(InsertCredentialsFeature):
 
@@ -323,7 +323,7 @@ later. You can add features to a vDevice by overwriting the inner class with the
 inheriting from the next parent. This is done here for the features ``MyInsertCredentialsFeature`` and
 ``MyViewInternalPageFeature``.
 
-Client Feature
+Client feature
 --------------
 
 We want to start with the method ``MyValidRegisteredUserFeature.get_user()``. This method should return a tuple with the
@@ -422,7 +422,7 @@ class property in the features that want to use it. For example, this can look l
 This allows you to simply refer it from your methods. It also defines that every device that uses the feature
 `MyViewInternalPageFeature` (by defining it as static attribute), has also implement the `BrowserSessionManagerFeature`.
 
-Implement the client Setup-Features
+Implement the client setup-features
 -----------------------------------
 
 As you may remember the setup features ``MyInsertCredentialsFeature`` and ``MyViewInternalPageFeature`` (which we still
@@ -447,13 +447,13 @@ give the same class name to the child vDevice class:
         browser_manager = BrowserSessionManagerFeature()
 
 .. note::
-    Note that it is really important, that the child VDevice class has the same name that is given in the parent feature
-    class! Otherwise the child VDevice will be interpreted as a new VDevice! In this case this will produce an exception
+    Note that it is really important, that the child vDevice class has the same name that is given in the parent feature
+    class! Otherwise the child vDevice will be interpreted as a new vDevice! In this case this will produce an exception
     because Balder only allows the redefining of inner devices by overwriting them all on one class level.
 
 In a few moments, we will create a new feature class ``InternalWebpageFeature`` that should return some constant values
-about the server (for example the webpage url). This feature should be implemented by our real Server Device. We can
-ensure this on feature level, by adding this feature to our VDevice ``Server``:
+about the server (for example the webpage url). This feature should be implemented by our real server device. We can
+ensure this on feature level, by adding this feature to our vDevice ``Server``:
 
 .. code-block:: python
 
@@ -464,9 +464,9 @@ ensure this on feature level, by adding this feature to our VDevice ``Server``:
 
         browser_manager = BrowserSessionManagerFeature()
 
-Just as we have already done with normal devices, we can address our feature in the VDevice, by using its property. So
+Just as we have already done with normal devices, we can address our feature in the vDevice, by using its property. So
 let us add an implementation for our abstract method ``ViewInternalPageFeature.check_internal_page_viewable()`` by
-using our new VDevice-Feature:
+using our new vDevice-Feature:
 
 .. code-block:: python
 
@@ -578,7 +578,7 @@ We have created some new features that we need specially for this setup, the ``L
 
     Before a variation (fixed mapping between scenario and setup devices) will be executed, Balder automatically
     exchanges all objects with the original objects that were instantiated in the setup. Everywhere! In all inner
-    feature references (also feature properties that are other instantiated Features), scenarios, vDevices and so on.
+    feature references (also feature properties that are other instantiated features), scenarios, vDevices and so on.
 
 Update our setup
 ----------------
@@ -623,7 +623,7 @@ in the `single-setup branch on GitHub <https://github.com/balder-dev/balderexamp
         ValidRegisteredUserFeature
 
 
-    # Server Features
+    # Server features
     class MyValidRegisteredUserFeature(ValidRegisteredUserFeature):
         def get_valid_user(self):
             return "guest", "guest12345"
@@ -661,7 +661,7 @@ in the `single-setup branch on GitHub <https://github.com/balder-dev/balderexamp
             return "http://localhost:8000/accounts/logout"
 
 
-    # Client Features
+    # Client features
 
     class MyInsertCredentialsFeature(InsertCredentialsFeature):
         class Server(InsertCredentialsFeature.Server):
