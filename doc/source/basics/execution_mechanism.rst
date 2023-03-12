@@ -342,7 +342,7 @@ In Balder, his looks like the following:
 
     class SetupBasic(balder.Setup):
 
-        class This(balder.Setup.This):
+        class This(balder.Device):
             server = SendGetRequestImplFeature()  # implements the `SendGetRequestFeature`
             ...
 
@@ -542,7 +542,7 @@ that you can interact with the setup-devices on this stage too.
 
     class SetupBasic(balder.Setup):
 
-        class This(balder.Setup.This):
+        class This(balder.Device):
             request = SendGetRequestImplFeature()
             ...
 
