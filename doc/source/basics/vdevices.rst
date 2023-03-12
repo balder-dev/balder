@@ -1,6 +1,12 @@
 VDevices and method-variations
 ******************************
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 During the development of :ref:`Features` you might have noticed, that you require some information from other devices.
 For example if you have a ``LoadSiteFeature``, which allows to load a website or a ``SendMessageFeature``, which allows
 to send a message *to another device*, you need some information about this other device.

@@ -1,6 +1,12 @@
 Scenarios
 *********
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 A (test) scenario describes the environment that a test **needs** to be able to be carried out (in contrast to the
 :ref:`Setups` that describes what you **have**). A scenario allows to define a test environment first, after the
 individual test cases will be implemented.

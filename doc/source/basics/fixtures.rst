@@ -1,6 +1,12 @@
 Fixtures
 ********
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 Fixtures are functions or methods that ensure that code is executed before or after specific times of a test run.
 Fixtures can be executed at different times (**execution-level**) and can be defined on different positions
 (**definition-scope**). The order in which these fixtures will be executed, depends on the definition position (in which

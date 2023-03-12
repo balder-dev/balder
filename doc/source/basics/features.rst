@@ -1,6 +1,12 @@
 Features
 ********
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 Features implement functionality for a :ref:`Device <Devices>` class. For example, if you have a device
 that could send messages, this device has to have a :class:`Feature` class that implements the functionality to send
 these messages.
