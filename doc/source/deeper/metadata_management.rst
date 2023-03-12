@@ -1,10 +1,10 @@
 Metadata management
 *******************
 
+.. important::
+
+    .. todo complete reworking of this section
+
+    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+
 Balder uses a lot of inner hidden class properties that manages the workflow of balder. This section describes them.
-
-.. warning::
-    Please note: This section is currently under development and will be released shortly!
-
-..
-    .. todo
