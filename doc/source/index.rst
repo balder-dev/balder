@@ -47,17 +47,17 @@ different **Setups**:
 
 Balder was created especially for that. You can write one **Scenario** and use it for different setups.
 
-You can find out more about Scenario-Based-Testing and how balder works in this documentation.
+You can find out more about Scenario-Based-Testing and how Balder works in this documentation.
 
 If you are completely new, we recommend to start with the :ref:`Getting Started <Getting Started>` section. Since, in
 our opinion, the best way is learning-by-doing. We recommend to continue with the :ref:`Tutorial Guide`. If
-you want to discover all components of balder you can continue with the :ref:`Basic Guides<Basic Guides>`. All profound
-functions of balder, like the different internal work processes, you can find in the
+you want to discover all components of Balder you can continue with the :ref:`Basic Guides<Basic Guides>`. All profound
+functions of Balder, like the different internal work processes, you can find in the
 :ref:`Reference Guides<Reference Guides>`.
 
 It is recommended to go throw the different subsections of the :ref:`Getting Started <Getting Started>` and the
 :ref:`Tutorial Guide` in the provided order to fully understand the basic functionality of **Scenario-based-testing**
-and how it works in the balder framework. The different subsections of :ref:`Basic Guides<Basic Guides>` and
+and how it works in the Balder framework. The different subsections of :ref:`Basic Guides<Basic Guides>` and
 :ref:`Reference Guides<Reference Guides>` are created independently from each other. So feel free to jump to the
 subsection you want to learn more about. But we always recommend to start with the complete
 :ref:`Getting Started <Getting Started>` section before going deeper into the :ref:`Basic Guides<Basic Guides>` and

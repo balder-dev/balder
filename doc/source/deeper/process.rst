@@ -7,4 +7,4 @@ Balder process
 
     Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
-This section describes the process how balder executes a test session and which steps it passes during it.
+This section describes the process how Balder executes a test session and which steps it passes during it.

@@ -17,7 +17,7 @@ Create a Scenario
 Every Scenario class have to be located in a file that fulfils the naming ``scenario_*.py``. To keep it clear, it
 is often useful to create a own directory for the scenario which has the same name like the scenario python file. So you
 can define your related objects, you only use for your single scenario inside this directory.
-However balder will load the python file (with naming ``scenario_*.py``) in its collecting process and searches for
+However Balder will load the python file (with naming ``scenario_*.py``) in its collecting process and searches for
 classes that are a subclass of :class:`Scenario` and starts with the name `Scenario`.
 
 .. code-block:: py
@@ -30,7 +30,7 @@ classes that are a subclass of :class:`Scenario` and starts with the name `Scena
                 pass
 
 Get it back in your mind, **a scenario defines the things your test needs**. The most obvious is that you want to test
-something, usually a device or an object. For this balder provides :class:`Device` classes.
+something, usually a device or an object. For this Balder provides :class:`Device` classes.
 
 Add one or more devices
 =======================
@@ -180,7 +180,7 @@ Use the features and write tests
 ================================
 
 Now we can write our first test method. We want to send a Hello-World message and want to make sure that it was
-received successfully. It is important that the name of a test method always starts with ``test_*()``, otherwise balder
+received successfully. It is important that the name of a test method always starts with ``test_*()``, otherwise Balder
 will not collect it as a testcase.
 
 
@@ -215,7 +215,7 @@ execute our newly created properties and methods.
     Mark test to SKIP or IGNORE
     ===========================
 
-    Balder provides an easy integration to mark a test in the way to SKIP or IGNORE it from balder test system. This can be
+    Balder provides an easy integration to mark a test in the way to SKIP or IGNORE it from Balder test system. This can be
     done with the class attributes ``IGNORE``, ``SKIP`` and ``RUN``, which are part of every :class:`.Scenario` class. Per
     default the ``RUN`` attribute contains a list with all testcases that are mentioned in the :class:`.Scenario` and
     inherited tests that are still active in the higher classes.

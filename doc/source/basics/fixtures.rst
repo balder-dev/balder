@@ -44,7 +44,7 @@ part of the fixture. The code behind will be executed after the branch ran itsel
 
 .. note::
 
-    You can also omit the ``yield`` command. But with this, balder assumes that no teardown code is available.
+    You can also omit the ``yield`` command. But with this, Balder assumes that no teardown code is available.
 
 Execution-Level
 ---------------
@@ -60,7 +60,7 @@ Definition-Scope
 ----------------
 
 The **definition-scope** describes the validity of the fixture. It depends on the definition position, the fixture is
-located in the balder testsystem. For example, if you implement a fixture in the global ``balderglob.py`` file, it has
+located in the Balder testsystem. For example, if you implement a fixture in the global ``balderglob.py`` file, it has
 the **definition-scope** GLOBAL. This means, that it is valid for the whole test session. It is valid for every testcase
 that is executed within a test session. If a fixture (that is defined in the ``balderglob.py`` file) has the decorator
 ``@balder.fixture(level="session")`` it will always be executed, independent of the :ref:`Scenario <Scenarios>` and
@@ -84,14 +84,14 @@ Fixture ordering
 
 Like you saw in the earlier sections, it is due to two important characteristics, when and how a fixture will be
 executed - the **execution-level**, which is defined at the fixture decorator and the **definition-scope**, which is
-defined over the location the fixture is placed in. But how does balder order the fixtures that are within the same
+defined over the location the fixture is placed in. But how does Balder order the fixtures that are within the same
 **execution-level**?
 
-First of all, balder creates a outer ordering by its **definition-scope**. Before the scenario-scoped-fixtures (defined
+First of all, Balder creates a outer ordering by its **definition-scope**. Before the scenario-scoped-fixtures (defined
 within a :class:`Scenario <Scenario>` class) will be executed, the setup-scoped-fixtures (defined in the
 :class:`Setup <Setup>` class) will run. Global-fixtures (defined in the global ``balderglob.py`` file) will be executed
 before them both. With this mechanism we have a basic ordering, but the order for fixture with the same
-**definition-scope** (and of course the same **execution-level**) is still undefined. For this balder provides the
+**definition-scope** (and of course the same **execution-level**) is still undefined. For this Balder provides the
 ability of chaining fixtures with each other.
 
 Take a look at the following example:
@@ -193,7 +193,7 @@ execution. The following table shows all possible **execution-level** attributes
 |                        | :ref:`Scenario <Scenarios>` changes. It embraces every new :class:`Setup <Setups>` class    |
 |                        | that will be get active in the test executor.                                               |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``variation``          | The **variation** in the balder test system is a new possible device assignment between the |
+| ``variation``          | The **variation** in the Balder test system is a new possible device assignment between the |
 |                        | :ref:`Scenario-Devices <Scenario-Device>` and the :ref:`Setup-Devices <Setup-Device>`.      |
 |                        | Depending on the **definition-scope** this fixture runs before and after every new device   |
 |                        | variation of its scoped :ref:`Setup <Setups>` / :ref:`Scenario <Scenarios>` constellation.  |
@@ -240,7 +240,7 @@ As mentioned above, Balder can referencing fixtures among each other.
 
 Sometimes you want to use the values of some fixtures into testcases or other fixtures. For example if you prepare an
 object in a fixture you maybe want to use this object in another fixture or in your testcase too. This can be
-realized in balder by simply referencing fixtures throw method/function attributes.
+realized in Balder by simply referencing fixtures throw method/function attributes.
 
 .. code-block:: py
 
@@ -383,7 +383,7 @@ reference them? For example if you define a fixture ``calc`` in your global ``ba
 :class:`Scenario` which has a fixture ``calc`` defined too. Now you want to reference `calc` within the test method of
 this scenario. Which value will be provided?
 
-First of all, every fixture will be called by balder. It won't matter if they have the same name. The name will only
+First of all, every fixture will be called by Balder. It won't matter if they have the same name. The name will only
 matter if you want to referencing these fixtures. Maybe it will be getting clearer if we take a look at the following
 example:
 
@@ -415,9 +415,9 @@ Now we have a fixture with the same name in our global ``balderglob.py`` file:
 
 Both fixtures have the same name ``calc`` and the same **execution-level**. First of all the **definition-scope**
 doesn't matter for the executed ordering of the fixtures as long as they are not referenced among each other. If you
-reference them, balder will be forced to adjust the order of them. However, the situation is different if you reference
+reference them, Balder will be forced to adjust the order of them. However, the situation is different if you reference
 these fixtures. If you have two fixtures with the same **execution-level** and with the same name, but different
-**definition-scopes**, balder will select them according their **definition-scope**.
+**definition-scopes**, Balder will select them according their **definition-scope**.
 
 For example, if you referencing the ``calc`` fixture from another fixture in the ``balderglob.py`` file, it
 will call the next higher one (related to the **definition-scope**):
@@ -498,7 +498,7 @@ Special case: Unclear-Setup_Scoped_Fixture-Reference problematic
 
 There is one single case, you should be aware with. If you want to reference a session-fixture
 with the **definition-scope** SETUP from a session-fixture with the **definition-level** SCENARIO. For this case it is
-not clear which setup balder should use, because no setup is active yet (we are still on SESSION level).
+not clear which setup Balder should use, because no setup is active yet (we are still on SESSION level).
 
 This should be avoided and not use. Balder will throw an exception :class:`UnclearSetupScopedFixtureReference` here!
 

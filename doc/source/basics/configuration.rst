@@ -37,8 +37,8 @@ to create a new class inside the ``balderglob.py`` file, that inherits from :cla
 BalderPlugin object
 ===================
 
-You can also influence the mechanism of balder by developing balder plugins. For this balder has a global plugin object
-that allows to interact with different callbacks. This helps you to influence the mechanism of the balder system.
+You can also influence the mechanism of Balder by developing Balder plugins. For this Balder has a global plugin object
+that allows to interact with different callbacks. This helps you to influence the mechanism of the Balder system.
 
 .. note::
     The plugin section is still under development. We will integrate and add new callbacks soon!
@@ -46,7 +46,7 @@ that allows to interact with different callbacks. This helps you to influence th
 ..
     .. todo
 
-If you want to create and use a balder plugin, simply create a new child object of :class:`BalderPlugin` and include it
+If you want to create and use a Balder plugin, simply create a new child object of :class:`BalderPlugin` and include it
 in the global ``balderglob.py`` file:
 
 .. code-block:: python

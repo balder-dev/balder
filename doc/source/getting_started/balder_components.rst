@@ -1,9 +1,9 @@
 Main Balder components
 **********************
 
-The following section should help getting an overview over the available components in balder. You will learn the key
+The following section should help getting an overview over the available components in Balder. You will learn the key
 facts about :ref:`Scenarios` and :ref:`Setups` and how their :ref:`Devices` work. You will learn what
-:ref:`Features` are and how balder matches these between :ref:`Scenarios` and :ref:`Setups`. You will also learn how to
+:ref:`Features` are and how Balder matches these between :ref:`Scenarios` and :ref:`Setups`. You will also learn how to
 connect devices with each other over :ref:`Connections` and how :ref:`Connection-Trees` are defined.
 
 Note that this section only provides an overview of the components. You can find a detailed description of each
@@ -36,7 +36,7 @@ Setup: Describes what you have
 It is different when we look at the :ref:`Setups`. In a setup you define everything that is available and
 relevant in the environment, the particular setup is for. So for example, if you have your computer, the router and the
 server of company X in your influenceable spectrum of devices you can add all of them to your setup. Also if the
-scenario is written later only for the router and the server, it will work out, because balder will automatically match
+scenario is written later only for the router and the server, it will work out, because Balder will automatically match
 scenario-devices with compatible setup-devices.
 
 What are devices?
@@ -189,10 +189,10 @@ provides the specific setup level features:
 
     Here you can implement many files in it, which allows you to separate the features a little bit.
 
-How does balder know, which feature you are implementing?
+How does Balder know, which feature you are implementing?
 ---------------------------------------------------------
 
-Maybe you ask yourself how balder knows which scenario-feature you are implementing in your setup. For this balder
+Maybe you ask yourself how Balder knows which scenario-feature you are implementing in your setup. For this Balder
 uses **Inheritance**!
 
 The scenario-features often implement abstract properties or methods. You can implement them easily by overwriting them.
@@ -237,9 +237,9 @@ like it is done in the scenario, but of course with the subclass, that really pr
     Please note, that :class:`Setup` classes must be defined inside files that start with `setup_*.py`. In
     addition their class name has to start with `Setup*`. Otherwise the file will not be picked up by Balder.
 
-You can implement more devices than in the scenario, balder doesn't care. It will search for devices that match the
+You can implement more devices than in the scenario, Balder doesn't care. It will search for devices that match the
 **requirement**, defined in scenario. If the matching candidates have a matching connection-tree and if all required
-features of a scenario-device are also implemented in the setup-device, balder will run the scenario-testcases with this
+features of a scenario-device are also implemented in the setup-device, Balder will run the scenario-testcases with this
 constellation!
 
 .. note::
@@ -255,7 +255,7 @@ between scenarios and setups are:
 
 **Setup:** Describes what you have
 
-These are the golden rules, balder works with. After you have defined a scenario, add some devices to it and instantiate
+These are the golden rules, Balder works with. After you have defined a scenario, add some devices to it and instantiate
 their feature objects as their class attributes. This describes what your testcase needs.
 
 Then you think about **what you have**. How does your test rack or your test pc/pipeline look like? All this can be
@@ -267,12 +267,12 @@ Matching process
 
 When Balder is executed and after it has collected all relevant classes, the matching process takes place. It
 determines which device-mappings (between scenarios and setups) match with each other. For
-that, Balder is interested in the feature sets your devices have. Based on these feature sets, balder will automatically
+that, Balder is interested in the feature sets your devices have. Based on these feature sets, Balder will automatically
 determine the possible mappings between the :ref:`Scenario <Scenarios>`-Devices and the
 :ref:`Setup <Setups>`-Devices.
 
 Generally, Balder will create matching candidates by searching possible mappings of a scenario device with one of
-the available setup devices. In this stage balder does not care if the devices are compatible.
+the available setup devices. In this stage Balder does not care if the devices are compatible.
 
 Feature check
 -------------
@@ -345,7 +345,7 @@ the matching devices. Every matching with one or more device-connection that doe
 Execution
 =========
 
-In the last step balder will execute the mappings. You can execute balder, by simply calling it inside the project
+In the last step Balder will execute the mappings. You can execute Balder, by simply calling it inside the project
 directory:
 
 .. code-block:: none

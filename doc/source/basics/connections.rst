@@ -24,7 +24,7 @@ This section shows the basic functionality of connections and how you can use th
 Global Connection-Trees
 =======================
 
-Internally balder knows exactly how the connections are arranged with each other. For this it refers to the global
+Internally Balder knows exactly how the connections are arranged with each other. For this it refers to the global
 connection-tree. For example, this tree defines that a :class:`TcpV4Connection` is based on an :class:`IPV4Connection`.
 It also knows that a :class:`HttpConnection` is based on an :class:`TcpV4Connection` or an :class:`TcpV6Connection`.
 
@@ -197,7 +197,7 @@ You are now able to use this connection. It is integrated in the project global 
 Global-Connection-Tree
 ======================
 
-In balder all connections are embedded in a so called global-connection-trees. This tree defines how the connections are
+In Balder all connections are embedded in a so called global-connection-trees. This tree defines how the connections are
 arranged to each other.
 
 The global connection tree
@@ -250,8 +250,8 @@ So let's take a look at the following example:
 .. warning::
 
     Be careful with changing the standard connection tree. With that, there is no connection included in the tree
-    anymore, so you have to define every connection by yourself. If you use standard balder connections
-    note that some BalderHub projects uses the original balder connections.
+    anymore, so you have to define every connection by yourself. If you use standard Balder connections
+    note that some BalderHub projects uses the original Balder connections.
 
     If you want to change the tree dependencies for an existing tree, you can use the class method ``set_parents(..)``.
 
