@@ -99,7 +99,7 @@ Take a look at the following example:
 
 .. code-block:: py
 
-    # file `balder.py`
+    # file `balderglob.py`
 
     @balder.fixture(level='session')
     def my_own_fixture1():
@@ -244,7 +244,7 @@ realized in Balder by simply referencing fixtures throw method/function attribut
 
 .. code-block:: py
 
-    # file `balder.py`
+    # file `balderglob.py`
 
     import balder
 
@@ -310,7 +310,7 @@ example:
 
 .. code-block:: py
 
-    # file `balder.py`
+    # file `balderglob.py`
 
     # BE CAREFUL: THIS EXAMPLE LEADS TO AN ERROR!
 
