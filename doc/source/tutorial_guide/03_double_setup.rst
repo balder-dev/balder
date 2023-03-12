@@ -1,21 +1,25 @@
 Part 3: Expand Setup Code
 *************************
 
-In this part we want to learn one of the key concepts of balder - reusing tests. This section shows how easy it is to
-use an existing scenario for different setups. A lot of projects do similar the same in a lot of different ways. Maybe
-your app is a user interface that you support on different platforms or you have a device that you can manage over
-different apps. Or imagine you want to test a bus system of a device. Every bus member must work in the same way.
-Exactly for this, balder was created for.
+In this part we are going to learn one of the key concepts of balder - reusing tests.
+
+This essential concept allows you to effortlessly utilize existing scenarios for various setups. Many projects require
+similar testing in multiple ways, whether it's supporting a user interface on different platforms or managing a device
+over several apps. Perhaps you need to test a bus system where every member must function identically. Balder was
+designed precisely for this purpose.
+
+
+There are a lot of different ways to expand our testing environment. If we have a new device, but inside the same
+environment, we just need to add this device to the setup. If we just want to add a new feature to an already existing
+device, we can just add it inside our setup. And of course, if we have a complete other environment, we can simply
+create a complete new setup.
+
+In this section, we'll add a new setup class.
+
+How the all-in-one setup approach works is described in :ref:`Part 5: One common setup`.
 
 So let's go back to our example and restructure our earlier created project a little bit.
 
-
-The shown project structure describes two separated setups. The approach we follow here is that we separate the
-setups from each other. You should use this if the System-Under-Test is another. On the other side, if the devices
-are the same (we have only one server to test) you can also use this approach to clearly separate one functionality from
-another (like the normal webpage from the REST interface shown here). This section shows how you can provide a complete
-new setup for testing another component of the application. Often this is not necessary and you can summarize all
-together in one single setup. You can find this summarized approach in :ref:`Part 5: One common setup`.
 
 Prepare for the new setup
 =========================
@@ -81,7 +85,7 @@ should now looks like the following:
 
 Now we want to organize our features of the old setup. All features usable without a browser should be placed
 in the ``setup_features.py`` file. All specific features that are implemented to test the login with the
-browser should be placed in a separate feature file ``setups/browser/browser_features.py``
+browser should be placed in a separate feature file ``setups/browser/browser_features.py``.
 
 So our new structure looks like the following:
 
@@ -100,7 +104,8 @@ So our new structure looks like the following:
                 |- setup_features.py
 
 .. note::
-    Of course you can organize your project in the structure of your choice. You can also name it in the way you want,
+    As you can see, it could be helpful to organize your feature inside own namespace modules. Of course you can
+    organize your project in the structure of your choice. You can also name it in the way you want,
     but it is highly recommended to use a name to easily distinguish the source of an imported setup. If you name every
     file ``features.py`` this can get really hard to understand, specially when you import from different directory
     levels, like it is showed below.
@@ -115,20 +120,25 @@ So our new structure looks like the following:
 
     .. code-block:: python
 
-        from .browser_features import SpecialBrowserFeature
-        from ..setup_features import GlobFeature
+        from . import browser_features
+        from .. import setup_features
         ...
+
+        class SetupExample(balder.Setup):
+
+            class Browser(balder.Device):
+                glob = setup_features.GlobFeature()
+                browser = browser_features.SpecialBrowserFeature()
+                ...
 
 So think about which features are global and which features are special browser features. If you take a look into
 our file ``setup_features.py`` you should find the following features:
 
-* ``MyValidRegisteredUserFeature``:  This feature provides the user credentials valid for the whole
-    ``balderexample-loginserver``. The user is valid for all access strategies.
+* ``MyValidRegisteredUserFeature``:  This feature provides the user credentials valid for the whole ``balderexample-loginserver``. The user is valid for all access strategies.
 * ``LoginWebpageFeature``: This feature provides all specific data of the login front-end webpage.
 * ``InternalWebpageFeature``: This feature provides all specific data of the internal front-end webpage.
 * ``MyInsertCredentialsFeature``: This feature allows inserting credentials into a login system.
-* ``MyViewInternalPageFeature``: This feature allows the owner device to interact with the internal area provided by the
-    vDevice.
+* ``MyViewInternalPageFeature``: This feature allows the owner device to interact with the internal area provided by the vDevice.
 
 The first feature ``MyValidRegisteredUserFeature`` returns the global valid credentials to access the login area in
 every possible way. This feature is not limited to the browser method, so we can left it in the higher file
@@ -146,6 +156,15 @@ endpoint ``/api/users``. But this endpoint contains sensitive data, so it is beh
 server uses a standard authentication system ``Basic Authentication`` that requires the same username and password as
 credentials, we also have used in the browser setup before. We can use the python library ``requests``, which
 allows us easily to execute a GET request with ``Basic Authentication``.
+
+Install requests
+----------------
+
+For testing our API, we use the python package ``requests``. Make sure that you have installed it.
+
+.. code-block::
+
+    >>> pip install requests
 
 Add the new file
 ----------------
@@ -177,11 +196,9 @@ Similar to :ref:`part 2 <Part 2: Implement Browser Setup>` we first define our n
 imported features. Again we want to create two devices, one server devices that provides the rest api and one rest
 client device, that executes the requests with the basic authentication.
 
-So that our setup now match, it must contain at least the following elements. Similar to the first setup, we rename the
-features for an easy understanding to the structure ``My<scenario feature name>`` and first import them directly
-from our new specific rest file ``setups/rest/rest_features.py``, except for our common feature
-``MyValidRegisteredUserFeature``, which we have already moved in the common setup-feature file
-``setups/setup_features.py``.
+Similar to the first setup, we name the features in a format ``My<scenario feature name>``. We will import them all from
+our new specific rest file ``setups/rest/rest_features.py``, except for our ``MyValidRegisteredUserFeature``, which we
+have already moved in the common setup-feature file ``setups/setup_features.py``.
 
 Our setup file will look like:
 
@@ -413,11 +430,15 @@ We have made it! We have implemented both setups and manage the common use of fe
 Execute balder with both setups
 ===============================
 
-We can check if balder resolves our scenario with the both setups correctly. Check the mappings, with the command:
+We can check if balder resolves our scenario with the both setups correctly. For this, just call balder with the
+argument ``--resolve-only``:
+
+.. code-block::
+
+    $ balder --working-dir tests --resolve-only
 
 .. code-block:: none
 
-    $ balder --working-dir tests --resolve-only
     +----------------------------------------------------------------------------------------------------------------------+
     | BALDER Testsystem                                                                                                    |
     |  python version 3.9.7 (default, Sep  3 2021, 12:37:55) [Clang 12.0.5 (clang-1205.0.22.9)] | balder version 0.0.1     |
@@ -437,7 +458,8 @@ We can check if balder resolves our scenario with the both setups correctly. Che
        -> Testcase<ScenarioSimpleLoginOut.test_valid_login_logout>
 
 
-You can see how balder finds the mappings between the devices.
+Great, it works. Balder can find our two possible variations, one using our ``SetupWebBrowser`` and one using our
+``SetupRestBasicAuth``.
 
 Now it is time to really run the balder session.
 
@@ -448,7 +470,11 @@ Now it is time to really run the balder session.
 
         $ python manage.py runserver
 
-After you have secured that the django server runs, you can start balder with the simple command:
+After you have secured that the django server runs, you can run balder:
+
+.. code-block::
+
+    $ balder --working-dir tests
 
 .. code-block:: none
 
