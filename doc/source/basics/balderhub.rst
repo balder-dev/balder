@@ -22,8 +22,8 @@ provided in these balderhub project. This helps you and your team to develop tes
 
 .. note::
 
-    Balder is a very young project. Unfortunately, this also means that we do not have so many BalderHub projects at the
-    moment.
+    Balder is a very young project. Unfortunately, this also means that we do not have so many
+    `BalderHub projects <https://hub.balder.dev>`_ at the moment.
 
     We need your help here. There are a lot of people in this world, that are experts in the thing they are doing and
     exactly these experts we need here.
@@ -35,11 +35,8 @@ provided in these balderhub project. This helps you and your team to develop tes
     `create an issue <https://github.com/balder-dev/hub.balder.dev/issues>`_ or
     `start a new discussion <https://github.com/balder-dev/hub.balder.dev/discussions>`_.
 
-    Of course you could develop the project by your own too. But if you want to release it, we would really like to add
-    it into our group. Currently, we are working on a specific section in our documentation that should provide a big
-    overview about all existing BalderHub projects. We will release this shortly. If you provide your package within the
-    `Balder GitHub Group <https://github.com/balder-dev>`_, we can secure to add your package as soon as possible. Of
-    course you will remain maintainer of the project.
+    If you want to add your package within the `BalderHub projects <https://hub.balder.dev>`_, just ask for help by
+    creating `an issue in the main hub project <https://github.com/balder-dev/hub.balder.dev/issues>`_.
 
 Where can I search for?
 =======================
