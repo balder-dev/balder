@@ -93,7 +93,7 @@ Limits of connection-relations
 ------------------------------
 
 You can define **AND**/**OR** definitions in almost any possible variation, but there is one limit.
-It is not allowed to define **AND** connections that on the highest level, so for example:
+It is not allowed to define **AND** connections inside other **AND** connections, so for example:
 
 .. code-block:: python
 
@@ -103,12 +103,12 @@ It is not allowed to define **AND** connections that on the highest level, so fo
     conn = SpecialConnection.based_on((AConnection, BConnection, (CConnection, DConnection)))
 
 The last definition is not allowed because we use an inner **AND** connection there. We can write the same logic more
-easier by refactor the **OR** and **AND** relations:
+easier by refactoring the both **AND** relations:
 
 .. code-block:: python
 
     # same like the NOT ALLOWED tree from above - BUT NOW IT IS ALLOWED
-    conn = SpecialConnection.based_on((AConnection, BConnection, CConnection), (AConnection, BConnection, DConnection)))
+    conn = SpecialConnection.based_on((AConnection, BConnection, CConnection, DConnection)))
 
 This limitation makes it easier to read the logic.
 
