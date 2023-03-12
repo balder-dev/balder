@@ -1,10 +1,12 @@
 Balder Intro Example
 ********************
 
-We want to test the login functionality for a website. We want to create a scenario, that allows us to test the
-login procedure that secures that we are logged-in over the possibility that we can access the internal webpage. This
-scenario should than be transferred that our tests work with a lot of other environments. For example we can use our
-test scenarios also for a REST API that allows us to check the available users.
+In the next sections, we want to test the login functionality for a website. For this, we will create a scenario, that
+allows us to test the login procedure. This scenario secures that we are logged-in over the possibility that we can
+access the internal webpage.
+
+Our goal is an implementation, that allows executing the scenario with a lot of different environments (``Setup``
+classes). For example we want to execute our test scenarios with an UI setup and also with a REST API setup.
 
 The project we are using in this tutorial is the ``balderexample-loginserver``. You can find it
 `on GitHub <https://github.com/balder-dev/balderexample-loginserver>`_. It is a
@@ -114,8 +116,8 @@ This command will install all dependencies for the loginserver.
 Start development server
 ------------------------
 
-You can use the ``balderexample-loginserver`` while starting the django included developer server. For this, simply
-call the following command:
+If you want to run the ``balderexample-loginserver`` application, just start the django included developer server. For
+this, call the following command:
 
 .. code-block::
 
@@ -123,6 +125,8 @@ call the following command:
 
 
 Now the server is available at url http://localhost:8000
+
+.. image:: ../_static/balderexample-loginserver-login.png
 
 **Use specific port:**
 
