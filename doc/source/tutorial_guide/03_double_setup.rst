@@ -1,7 +1,7 @@
 Part 3: Expand Setup Code
 *************************
 
-In this part we are going to learn one of the key concepts of balder - reusing tests.
+In this part we are going to learn one of the key concepts of Balder - reusing tests.
 
 This essential concept allows you to effortlessly utilize existing scenarios for various setups. Many projects require
 similar testing in multiple ways, whether it's supporting a user interface on different platforms or managing a device
@@ -425,12 +425,12 @@ Of course we have to add our new helper features in our REST setup too:
             internal = rest_features.MyViewInternalPageFeature()
 
 
-We have made it! We have implemented both setups and manage the common use of feature classes. So let's start balder.
+We have made it! We have implemented both setups and manage the common use of feature classes. So let's start Balder.
 
-Execute balder with both setups
+Execute Balder with both setups
 ===============================
 
-We can check if balder resolves our scenario with the both setups correctly. For this, just call balder with the
+We can check if Balder resolves our scenario with the both setups correctly. For this, just call Balder with the
 argument ``--resolve-only``:
 
 .. code-block::
@@ -461,7 +461,7 @@ argument ``--resolve-only``:
 Great, it works. Balder can find our two possible variations, one using our ``SetupWebBrowser`` and one using our
 ``SetupRestBasicAuth``.
 
-Now it is time to really run the balder session.
+Now it is time to really run the Balder session.
 
 .. note::
     Do not forget to start the django server before:
@@ -470,7 +470,7 @@ Now it is time to really run the balder session.
 
         $ python manage.py runserver
 
-After you have secured that the django server runs, you can run balder:
+After you have secured that the django server runs, you can run Balder:
 
 .. code-block::
 

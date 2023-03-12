@@ -117,8 +117,8 @@ The implementation of the ``ManagePipeFeature`` doesn't matter, but we want to u
             self.pipe.send(msg)
 
 You simply have to instantiate it as class attribute inside your feature. This will automatically lead to the behavior,
-that balder assumes that your feature only works with a device, that also provides an implementation for the
-``ManagePipeFeature``. The reference inside your feature will automatically provided by balder on variation-level.
+that Balder assumes that your feature only works with a device, that also provides an implementation for the
+``ManagePipeFeature``. The reference inside your feature will automatically provided by Balder on variation-level.
 
 Autonomous-Features
 ===================
@@ -193,7 +193,7 @@ setup:
 Bind Features
 =============
 
-A big advantage of balder is that you are able to reuse components. This also applies to features. But mostly you will
+A big advantage of Balder is that you are able to reuse components. This also applies to features. But mostly you will
 not use them under the exact same conditions. So maybe you want to use a ``SendFeature`` with a device that can only
 send messages over SMS while you also use this feature with a device that can only send its messages over tcp. So how we
 can handle this?
@@ -210,7 +210,7 @@ In addition to that, it is also possible to bind single methods of your feature 
 tree or/and for the usage with one VDevice only. This allows it to define a method multiple times with different
 `@for_vdevice` bindings. So for example you can implement a method `send` that will be used if the device (that is
 assigned as VDevice) is connected over a TcpConnection. And additionally to that you have another method `send` that is
-bind to a `UdpConnection`. Depending on the current Scenario/Setup, balder will use the correct method variation of
+bind to a `UdpConnection`. Depending on the current Scenario/Setup, Balder will use the correct method variation of
 `send`, after you call it in your testcase. This is the so called **method-based-binding**.
 
 This section describes how this mechanism generally works. You can find a lot of more detailed explanations in the
@@ -261,7 +261,7 @@ attribute ``OtherPipeVDevice="PipeDevice2"`` to the feature constructor to defin
 
 
 .. note::
-    Often you can not access the Device type objects inside the feature constructor. For this balder also allows to use
+    Often you can not access the Device type objects inside the feature constructor. For this Balder also allows to use
     simple strings, that contains the same name than the referencing device type.
 
 You can do this with different devices that could stand for different usages of this feature. So you can also add
@@ -430,7 +430,7 @@ defines, that the devices should be connected over an TcpConnection. If the test
 now uses on of our methods ``MyMessengerFeature.send(..)``, the variation with the decorator
 ``@balder.for_vdevice(..., over_connection=[TcpConnection])`` will be used.
 
-If one would exchange the connection with the ``SerialConnection``, balder would select the method variation with the
+If one would exchange the connection with the ``SerialConnection``, Balder would select the method variation with the
 decorator ``@balder.for_vdevice(MessengerFeature.OtherVDevice, with_connection=SerialConnection)``.
 
 .. note::

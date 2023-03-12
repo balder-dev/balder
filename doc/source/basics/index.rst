@@ -8,7 +8,7 @@ before going deeper.
 The different subsections of this chapter are created independently from each other. So feel free to jump to the
 subsection you want to learn more about.
 
-If you want to get a deeper understanding how balder is implemented internally or if you have some specific questions
+If you want to get a deeper understanding how Balder is implemented internally or if you have some specific questions
 about some of these topics, please take a look at the `Reference Guides <../deeper>`_.
 
 .. toctree::

@@ -40,7 +40,7 @@ vDevices
 
 A vDevice is a inner-feature device that describes a possible other device this feature interacts with. You simply
 create a vDevice, describe which features it should have (by instantiating them like it is done with normal devices) and
-use them. All other things will be automatically managed from balder.
+use them. All other things will be automatically managed from Balder.
 
 Let's go back to the example from earlier. Instead of giving the attribute as method parameters, you can create a
 vDevice that uses the ``HttpServerFeature``. This allows you to access the properties and methods of the
@@ -275,7 +275,7 @@ The example from before becomes much clearer if you use method variations:
     Sometimes python does not allow to reference the type variable for vDevices. You can use a string with the name of
     the vDevice here too. Balder will automatically resolve this internally.
 
-Depending on the current mapped vDevice balder automatically calls the method variation, that fits for the current
+Depending on the current mapped vDevice Balder automatically calls the method variation, that fits for the current
 active vDevice.
 
 .. note::
@@ -349,7 +349,7 @@ Our ``SendFeature`` class is implemented in the following way:
 As you can see it is also possible to define method variations depending on the current active connection tree. Even
 it is not clear which variation it will execute in scenario level, till now it does not matter over which connection
 the two devices are connected with each other. It is enough if the setup will restrict this later. If we specify that
-our setup only supports an ``EMailConnection`` for example, balder automatically knows which method variation should be
+our setup only supports an ``EMailConnection`` for example, Balder automatically knows which method variation should be
 called.
 
 What happens if we have multiple possibilities?
@@ -357,20 +357,20 @@ What happens if we have multiple possibilities?
 
 
 It is the responsibility of the feature developer that there exists exactly one clear variation for every possible
-vDevice and connection-tree constellation. For this balder will execute an initial check on the beginning of the
+vDevice and connection-tree constellation. For this Balder will execute an initial check on the beginning of the
 execution.
 
 Instead of illegally multiple method variations (multiple variations, with independent OR connections), hierarchically
 method variations are allowed. It is possible that you provide different implementations for different sizes of an
 connection-tree. If you have one method variation with a connection tree ``Tcp.based_on(Ethernet)`` and one with a
 single ``Ethernet``, of course you want to use the method variation with the bigger tree (the
-``Tcp.based_on(Ethernet)``). Theoretically, however, the small one would also fit. Here balder first tries to sort these
+``Tcp.based_on(Ethernet)``). Theoretically, however, the small one would also fit. Here Balder first tries to sort these
 trees hierarchically and check if one of them is CONTAINED-IN another. Balder allows the execution and selects the
 biggest one if, this hierarchical structure works for all method-variation candidates of a variation.
 
 It will secure that for every possible constellation only one method variation is implemented or that all possibilities
 of the method variation connection-tree are CONTAINED-IN each other. Otherwise it will run in an error in the collecting
-stage of balder. It would be not possible to execute the test session with that.
+stage of Balder. It would be not possible to execute the test session with that.
 
 Use multi-vDevice feature multiple times
 ========================================
@@ -381,7 +381,7 @@ Use multi-vDevice feature multiple times
 ..
     .. todo
 
-Maybe you wondered if you can use a feature multiple times. Normally balder does not support this, because it is
+Maybe you wondered if you can use a feature multiple times. Normally Balder does not support this, because it is
 not defined which scenario-feature should be replaced with which setup-feature. But there is one useful
 possibility to define features multiple times. Map different vDevices on it.
 
@@ -432,7 +432,7 @@ and on scenario level. The setup implementation could look like the following ex
         class RecvDevice2(balder.Device):
             recv = RecvFeature()
 
-As you can see in the example above, you only have to secure that balder exactly knows which feature instance it should
+As you can see in the example above, you only have to secure that Balder exactly knows which feature instance it should
 use for which device. With this it is possible to instantiate the same features multiple times.
 
 Class based for_vdevice
@@ -483,5 +483,5 @@ corresponding devices later. It always describes the merged data of the method v
 
 .. note::
     If you define a class based decorator which is a smaller set than the possibilities defined with method variations,
-    balder will reduce the method variation set to the defined class based decoration here! In this case, balder will
+    balder will reduce the method variation set to the defined class based decoration here! In this case, Balder will
     throw a warning.

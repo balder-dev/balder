@@ -7,15 +7,15 @@ Balder Execution mechanism
 
     Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
-After you start the execution in a balder project with the command line `balder ..`, balder will go through a procedure
-of tree steps. First balder collects all relevant items that can be found in the project directory (the current working
-directory) and imports their balder-related classes and functions. For this purpose balder keeps an internal overview
+After you start the execution in a Balder project with the command line `balder ..`, Balder will go through a procedure
+of tree steps. First Balder collects all relevant items that can be found in the project directory (the current working
+directory) and imports their Balder related classes and functions. For this purpose Balder keeps an internal overview
 of all :ref:`Setup <Setups>`, :ref:`Scenario <Scenarios>` and :ref:`Connection <Connections>` classes. With that
-information, balder will start to create possible matching between the collected setups and scenario instances. In this
-step, balder creates the whole execution tree that contains all existing matches with its device-mappings organized in
-an execution-tree. In the last step balder executes this tree with the inclusion of all :ref:`Features` and test cases.
+information, Balder will start to create possible matching between the collected setups and scenario instances. In this
+step, Balder creates the whole execution tree that contains all existing matches with its device-mappings organized in
+an execution-tree. In the last step Balder executes this tree with the inclusion of all :ref:`Features` and test cases.
 
-To make it easier to understand the functionality of balder, we will start to consider the differences between
+To make it easier to understand the functionality of Balder, we will start to consider the differences between
 :ref:`Setup <Setups>` classes and :ref:`Scenario <Scenarios>` classes a little bit more in detail.
 
 Difference between Setup and Scenario
@@ -56,8 +56,8 @@ in the execution step. You can read more about this in the further subsections o
 Collecting process
 ==================
 
-The collection process is the first stage of the balder execution mechanism, directly after executing the ``balder ...``
-command. In this stage all available relevant balder classes within the working directory are collected.
+The collection process is the first stage of the Balder execution mechanism, directly after executing the ``balder ...``
+command. In this stage all available relevant Balder classes within the working directory are collected.
 
 Collect Setups and Scenarios
 ----------------------------
@@ -67,10 +67,10 @@ collected in the earlier step.
 
 Balder searches for scenarios exclusively in files with the name ``scenario_*.py``. In these files it searches for
 classes, which are subclasses of the master :class:`Scenario` class and if their name starts with ``Scenario*``.
-Only for classes that meet all these criteria, balder will acknowledge these classes as valid scenarios and add
+Only for classes that meet all these criteria, Balder will acknowledge these classes as valid scenarios and add
 them to the internal collection of executable scenarios.
 
-In the same way, balder searches for scenarios, it will do that for Setups. These setups have to be in files that have
+In the same way, Balder searches for scenarios, it will do that for Setups. These setups have to be in files that have
 the name ``setup_*.py` and whose classes have the name ``Setup*`` and are child classes of :class:`Setup`.
 
 .. note::
@@ -79,7 +79,7 @@ the name ``setup_*.py` and whose classes have the name ``Setup*`` and are child 
 Collect tests
 -------------
 
-With the previous step, balder has automatically loaded all defined testcase methods too, because in balder all
+With the previous step, Balder has automatically loaded all defined testcase methods too, because in Balder all
 testcases have to be defined as a method in a :ref:`Scenario <Scenarios>` class. The name of these test methods always
 has to start with ``test_ *``. A scenario could define as much test methods as you like.
 
@@ -87,16 +87,16 @@ Collect Connections
 -------------------
 
 :ref:`Connections` are objects that connects devices with each other. These objects will be included in a global
-connection tree, which is the general representation of usable balder connections. In every project you can define your
-own connections within python modules/files with the name ``connections``. These files will be read by balder
+connection tree, which is the general representation of usable Balder connections. In every project you can define your
+own connections within python modules/files with the name ``connections``. These files will be read by Balder
 automatically during the collecting process. They will be inserted into the
 :ref:`global Connection-Tree <The global connection tree>`.
 
 Matching process of setups and scenarios (SOLVING)
 ==================================================
 
-After the collecting process, balder knows all existing setup and scenario classes. Now it is time to determine
-the matchings between them. For this balder checks if the definition of the :ref:`Scenario <Scenarios>` (defines what
+After the collecting process, Balder knows all existing setup and scenario classes. Now it is time to determine
+the matchings between them. For this Balder checks if the definition of the :ref:`Scenario <Scenarios>` (defines what
 we need) matches in one possible constellation of one or more :ref:`Setup(s) <Setups>` (defines what we have).
 
 What are variations?
@@ -104,7 +104,7 @@ What are variations?
 
 In the SOLVING stage, Balder determines so called variations. This describes the device mappings between all required
 :ref:`Scenario-Devices <Scenario-Device>` and their mapped :ref:`Setup-Device`. First all variations will be
-added, regardless of whether they are executable. In the first part of the SOLVING stage, balder will create a
+added, regardless of whether they are executable. In the first part of the SOLVING stage, Balder will create a
 variation for every possible device mapping first. If a mapping really fits (same feature and containing connection
 trees between all device mappings - later more) will be determined
 :ref:`in the second part of the SOLVING stage <SOLVING Part 2: Filtering Variations>`.
@@ -215,7 +215,7 @@ setup devices in ``Variation4`` or ``Variation6`` aren't connected with each oth
 to the ``This`` device, but not between each other. These variations simply doesn't make sense, because the devices
 have a complete different connection with each other.
 
-In view of this fact the ``Variation4`` or the ``Variation6`` can not be executed and will be filtered by balder. Balder
+In view of this fact the ``Variation4`` or the ``Variation6`` can not be executed and will be filtered by Balder. Balder
 now has 4 active variations that could be executed from the current point of view:
 
 .. code-block:: none
@@ -235,7 +235,7 @@ now has 4 active variations that could be executed from the current point of vie
 
 As you can see there are still some variations, we do not want to be executed. For example in the ``Variation3``
 our scenario device ``ClientDevice`` is mapped to the server device ``MyServerDevice1``, but this doesn't make
-sense, we want a client device here. But wait - how should balder know this? Only the name is an indication that these
+sense, we want a client device here. But wait - how should Balder know this? Only the name is an indication that these
 two elements do not go together..
 
 They need some :ref:`Features`!
@@ -243,7 +243,7 @@ They need some :ref:`Features`!
 Devices with Features
 =====================
 
-In the previous step all our devices doesn't have a real functionality, they only exist. For this balder provides
+In the previous step all our devices doesn't have a real functionality, they only exist. For this Balder provides
 :ref:`Features`. Features are classes that can be used by devices and offers functionality for these. If you have gone
 through the :ref:`Balder Intro Example` you have learned the basic functionality of features. For a full introduction
 to features, you can also discover the basic documentation section :ref:`Features`.
@@ -306,7 +306,7 @@ Of course we also need a feature implementation in our setups too. As you will s
 :ref:`Scenario-Devices <Scenario-Device>` often only define the interface that is needed by the scenario-device, but we
 often do not provide a direct implementation of it there. Mostly the direct implementation is done on setup level.
 
-To understand the balder execution mechanism it doesn't matter where the implementation is done. First of all, it is
+To understand the Balder execution mechanism it doesn't matter where the implementation is done. First of all, it is
 sufficient to know, that every ``*ImplFeature`` feature in our setup is a subclass of the defined feature classes in
 our ``ScenarioLogin``.
 Every of these setup features contains the implementation of all interface methods and properties that are defined in
@@ -333,7 +333,7 @@ For this, we expand our setup in the following way:
         This <--> MyServerDevice1: HttpConnection
         This <--> MyServerDevice2: HttpConnection
 
-In balder, his looks like the following:
+In Balder, his looks like the following:
 
 .. code-block:: python
 
@@ -357,7 +357,7 @@ In balder, his looks like the following:
             ...
 
 .. note::
-    The names of the class properties, the feature instances are assigned to, doesn't matter for balder. They are
+    The names of the class properties, the feature instances are assigned to, doesn't matter for Balder. They are
     only relevant, if you want to access the feature instance in the setup class itself (you will see later in
     :ref:`Using Fixtures`).
 
@@ -388,13 +388,13 @@ Get back in mind, that we had four of our six variations left:
         Scenario `ClientDevice` <=> Setup `MyServerDevice2`
         Scenario `ServerDevice` <=> Setup `This`
 
-These are already filtered after their connections, but balder hasn't check their feature implementation.
-For this balder will go through every possible variation and check it the mapped devices on the setup side uses child
+These are already filtered after their connections, but Balder hasn't check their feature implementation.
+For this Balder will go through every possible variation and check it the mapped devices on the setup side uses child
 classes of the feature that are defined in the corresponding scenario device. Only if every feature of every mapped
 scenario device has a relevant child implementation in the corresponding setup device, the variation is still
 applicable.
 
-In ``Variation1`` balder will start looking for the ``ClientDevice``. It will notices that it **needs** the
+In ``Variation1`` Balder will start looking for the ``ClientDevice``. It will notices that it **needs** the
 ``SendGetRequestFeature``. The ``This`` device on the other side is the mapped setup device for the ``ClientDevice``.
 For this variation matches, Balder has to secure, that this setup device implements all existing features (as child
 subclasses). With that, it iterates over the features of the setup device ``This``, and recognize the feature
@@ -474,7 +474,7 @@ executed or not also depends on the **definition-scope**.
 The definition-scope
 --------------------
 
-In balder there exists a lot of different **definition-scopes**. These scopes define to a certain extent the validity
+In Balder there exists a lot of different **definition-scopes**. These scopes define to a certain extent the validity
 of them. The following table shows them with the scope, they are valid.
 
 +------------------------+------------------------+--------------------------------------------------------------------+
@@ -518,13 +518,13 @@ This fixture can look like the following:
 
     @balder.fixture(level="session")
     def signal_balder_is_running():
-        # sets the information that balder is running now
+        # sets the information that Balder is running now
         notification.send("balder is running")
         yield
         notification.send("balder terminated")
 
 .. note::
-    Note that balder will collect only the ``balderglob.py`` file that is located directly in the working directory. If
+    Note that Balder will collect only the ``balderglob.py`` file that is located directly in the working directory. If
     you want to separate your global elements, you can distribute your code but you have to import it in the global
     ``balderglob.py`` file.
 

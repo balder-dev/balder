@@ -31,7 +31,7 @@ Create the new scenario
 -----------------------
 
 First of all we create a new file in our scenario submodule ``tests/scenarios/scenario_simple_loginout.py``. It is
-required, that the file name starts with ``scenario_*``, because balder only collects this files while it searches for
+required, that the file name starts with ``scenario_*``, because Balder only collects this files while it searches for
 scenario files.
 
 In this newly created file, we have to create a new :class:`Scenario` class:
@@ -434,7 +434,7 @@ However, it is still possible to provide some implementations in certain scenari
 we make our methods abstract by adding ``NotImplementedError`` everywhere.
 
 .. note::
-    If you are writing ``balderhub`` projects or if you are creating common scenarios that are used from other people
+    If you are writing BalderHub projects or if you are creating common scenarios that are used from other people
     it is highly recommended to add nice comments of all the classes and methods. In addition to that it is highly
     recommended to use type definitions. This makes the code more readable and nice structured. If you take a look in
     the example of this code in the

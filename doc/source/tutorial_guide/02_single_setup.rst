@@ -199,7 +199,7 @@ We want to connect the two devices exactly in the same way as in the scenario. S
             credentials = MyInsertCredentialsFeature()
             internal = MyViewInternalPageFeature()
 
-As you can see, the devices directly inherit from the basic balder device and not from the scenario device.
+As you can see, the devices directly inherit from the basic Balder device and not from the scenario device.
 Balder manage this automatically. Balder doesn't really care for the device class, because it only exchange the
 features of it, but does not change the device itself.
 
@@ -273,7 +273,7 @@ Implement the Setup-Features
 ============================
 
 Now let us implement the different features we have already imported. Open the file ``setups/features.py`` and add the
-basic code. Secure that you inherit from the parent classes of the scenario level. With inheritance balder secures that
+basic code. Secure that you inherit from the parent classes of the scenario level. With inheritance Balder secures that
 a feature belongs to another. We also add the abstract methods, we have defined earlier that are filled with an
 ``NotImplementedError``. We will provide the full implementation of our methods there later:
 
@@ -449,7 +449,7 @@ give the same class name to the child vDevice class:
 .. note::
     Note that it is really important, that the child VDevice class has the same name that is given in the parent feature
     class! Otherwise the child VDevice will be interpreted as a new VDevice! In this case this will produce an exception
-    because balder only allows the redefining of inner devices by overwriting them all on one class level.
+    because Balder only allows the redefining of inner devices by overwriting them all on one class level.
 
 In a few moments, we will create a new feature class ``InternalWebpageFeature`` that should return some constant values
 about the server (for example the webpage url). This feature should be implemented by our real Server Device. We can
@@ -733,7 +733,7 @@ in the `single-setup branch on GitHub <https://github.com/balder-dev/balderexamp
             credentials = setup_features.MyInsertCredentialsFeature()
             internal = setup_features.MyViewInternalPageFeature()
 
-Execute balder
+Execute Balder
 ==============
 
 Now is the time to execute Balder and take advantage of the benefits it provides. We have a single setup, as well as a
@@ -767,7 +767,7 @@ Let's take a look how Balder will resolve our project without really executing i
 
 Great, the mapping works. Balder finds the valid variation.
 
-Now it is time to really run the balder session.
+Now it is time to really run the Balder session.
 
 .. note::
     Do not forget to start the django server before:
@@ -776,7 +776,7 @@ Now it is time to really run the balder session.
 
         $ python manage.py runserver
 
-After you have secured that the django server will be executed, you can start balder with the command:
+After you have secured that the django server will be executed, you can start Balder with the command:
 
 .. code-block::
 

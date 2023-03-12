@@ -190,5 +190,5 @@ code and make testing easier for others or use scenarios from other community me
 Learn more about
 ================
 
-This documentation shows you an insight how this concept is implemented in balder. Feel free to do the
+This documentation shows you an insight how this concept is implemented in Balder. Feel free to do the
 :ref:`tutorial <Tutorial Guide>` to learn the key concepts of Balder.

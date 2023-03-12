@@ -141,18 +141,18 @@ command:
     Never use this package in an real environment. It uses the Django developer server that is only for developing and
     not secure to use in a productive environment.
 
-Prepare balder
+Prepare Balder
 ==============
 
-Now it's time to prepare our balder environment. For this, we create a sub folder ``tests`` into our project.
+Now it's time to prepare our Balder environment. For this, we create a sub folder ``tests`` into our project.
 
 .. note::
 
-    For an easier development we integrate our balder project inside the main project directory. In the most cases, it
+    For an easier development we integrate our Balder project inside the main project directory. In the most cases, it
     doesn't make sense to do it this way, because we want to do the test for multiple environments. For an easier
     workflow in this example here, however, we create a directory ``tests`` directly in the project.
 
-First of all, we have to create a new balder environment in our project. For this we create a new balder-project
+First of all, we have to create a new Balder environment in our project. For this we create a new Balder project
 in our ``tests`` directory. We will create the following directory structure:
 
 .. code-block:: none

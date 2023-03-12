@@ -18,7 +18,7 @@ application specific code, but you can reuse different test devices. The idea is
 different tests where a lot of clever minds has already think about. You simply have to inherit from their scenarios,
 add the specific setup-device feature code for your device and go for it. Different mock functions, helper devices or
 complete testable implementations of remote devices (for example a dhcp server for dhcp-client tests) are already
-provided in these balderhub project. This helps you and your team to develop test a lot of faster.
+provided in these BalderHub project. This helps you and your team to develop test a lot of faster.
 
 .. note::
 
@@ -28,7 +28,7 @@ provided in these balderhub project. This helps you and your team to develop tes
     We need your help here. There are a lot of people in this world, that are experts in the thing they are doing and
     exactly these experts we need here.
 
-    Do you know one area really well? Do you like the concept of balder? Think about to initiate an own
+    Do you know one area really well? Do you like the concept of Balder? Think about to initiate an own
     BalderHub project. Take a look into our `Balder GitHub Group <https://github.com/balder-dev>`_ and feel free to
     contribute to an existing project or create your own one. If you are not secure if your subject already exist or
     if you are searching for some colleagues to develop a BalderHub project within a group, fell free to

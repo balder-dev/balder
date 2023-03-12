@@ -1,7 +1,7 @@
 Installation
 ************
 
-Before you can start to develop with balder, you will need to install it.
+Before you can start to develop with Balder, you will need to install it.
 
 Install python
 ==============
@@ -10,10 +10,10 @@ For this python in the version ``3.9`` or higher is required. You can get the la
 `https://www.python.org/downloads/ <https://www.python.org/downloads/>`_ or install it with your packet management
 system of your operating system.
 
-Install balder
+Install Balder
 ==============
 
-You can easily install balder in different ways, that are described here.
+You can easily install Balder in different ways, that are described here.
 
 Install the official release
 ----------------------------
@@ -35,7 +35,7 @@ Install the latest developer version
    this will create a new directory ``balder`` in the current working directory
 3. Then run the command ``python -m pip install -e balder``
 
-This will make the code of balder importable and allows you to develop with the latest state of this branch.
+This will make the code of Balder importable and allows you to develop with the latest state of this branch.
 
 If you want to update your further installed developer version to the latest version, simply pull
 the changes with:
