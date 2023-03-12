@@ -64,8 +64,14 @@ devices are needed in our setup too.
 Think about devices
 -------------------
 
-According to our developed scenario we have developed in :ref:`part 1 <Part 1: Develop a Scenario>`, we need two devices
-that implements the following features.
+For a setup to match a scenario, there has to be a variation between its devices that matches. A setup device matches
+with a scenario device if it implements at least all features (by inheriting from them) and fulfill the connections.
+
+.. note::
+    This also means that a setup can have devices or features that are not mentioned in the scenario.
+
+So, according to our developed scenario we have developed in :ref:`part 1 <Part 1: Develop a Scenario>`, we need two
+devices that implements the following features:
 
 ``MechanizeClient``:
 
@@ -84,12 +90,16 @@ no implementation yet.
 
 **Balder-Matching-Mechanism:**
 
-In the solving process, balder searches all Setup <=> Scenario Mappings, that can be executed. For this the setup
-candidate must have the same devices like in the scenario. This means, that every device candidate in the setup must
-implement the features of the scenario device that is mapped to the setup device. Balder will try all combinations and
-mark an mapping (further called a VARIATION) as applicable if every scenario device maps to the assigned setup device.
-In addition to that, also the defined scenario-device-connections have to BE IN the related connections of the setup
-devices.
+In the solving process, Balder determines all combinations a setup and scenario could be mapped. It also creates sub
+combinations about how their devices could be combined with each other. During this initial mapping, compatibility
+between the setup and scenario is not necessarily checked.
+
+However, before the variation is executed, Balder takes the extra step of verifying that the current variation is valid.
+This means that the setup candidate must have a device that implements all the features (inherits from them) of the
+current mapped scenario device in order for the variation to be accepted. In addition to that, also the defined
+scenario-device-connections have to BE IN the related connections of the setup devices.
+
+If you want to learn more about, how Balder works, check out the :ref:`Balder Execution mechanism`.
 
 Autonomous Feature
 ------------------
@@ -104,12 +114,14 @@ You can find more about autonomous features :ref:`here <Autonomous-Features>`.
 Abstract Features
 -----------------
 
-The most of our current feature implementations are abstract and has no implementation or at least have no complete
-implementation. This is often the case for scenario features, because it simply can't be provided, because the scenario
-simply does not know it. Imagine you want to test the reset functionality of something, how do you should know how the
-"something" can be reset. You do not even know what something is.
-So like in this example, these features often need an implementation in our setup area. Maybe we want to reuse the
-features in a similar matter, so we organize them in a hierarchy structure within the setup directory.
+Most of the features we have implemented so far are abstract and have no implementation or at least have no complete
+implementation. This is often the case for scenario features, because it simply can't be provided. In many cases, it is
+impossible to provide the full implementation on scenario-level because the situation does not permit such knowledge.
+Take for example a reset function; without understanding what needs to be reset there, it is hard to really implement
+the full feature. We use the scenario-level feature to provide the interface or in pythonic words, the abstract methods,
+which define **what we need**.
+
+Therefore, in Balder, the implementation is often done at the setup-level.
 
 For this we add a new file `features` in the `setups` directory:
 
@@ -131,12 +143,23 @@ login.
     In :ref:`Part 3: Expand Setup Code` we will expand this and use real hierarchy structured setup-feature code,
     but for now this is quite sufficient.
 
+.. note::
+    Please note, that the structure described here is not the be-all and end-all, but it makes often sense to capsule
+    the features in specific namespace areas, like shown in this tutorial.
+
 Add the devices
 ---------------
 
 In the same way we have developed our scenario in :ref:`part 1 <Part 1: Develop a Scenario>`, we add the features
-before we really implement it. For an easier understanding, we use a simple name for the features we will overwrite in
-our setup area. These features we will name in the way ``My<scenario-feature-name>``.
+before we really implement it. For an easier understanding, we use a simple name format for the features we will
+overwrite in our setup area. Every of these features will be named like ``My<scenario-feature-name>``.
+
+.. note::
+    If you're developing a real test project, it's a good idea to think about encapsulating your features in their own
+    namespaces. For example, you could create a file for all setup features and import them using
+    ``from project.setups import setup_features``. This approach will make it much easier to keep track of all the
+    features in your project, as well as making it more organized and easier to maintain. It will also make it easier
+    to add new features in the future.
 
 We will already add the import statement even if we don't have an implementation yet. Often this helps to get a clearer
 imagine about the things we need. We will import these features from the setup feature file ``setups/features.py``, that
@@ -176,16 +199,16 @@ We want to connect the two devices exactly in the same way as in the scenario. S
             credentials = MyInsertCredentialsFeature()
             internal = MyViewInternalPageFeature()
 
-It is important that the devices also directly inherit from the basic balder device and not from the scenario device.
+As you can see, the devices directly inherit from the basic balder device and not from the scenario device.
 Balder manage this automatically. Balder doesn't really care for the device class, because it only exchange the
 features of it, but does not change the device itself.
 
 What's about the vDevices?
 --------------------------
 
-As you can see in our :ref:`scenario definition <Think about device features>`, we have used vDevices there. To
-understand why we use them, let's recall the earlier used scenario code again. Our scenario devices looks like the
-following:
+As you have seen in our :ref:`scenario definition <Think about device features>`, we uses vDevices on scenario-level. To
+understand why we use them, let's check the earlier used scenario code again. Our scenario device definition looks like
+the following:
 
 .. code-block:: python
 
@@ -199,14 +222,17 @@ following:
 
         @balder.connect(ServerDevice, conn.HttpConnection)
         class ClientDevice(balder.Device):
-            login_out = InsertCredentialsFeature(Server=ServerDevice)
+            login_out = InsertCredentialsFeature(Server="ServerDevice")
             ...
 
-In the ``InsertCredentialsFeature`` constructor, that is used by the ``ClientDevice`` we have a mapping between the
-vDevice ``Server`` and our real device ``ServerDevice``. A VDevice definition allows to define on FEATURE level, that
-we need a connection to another device (from the device that currently implements the feature) which itself implements
-some required features. So specially in our example you can see this feature definition in the feature
-`InsertCredentialsFeature`:
+In the ``InsertCredentialsFeature`` constructor, that is used by the ``ClientDevice`` we have defined a mapping between
+our vDevice ``Server`` and our real device ``ServerDevice``. With this, we tell Balder that we want to use the
+``Server`` VDevice and that our real device ``ServerDevice`` should be mapped to it, thus representing it.
+
+By instantiating own features inside the VDevice, we define, that Balder should ensure that our mapped device (in our
+case ``ServerDevice``) also provides an implementation for them.
+
+You can see this definition also inside the feature ``InsertCredentialsFeature``:
 
 .. code-block:: python
 
@@ -223,22 +249,25 @@ some required features. So specially in our example you can see this feature def
 
     ...
 
-You can see that our mapped VDevice ``Server``, needs a connection to a device that minimum implements the
-``HasLoginSystemFeature``. This would allow us, to also access this features of the device within our feature method.
-However, since we have only an autonomous feature here the mapping will only be used to define that other device. It
-simply doesn't make sense to use this feature without another device that provides this interface.
+You can see that our mapped vDevice ``Server``, needs a connection to a device that at least implements the
+``HasLoginSystemFeature``. However, since this is only an autonomous feature, we just define that our peer device has to
+provide this autonomous feature too. It simply doesn't make sense to use this feature without
+another device that provides this interface.
+
+.. note::
+    Of course you can also add normal features to your vDevices. By adding real normal features, you can access the
+    features of the mapped peer device over these vDevices. This makes it possible that you can request configurations
+    from a peer device inside a feature.
 
 
 This VDevice-Device mapping also affects our setup, but we don't have to define the mapping again in the setup. It will
 automatically secured by the device mapping algorithm.
 
 .. note::
-    You can use multiple vDevices with different feature requirements here too. Although we have not use this
-    functionality here, it is an easy and powerful way to provide feature implementations for different types of
-    applications. By specifying a mapping you definitely set, which vDevice you want to use for your setup/scenario.
-
-.. note::
     It is also possible to assign a vDevice in the setup.
+
+This vDevice mechanism is very powerful. You are also able to define different methods for different mapped vDevices. If
+you want to find out more about that, check the section :ref:`VDevices and method-variations`.
 
 Implement the Setup-Features
 ============================
@@ -312,6 +341,7 @@ We simply add a return statement with these values:
     ...
 
     class MyValidRegisteredUserFeature(ValidRegisteredUserFeature):
+
         def get_user() -> Tuple[str, str]:
             return "guest", "guest12345"
 
@@ -319,20 +349,31 @@ We simply add a return statement with these values:
 
 That was easy, wasn't it? So lets get a little bit deeper.
 
-Use shared features
--------------------
+Reference a feature from another
+--------------------------------
 
-We have two features to implement, the ``MyInsertCredentialsFeature`` and the ``MyViewInternalPageFeature``. Both of
-them will be used to access the loginserver over a browser window. To ensure access via the login area we must allow
-cookies to be passed between webpage changes, for this we need one common browser object. The ``mechanize`` package
-allows this with a so called browser object. To reuse cookies, of course we need the same ``Browser`` object for the
-whole test session, but for us it seems hard to share this object between different feature instances. We also can not
-add it to the constructor or something similar. But how can we share this? We can use a shared feature, that is added
-as required feature to our both feature classes ``MyInsertCredentialsFeature`` and ``MyViewInternalPageFeature``.
+The ``mechanize`` package allows accessing the browser content with a so called ``mechanize.Browser`` object. After
+instantiating, you can browse through a website while it handles all session stuff for us. For using it, we should
+instantiate it only once.
+
+In our client device, we have two features to implement, the ``MyInsertCredentialsFeature`` and the
+``MyViewInternalPageFeature``. Both of them must have access to the same browser.
+
+With that, we need the same ``Browser`` object for the whole test session, but for us it seems hard to share this object
+between different feature instances. We can not add it to the constructor or something similar. But how can we share
+this?
+
+We can use a shared feature, that is referred in our both feature classes
+``MyInsertCredentialsFeature`` and ``MyViewInternalPageFeature``.
 
 .. note::
-    We will add this shared feature only in setup code, which will lead to the fact that we can create other setups
-    that do not implement our specific mechanize feature here.
+
+    We will add this shared feature only in setup code. The scenario implementation hasn't changed, it does not know
+    anything about a browser object. This allows us to create other setups that do not implement our specific mechanize
+    feature.
+
+    With that we are really flexible, because we can provide different implementations for the same scenario-features on
+    setup-level.
 
 Let's call this feature ``BrowserSessionManagerFeature``. It should completely manage this browser object and also
 provide some methods, we can interact with.
@@ -376,6 +417,8 @@ class property in the features that want to use it. For example, this can look l
 
         browser_manager = BrowserSessionManagerFeature()
 
+        ...
+
 This allows you to simply refer it from your methods. It also defines that every device that uses the feature
 `MyViewInternalPageFeature` (by defining it as static attribute), has also implement the `BrowserSessionManagerFeature`.
 
@@ -385,14 +428,45 @@ Implement the client Setup-Features
 As you may remember the setup features ``MyInsertCredentialsFeature`` and ``MyViewInternalPageFeature`` (which we still
 have to implement) have a vDevice ``Server`` in our scenario implementation. But on this scenario level implementation,
 the vDevice has only the one autonomous feature ``HasLoginSystemFeature``.
-We have written it very universal, that allows that the scenario implementation is very flexible. But now on setup
-level, we need some more information from our communication partner device that is mapped to the vDevice
-``MyInsertCredentialsFeature.Server``.
+
+We have written a very universal scenario-level feature, which is often a good decision. This allows a very flexible
+scenario implementation. But now on setup-level, we need some more information from our communication partner device
+that is mapped to the vDevice ``MyInsertCredentialsFeature.Server``.
 
 Balder allows us to access these information by simply specifying the features that provide this info in our vDevice.
 As mentioned earlier, we can overwrite a vDevice, by inheriting from the vDevice of the parent feature class **and**
-give the same class name to the child vDevice class. We will add a new feature that should return some constant
-values about the server, for example the webpage url.
+give the same class name to the child vDevice class:
+
+.. code-block:: python
+
+    class MyViewInternalPageFeature(ViewInternalPageFeature):
+
+        class Server(ViewInternalPageFeature.Server):
+            pass
+
+        browser_manager = BrowserSessionManagerFeature()
+
+.. note::
+    Note that it is really important, that the child VDevice class has the same name that is given in the parent feature
+    class! Otherwise the child VDevice will be interpreted as a new VDevice! In this case this will produce an exception
+    because balder only allows the redefining of inner devices by overwriting them all on one class level.
+
+In a few moments, we will create a new feature class ``InternalWebpageFeature`` that should return some constant values
+about the server (for example the webpage url). This feature should be implemented by our real Server Device. We can
+ensure this on feature level, by adding this feature to our VDevice ``Server``:
+
+.. code-block:: python
+
+    class MyViewInternalPageFeature(ViewInternalPageFeature):
+
+        class Server(ViewInternalPageFeature.Server):
+            internal_webpage = InternalWebpageFeature()
+
+        browser_manager = BrowserSessionManagerFeature()
+
+Just as we have already done with normal devices, we can address our feature in the VDevice, by using its property. So
+let us add an implementation for our abstract method ``ViewInternalPageFeature.check_internal_page_viewable()`` by
+using our new VDevice-Feature:
 
 .. code-block:: python
 
@@ -411,15 +485,9 @@ values about the server, for example the webpage url.
                 return False
             return True
 
-Similar to the normal device usage we can now use our vDevice feature property to access the data. Currently we have no
-implementation for our feature ``InternalWebpageFeature``. We will implement it in a few moments.
 
-.. note::
-    Note that it is really important, that the child vDevice class has the same name that is given in the parent feature
-    class! Otherwise the child vDevice will be interpreted as a new device! In this case this will produce an exception
-    because balder only allows the redefining of inner devices by overwriting all on one class level.
-
-We will do the same for the other feature:
+We will do the same for the other feature and also add another feature ``LoginWebpageFeature`` (which we will also
+implement in a few moments) to its vDevice:
 
 .. code-block:: python
 
@@ -460,8 +528,10 @@ We will do the same for the other feature:
 
 We will implement the newly created ``LoginWebpageFeature`` in the ``Server`` vDevice in the next stage.
 
-The object has also a new method ``do_setup_if_necessary()``, which was not defined in the scenario version. Of course
-you can expand it after the definition in the scenario too.
+.. note::
+    The overwritten feature also implements a new method ``do_setup_if_necessary()``. This is no problem, even if it is
+    not defined in the parent feature. In the normal way like inheriting works, you can freely implement more logic in
+    child classes.
 
 Implement the vDevice features
 ------------------------------
@@ -506,9 +576,9 @@ We have created some new features that we need specially for this setup, the ``L
 .. note::
     **We instantiate every feature multiple times, why do we think they are synchronized?**
 
-    In the resolving process balder automatically exchange all objects with the original objects that were initialized
-    in the setup. Everywhere! In all inner feature references (also feature properties that are other instantiated
-    features), scenarios, vDevices and so on.
+    Before a variation (fixed mapping between scenario and setup devices) will be executed, Balder automatically
+    exchanges all objects with the original objects that were instantiated in the setup. Everywhere! In all inner
+    feature references (also feature properties that are other instantiated Features), scenarios, vDevices and so on.
 
 Update our setup
 ----------------
@@ -539,12 +609,11 @@ Our new setup devices should implement the following:
 
 
 
-The whole setup and setup features
-==================================
+The whole setup and its features
+================================
 
-Done, we have successfully implement our setup. The whole code is shows below, but you can find the code
-in the
-`single-setup branch on GitHub <https://github.com/balder-dev/balderexample-loginserver/tree/single-setup>`_ too.
+Done, we have successfully implement our setup. The whole code is shown below, but you can find the code
+in the `single-setup branch on GitHub <https://github.com/balder-dev/balderexample-loginserver/tree/single-setup>`_ too.
 
 .. code-block:: python
 
@@ -667,14 +736,19 @@ in the
 Execute balder
 ==============
 
-Now it is time to check if balder finds the match by executing balder. We have one setup and one scenario, while
-the setup definition should match the scenario definition. We also expect, that balder will find exactly one matching.
+Now is the time to execute Balder and take advantage of the benefits it provides. We have a single setup, as well as a
+single scenario, where every setup device is mapped to a scenario device, ensuring that each setup device implements
+at least the features of its mapped scenario device. Therefore, it is expected that Balder will find exactly one valid
+executable variation.
 
-Let's take a look how balder will resolve our project. For this you can simply execute the following command:
+Let's take a look how Balder will resolve our project without really executing it. For this you can add the argument
+``--resolve-only`` to the ``balder`` call:
 
-.. code-block:: none
+.. code-block::
 
     $ balder --working-dir tests --resolve-only
+
+.. code-block:: none
 
     +----------------------------------------------------------------------------------------------------------------------+
     | BALDER Testsystem                                                                                                    |
@@ -691,7 +765,7 @@ Let's take a look how balder will resolve our project. For this you can simply e
        -> Testcase<ScenarioSimpleLoginOut.test_valid_login_logout>
 
 
-You can see how balder finds the mappings between the devices.
+Great, the mapping works. Balder finds the valid variation.
 
 Now it is time to really run the balder session.
 
@@ -702,11 +776,13 @@ Now it is time to really run the balder session.
 
         $ python manage.py runserver
 
-After you have secured that the django server will be executed, you can start balder with the simple command:
+After you have secured that the django server will be executed, you can start balder with the command:
 
-.. code-block:: none
+.. code-block::
 
     $ balder --working-dir tests
+
+.. code-block:: none
 
     +----------------------------------------------------------------------------------------------------------------------+
     | BALDER Testsystem                                                                                                    |
@@ -724,4 +800,4 @@ After you have secured that the django server will be executed, you can start ba
     TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 1 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
 
 
-Congratulations! You have successfully created a Scenario and a suitable Setup for it.
+Congratulations! You have successfully run your first test with Balder.
