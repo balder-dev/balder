@@ -351,14 +351,14 @@ class VariationExecutor(BasicExecutor):
 
     def has_feature_implementation_matching(self):
         """
-        This method returns True if the features in this variation are valid. For this the setup devices must
+        This method validates, that the features in this variation are valid. For this the setup devices must
         implement all the required features of the scenario device. In other words, a feature child class must be
         implemented in the setup device for each feature in the scenario device.
         """
         for scenario_device, setup_device in self._base_device_mapping.items():
             scenario_device_orig_features = \
                 DeviceController.get_for(scenario_device).get_original_instanced_feature_objects()
-            for _, cur_scenario_feature in scenario_device_orig_features.items():
+            for cur_scenario_feature_attr_name, cur_scenario_feature in scenario_device_orig_features.items():
                 found_setup_feature_for_scenario_feature = False
                 setup_device_instantiated_features = \
                     DeviceController.get_for(setup_device).get_all_instantiated_feature_objects()
@@ -366,8 +366,10 @@ class VariationExecutor(BasicExecutor):
                     if isinstance(cur_setup_feature, cur_scenario_feature.__class__):
                         found_setup_feature_for_scenario_feature = True
                 if not found_setup_feature_for_scenario_feature:
-                    return False
-        return True
+                    raise NotApplicableVariationException(
+                        f'no matching setup-level feature found for scenario-level feature '
+                        f'`{cur_scenario_feature_attr_name} = {cur_scenario_feature.__class__.__name__}()` of device '
+                        f'`{scenario_device.__qualname__}`')
 
     def cleanup_empty_executor_branches(self):
         """
@@ -642,8 +644,8 @@ class VariationExecutor(BasicExecutor):
         try:
             self.determine_feature_replacement_and_vdevice_mappings()
 
-            if not self.has_feature_implementation_matching():
-                return False
+            self.has_feature_implementation_matching()
+
             if not self.has_vdevice_feature_implementation_matching():
                 return False
             if not self.has_all_valid_routings():
