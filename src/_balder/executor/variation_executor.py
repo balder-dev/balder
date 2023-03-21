@@ -379,12 +379,10 @@ class VariationExecutor(BasicExecutor):
         This method implementation of the :class:`VariationExecutor` does nothing.
         """
 
-    def has_vdevice_feature_implementation_matching(self) -> bool:
+    def has_vdevice_feature_implementation_matching(self) -> None:
         """
         This method checks for all vDevices that are in the setups/scenario features of this VariationExecutor, if their
         vDevices-Mappings (so the mapped setup-devices) implements all features that are defined in the vDevices
-
-        This method returns false, if there is missing some :class:`Feature` classes.
         """
 
         for cur_scenario_device, cur_replacement_dict in self.feature_replacement.items():
@@ -394,7 +392,7 @@ class VariationExecutor(BasicExecutor):
 
             # describes the mapping from the new setup feature (key) to the instantiated scenario feature (value)
             #  note that this dictionary only contains the required one
-            new_to_old_feature_mapping: Dict[Type[Feature], Feature] = {
+            setup_to_scenario_feature_mapping: Dict[Type[Feature], Feature] = {
                 cur_replacement_tuple[1]: cur_replacement_tuple[0]
                 for cur_attr_name, cur_replacement_tuple in cur_replacement_dict.items()
                 if cur_replacement_tuple[0] is not None}
@@ -403,10 +401,10 @@ class VariationExecutor(BasicExecutor):
             #  mapped vDevice
             for _, cur_setup_feature_obj in all_inner_setup_features.items():
                 # only check if there is a requirement of this feature (the feature is required by the Scenario)
-                if cur_setup_feature_obj.__class__ not in new_to_old_feature_mapping.keys():
+                if cur_setup_feature_obj.__class__ not in setup_to_scenario_feature_mapping.keys():
                     # ignore this, because no requirement for this feature
                     continue
-                related_scenario_feature_obj = new_to_old_feature_mapping[cur_setup_feature_obj.__class__]
+                related_scenario_feature_obj = setup_to_scenario_feature_mapping[cur_setup_feature_obj.__class__]
                 # get vDevice and device mapping
                 partner_scenario_vdevice, partner_scenario_device = \
                     related_scenario_feature_obj.active_vdevice_device_mapping
@@ -424,7 +422,10 @@ class VariationExecutor(BasicExecutor):
                     if issubclass(cur_vdevice, partner_scenario_vdevice)]
                 if len(mapped_setup_vdevices) != 1:
                     # find no mapping for the vDevice -> not possible
-                    return False
+                    # todo optimize this exception message
+                    raise NotApplicableVariationException(
+                        f'can not find a valid setup-level vDevice in setup feature '
+                        f'`{cur_setup_feature_obj.__class__}`')
                 # now check that the setup partner device has all features implemented that are required
                 # features from the VDevice
                 partner_setup_device_features = \
@@ -436,8 +437,10 @@ class VariationExecutor(BasicExecutor):
                     # vDevice class
                     if len([cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
                             if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]) == 0:
-                        return False
-        return True
+                        raise NotApplicableVariationException(
+                            f'can not find a child feature in mapped setup device `{partner_setup_device.__qualname__}`'
+                            f' for required feature `{cur_vdevice_feature.__class__}` of vDevice '
+                            f'`{mapped_setup_vdevices[0].__qualname__}`')
 
     def has_all_valid_routings(self) -> bool:
         """
@@ -646,8 +649,8 @@ class VariationExecutor(BasicExecutor):
 
             self._verify_applicability_trough_feature_implementation_matching()
 
-            if not self.has_vdevice_feature_implementation_matching():
-                return False
+            self.has_vdevice_feature_implementation_matching()
+
             if not self.has_all_valid_routings():
                 return False
         except NotApplicableVariationException:
