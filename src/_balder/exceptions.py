@@ -158,7 +158,7 @@ class IllegalVDeviceMappingError(BalderException):
     """
 
 
-class NotApplicableVariationError(BalderException):
+class NotApplicableVariationException(BalderException):
     """
     is thrown internally after the current variation is not applicable
     """
