@@ -5,7 +5,7 @@ from _balder.exceptions import FixtureScopeError, FixtureReferenceError, Unclear
     AccessToUnmappedVDeviceException, FeatureOverwritingError, UnknownVDeviceException, RoutingBrokenChainError, \
     IllegalConnectionTypeError, ConnectionMetadataConflictError, DeviceScopeError, ConnectionIntersectionError, \
     UnclearAssignableFeatureConnectionError, InheritanceError, MultiInheritanceError, InnerFeatureResolvingError, \
-    VDeviceResolvingError, IllegalVDeviceMappingError, NotApplicableVariationError, UnclearMethodVariationError, \
+    VDeviceResolvingError, IllegalVDeviceMappingError, NotApplicableVariationException, UnclearMethodVariationError, \
     UnexpectedPluginMethodReturnValue
 
 __all__ = [
@@ -37,7 +37,7 @@ __all__ = [
     "InnerFeatureResolvingError",
     "VDeviceResolvingError",
     "IllegalVDeviceMappingError",
-    "NotApplicableVariationError",
+    "NotApplicableVariationException",
     "UnclearMethodVariationError",
     "UnexpectedPluginMethodReturnValue",
 ]

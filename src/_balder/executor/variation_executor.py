@@ -12,7 +12,7 @@ from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.routing_path import RoutingPath
 from _balder.unmapped_vdevice import UnmappedVDevice
 from _balder.controllers import DeviceController, VDeviceController, FeatureController, NormalScenarioSetupController
-from _balder.exceptions import NotApplicableVariationError, UnclearAssignableFeatureConnectionError
+from _balder.exceptions import NotApplicableVariationException, UnclearAssignableFeatureConnectionError
 
 if TYPE_CHECKING:
     from _balder.setup import Setup
@@ -235,7 +235,7 @@ class VariationExecutor(BasicExecutor):
                             cleanup_replacing_features.remove(cur_replacing_feature)
 
                 if len(cleanup_replacing_features) != 1:
-                    raise NotApplicableVariationError(
+                    raise NotApplicableVariationException(
                         f'this variation can not be applicable because there was no setup feature implementation of '
                         f'`{cur_abstract_scenario_feature_obj.__class__.__name__}` (used by scenario device '
                         f'`{cur_scenario_device.__name__}`) in setup device `{cur_setup_device.__name__}`')
@@ -254,7 +254,7 @@ class VariationExecutor(BasicExecutor):
                             f"`{cur_abstract_scenario_feature_obj.__class__.__name__}` (used in scenario device "
                             f"`{cur_scenario_device.__name__}` and in setup device `{cur_setup_device.__name__}`) - "
                             f"VARIATION CAN NOT BE APPLIED")
-                        raise NotApplicableVariationError(
+                        raise NotApplicableVariationException(
                             f'this variation can not be applicable because there was no vDevice mapping given on '
                             f'scenario or on setup level for the feature '
                             f'`{cur_abstract_scenario_feature_obj.__class__.__name__}` (used by scenario device '
@@ -648,7 +648,7 @@ class VariationExecutor(BasicExecutor):
                 return False
             if not self.has_all_valid_routings():
                 return False
-        except NotApplicableVariationError:
+        except NotApplicableVariationException:
             # this variation can not be used, because the features can not be resolved correctly!
             return False
 
@@ -698,7 +698,7 @@ class VariationExecutor(BasicExecutor):
                 cur_mapped_setup_device = list(mapping_dict.values())[0]
 
                 if cur_mapped_setup_device not in self.base_device_mapping.values():
-                    raise NotApplicableVariationError(
+                    raise NotApplicableVariationException(
                         f'the mapped setup device `{cur_mapped_setup_device.__qualname__}` which is mapped to the '
                         f'VDevice `{cur_setup_feature_vdevice.__qualname__}` is no part of this variation')
 
