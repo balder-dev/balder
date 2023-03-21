@@ -185,6 +185,69 @@ class VariationExecutor(BasicExecutor):
                         f'`{cur_scenario_feature_attr_name} = {cur_scenario_feature.__class__.__name__}()` of device '
                         f'`{scenario_device.__qualname__}`')
 
+    def _verify_applicability_trough_vdevice_feature_impl_matching(self) -> None:
+        """
+        This method checks for all vDevices that are in the setups/scenario features of this VariationExecutor, if their
+        vDevices-Mappings (so the mapped setup-devices) implements all features that are defined in the vDevices
+        """
+
+        for cur_scenario_device, cur_replacement_dict in self.feature_replacement.items():
+            cur_setup_device = self.get_setup_device_for(scenario_device=cur_scenario_device)
+            all_inner_setup_features = \
+                DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
+
+            # describes the mapping from the new setup feature (key) to the instantiated scenario feature (value)
+            #  note that this dictionary only contains the required one
+            setup_to_scenario_feature_mapping: Dict[Type[Feature], Feature] = {
+                cur_replacement_tuple[1]: cur_replacement_tuple[0]
+                for cur_attr_name, cur_replacement_tuple in cur_replacement_dict.items()
+                if cur_replacement_tuple[0] is not None}
+
+            # now secure that all features are available in the corresponding setup device, that are defined in the
+            #  mapped vDevice
+            for _, cur_setup_feature_obj in all_inner_setup_features.items():
+                # only check if there is a requirement of this feature (the feature is required by the Scenario)
+                if cur_setup_feature_obj.__class__ not in setup_to_scenario_feature_mapping.keys():
+                    # ignore this, because no requirement for this feature
+                    continue
+                related_scenario_feature_obj = setup_to_scenario_feature_mapping[cur_setup_feature_obj.__class__]
+                # get vDevice and device mapping
+                partner_scenario_vdevice, partner_scenario_device = \
+                    related_scenario_feature_obj.active_vdevice_device_mapping
+
+                if partner_scenario_device is None:
+                    # ignore because no mapping exist here
+                    continue
+
+                partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_vdevice)
+                # get the related vDevice on setup view that is currently active
+                mapped_setup_vdevices = [
+                    cur_vdevice for cur_vdevice
+                    in FeatureController.get_for(
+                        cur_setup_feature_obj.__class__).get_abs_inner_vdevice_classes()
+                    if issubclass(cur_vdevice, partner_scenario_vdevice)]
+                if len(mapped_setup_vdevices) != 1:
+                    # find no mapping for the vDevice -> not possible
+                    # todo optimize this exception message
+                    raise NotApplicableVariationException(
+                        f'can not find a valid setup-level vDevice in setup feature '
+                        f'`{cur_setup_feature_obj.__class__}`')
+                # now check that the setup partner device has all features implemented that are required
+                # features from the VDevice
+                partner_setup_device_features = \
+                    DeviceController.get_for(partner_setup_device).get_all_instantiated_feature_objects()
+                mapped_setup_vdevices_instantiated_features = \
+                    VDeviceController.get_for(mapped_setup_vdevices[0]).get_all_instantiated_feature_objects()
+                for _, cur_vdevice_feature in mapped_setup_vdevices_instantiated_features.items():
+                    # check that there exists a child feature in the setup device for every used feature in the
+                    # vDevice class
+                    if len([cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
+                            if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]) == 0:
+                        raise NotApplicableVariationException(
+                            f'can not find a child feature in mapped setup device `{partner_setup_device.__qualname__}`'
+                            f' for required feature `{cur_vdevice_feature.__class__}` of vDevice '
+                            f'`{mapped_setup_vdevices[0].__qualname__}`')
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def add_testcase_executor(self, testcase_executor: TestcaseExecutor):
@@ -378,69 +441,6 @@ class VariationExecutor(BasicExecutor):
 
         This method implementation of the :class:`VariationExecutor` does nothing.
         """
-
-    def has_vdevice_feature_implementation_matching(self) -> None:
-        """
-        This method checks for all vDevices that are in the setups/scenario features of this VariationExecutor, if their
-        vDevices-Mappings (so the mapped setup-devices) implements all features that are defined in the vDevices
-        """
-
-        for cur_scenario_device, cur_replacement_dict in self.feature_replacement.items():
-            cur_setup_device = self.get_setup_device_for(scenario_device=cur_scenario_device)
-            all_inner_setup_features = \
-                DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
-
-            # describes the mapping from the new setup feature (key) to the instantiated scenario feature (value)
-            #  note that this dictionary only contains the required one
-            setup_to_scenario_feature_mapping: Dict[Type[Feature], Feature] = {
-                cur_replacement_tuple[1]: cur_replacement_tuple[0]
-                for cur_attr_name, cur_replacement_tuple in cur_replacement_dict.items()
-                if cur_replacement_tuple[0] is not None}
-
-            # now secure that all features are available in the corresponding setup device, that are defined in the
-            #  mapped vDevice
-            for _, cur_setup_feature_obj in all_inner_setup_features.items():
-                # only check if there is a requirement of this feature (the feature is required by the Scenario)
-                if cur_setup_feature_obj.__class__ not in setup_to_scenario_feature_mapping.keys():
-                    # ignore this, because no requirement for this feature
-                    continue
-                related_scenario_feature_obj = setup_to_scenario_feature_mapping[cur_setup_feature_obj.__class__]
-                # get vDevice and device mapping
-                partner_scenario_vdevice, partner_scenario_device = \
-                    related_scenario_feature_obj.active_vdevice_device_mapping
-
-                if partner_scenario_device is None:
-                    # ignore because no mapping exist here
-                    continue
-
-                partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_vdevice)
-                # get the related vDevice on setup view that is currently active
-                mapped_setup_vdevices = [
-                    cur_vdevice for cur_vdevice
-                    in FeatureController.get_for(
-                        cur_setup_feature_obj.__class__).get_abs_inner_vdevice_classes()
-                    if issubclass(cur_vdevice, partner_scenario_vdevice)]
-                if len(mapped_setup_vdevices) != 1:
-                    # find no mapping for the vDevice -> not possible
-                    # todo optimize this exception message
-                    raise NotApplicableVariationException(
-                        f'can not find a valid setup-level vDevice in setup feature '
-                        f'`{cur_setup_feature_obj.__class__}`')
-                # now check that the setup partner device has all features implemented that are required
-                # features from the VDevice
-                partner_setup_device_features = \
-                    DeviceController.get_for(partner_setup_device).get_all_instantiated_feature_objects()
-                mapped_setup_vdevices_instantiated_features = \
-                    VDeviceController.get_for(mapped_setup_vdevices[0]).get_all_instantiated_feature_objects()
-                for _, cur_vdevice_feature in mapped_setup_vdevices_instantiated_features.items():
-                    # check that there exists a child feature in the setup device for every used feature in the
-                    # vDevice class
-                    if len([cur_device_feature for _, cur_device_feature in partner_setup_device_features.items()
-                            if isinstance(cur_device_feature, cur_vdevice_feature.__class__)]) == 0:
-                        raise NotApplicableVariationException(
-                            f'can not find a child feature in mapped setup device `{partner_setup_device.__qualname__}`'
-                            f' for required feature `{cur_vdevice_feature.__class__}` of vDevice '
-                            f'`{mapped_setup_vdevices[0].__qualname__}`')
 
     def has_all_valid_routings(self) -> bool:
         """
@@ -649,7 +649,7 @@ class VariationExecutor(BasicExecutor):
 
             self._verify_applicability_trough_feature_implementation_matching()
 
-            self.has_vdevice_feature_implementation_matching()
+            self._verify_applicability_trough_vdevice_feature_impl_matching()
 
             if not self.has_all_valid_routings():
                 return False
