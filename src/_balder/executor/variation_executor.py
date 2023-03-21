@@ -248,6 +248,22 @@ class VariationExecutor(BasicExecutor):
                             f' for required feature `{cur_vdevice_feature.__class__}` of vDevice '
                             f'`{mapped_setup_vdevices[0].__qualname__}`')
 
+    def _verify_applicability_trough_all_valid_routings(self) -> None:
+        """
+        This method ensures that valid routings exist for every defined connection.
+
+        The check is passed, if the method finds one or more valid routings for EVERY scenario-level
+        :class:`Connection`.
+        """
+        if not self._routings:
+            self.determine_absolute_scenario_device_connections()
+            self.create_all_valid_routings()
+        for scenario_cnn, cur_routings in self._routings.items():
+            if len(cur_routings) == 0:
+                raise NotApplicableVariationException(
+                    f'can not find a valid routing on setup level for the connection `{scenario_cnn.get_tree_str()}` '
+                    f'between scenario devices `{scenario_cnn.from_device}` and `{scenario_cnn.to_device}`')
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def add_testcase_executor(self, testcase_executor: TestcaseExecutor):
@@ -442,22 +458,6 @@ class VariationExecutor(BasicExecutor):
         This method implementation of the :class:`VariationExecutor` does nothing.
         """
 
-    def has_all_valid_routings(self) -> None:
-        """
-        This method ensures that valid routings exist for every defined connection.
-
-        The check is passed, if the method finds one or more valid routings for EVERY scenario-level
-        :class:`Connection`.
-        """
-        if not self._routings:
-            self.determine_absolute_scenario_device_connections()
-            self.create_all_valid_routings()
-        for scenario_cnn, cur_routings in self._routings.items():
-            if len(cur_routings) == 0:
-                raise NotApplicableVariationException(
-                    f'can not find a valid routing on setup level for the connection `{scenario_cnn.get_tree_str()}` '
-                    f'between scenario devices `{scenario_cnn.from_device}` and `{scenario_cnn.to_device}`')
-
     def update_scenario_device_feature_instances(self):
         """
         This method ensures that the (mostly abstract) feature instances of a scenario are exchanged with the
@@ -651,7 +651,7 @@ class VariationExecutor(BasicExecutor):
 
             self._verify_applicability_trough_vdevice_feature_impl_matching()
 
-            self.has_all_valid_routings()
+            self._verify_applicability_trough_all_valid_routings()
         except NotApplicableVariationException:
             # this variation can not be used, because the features can not be resolved correctly!
             return False
