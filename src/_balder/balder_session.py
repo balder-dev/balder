@@ -60,6 +60,8 @@ class BalderSession:
         self.collect_only: Union[bool, None] = None
         #: specifies that the tests should only be collected and resolved but not executed
         self.resolve_only: Union[bool, None] = None
+        #: specifies that all discarded variations should be printed (with information why they were discarded)
+        self.show_discarded: Union[bool, None] = None
         #: contains a number of :class:`Setup` class strings that should only be considered for the execution
         self.only_with_setup: Union[List[str], None] = None
         #: contains a number of :class:`Scenario` class strings that should only be considered for the execution
@@ -247,6 +249,10 @@ class BalderSession:
             help="specifies that the tests are only collected and resolved but not executed")
 
         self.cmd_arg_parser.add_argument(
+            '--show-discarded', action='store_true',
+            help="specifies that all discarded variations should be printed (with information why they were discarded)")
+
+        self.cmd_arg_parser.add_argument(
             '--only-with-setup', nargs="*",
             help="defines a number of Setup classes which should only be considered for the execution")
 
@@ -270,6 +276,7 @@ class BalderSession:
         self.working_dir = self.parsed_args.working_dir
         self.collect_only = self.parsed_args.collect_only
         self.resolve_only = self.parsed_args.resolve_only
+        self.show_discarded = self.parsed_args.show_discarded
         self.only_with_setup = self.parsed_args.only_with_setup
         self.only_with_scenario = self.parsed_args.only_with_scenario
         self.force_covered_by_duplicates = self.parsed_args.force_covered_by_duplicates
