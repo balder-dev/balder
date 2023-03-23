@@ -145,7 +145,7 @@ class BasicExecutor(ABC):
         if self.prev_mark != PreviousExecutorMark.RUNNABLE:
             return False
         for cur_child in self.all_child_executors:
-            if cur_child.prev_mark == PreviousExecutorMark.RUNNABLE:
+            if cur_child.has_runnable_elements():
                 return True
         return False
 
