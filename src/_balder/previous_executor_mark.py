@@ -18,3 +18,6 @@ class PreviousExecutorMark(Enum):
 
     #: this marks that the element should be ignored from the executor mechanism
     IGNORE = -1
+
+    #: this marks that the element was already discarded because its variation is not applicable
+    DISCARDED = -2
