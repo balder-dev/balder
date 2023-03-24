@@ -82,7 +82,7 @@ class ExecutorTree(BasicExecutor):
         """
         all_scenario_executor = []
         for cur_setup_executor in self.get_setup_executors():
-            all_scenario_executor += cur_setup_executor.scenario_executors
+            all_scenario_executor += cur_setup_executor.get_scenario_executors()
         return all_scenario_executor
 
     def get_all_variation_executors(self) -> List[VariationExecutor]:
@@ -132,7 +132,7 @@ class ExecutorTree(BasicExecutor):
         to_remove_executor = []
         for cur_setup_executor in self.get_setup_executors():
             cur_setup_executor.cleanup_empty_executor_branches()
-            if len(cur_setup_executor.scenario_executors) == 0:
+            if len(cur_setup_executor.get_scenario_executors()) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_setup_executor)
         for cur_setup_executor in to_remove_executor:
@@ -174,7 +174,7 @@ class ExecutorTree(BasicExecutor):
         """this method is an auxiliary method which outputs the entire tree"""
         print("RESOLVING OVERVIEW", end="\n\n")
         for cur_setup_executor in self.get_setup_executors():
-            for cur_scenario_executor in cur_setup_executor.scenario_executors:
+            for cur_scenario_executor in cur_setup_executor.get_scenario_executors():
                 for cur_variation_executor in cur_scenario_executor.variation_executors:
                     print(f"Scenario `{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
                           f"Setup `{cur_setup_executor.base_setup_class.__class__.__qualname__}`")

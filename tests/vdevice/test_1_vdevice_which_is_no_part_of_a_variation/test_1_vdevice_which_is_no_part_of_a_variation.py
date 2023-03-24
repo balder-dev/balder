@@ -32,13 +32,13 @@ def processed(env_dir):
     assert session.executor_tree.executor_result == ResultState.SUCCESS, \
         "test session does not terminates with success"
     assert len(session.executor_tree.get_setup_executors()) == 1
-    assert len(session.executor_tree.get_setup_executors()[0].scenario_executors) == 1
-    assert len(session.executor_tree.get_setup_executors()[0].scenario_executors[0].variation_executors) == 2
-    for cur_variation_executor in \
-            session.executor_tree.get_setup_executors()[0].scenario_executors[0].variation_executors:
+
+    scenario_executors = session.executor_tree.get_setup_executors()[0].get_scenario_executors()
+    assert len(scenario_executors) == 1
+    assert len(scenario_executors[0].variation_executors) == 2
+    for cur_variation_executor in scenario_executors[0].variation_executors:
         all_setup_devices = [cur_device.__name__ for cur_device in cur_variation_executor.base_device_mapping.values()]
         assert "Calculator1" in all_setup_devices, \
             "can not find the expected `Calculator` setup device in mapped-devices"
         assert "Calculator2" not in all_setup_devices, \
             "`Calculator2` should not be contained in mapped-devices"
-

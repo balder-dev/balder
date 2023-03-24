@@ -205,7 +205,7 @@ class Test0TreecheckFixtBalderglobVariationConstruction(Base0EnvtesterClass):
             assert cur_setup_executor.body_result.result == ResultState.ERROR
             assert cur_setup_executor.teardown_result.result == ResultState.SUCCESS
 
-            for cur_scenario_executor in cur_setup_executor.scenario_executors:
+            for cur_scenario_executor in cur_setup_executor.get_scenario_executors():
                 assert cur_scenario_executor.executor_result == ResultState.ERROR, \
                     "the scenario executor does not have result ERROR"
 
