@@ -35,17 +35,12 @@ class ExecutorTree(BasicExecutor):
 
     @property
     def all_child_executors(self) -> List[BasicExecutor]:
-        return self.setup_executors
+        return self._setup_executors
 
     @property
     def base_instance(self) -> object:
         """returns None because this element is a ExecutorTree"""
         return None
-
-    @property
-    def setup_executors(self) -> List[SetupExecutor]:
-        """returns all setup executors of this tree"""
-        return self._setup_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
@@ -62,7 +57,7 @@ class ExecutorTree(BasicExecutor):
         pass
 
     def _body_execution(self):
-        for cur_setup_executor in self.setup_executors:
+        for cur_setup_executor in self.get_setup_executors():
             if cur_setup_executor.has_runnable_elements():
                 cur_setup_executor.execute()
             elif cur_setup_executor.prev_mark == PreviousExecutorMark.SKIP:
@@ -77,12 +72,16 @@ class ExecutorTree(BasicExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
+    def get_setup_executors(self) -> List[SetupExecutor]:
+        """returns all setup executors of this tree"""
+        return self._setup_executors
+
     def get_all_scenario_executors(self) -> List[ScenarioExecutor]:
         """
         returns a list with all scenario executors
         """
         all_scenario_executor = []
-        for cur_setup_executor in self.setup_executors:
+        for cur_setup_executor in self.get_setup_executors():
             all_scenario_executor += cur_setup_executor.scenario_executors
         return all_scenario_executor
 
@@ -131,7 +130,7 @@ class ExecutorTree(BasicExecutor):
 
     def cleanup_empty_executor_branches(self):
         to_remove_executor = []
-        for cur_setup_executor in self.setup_executors:
+        for cur_setup_executor in self.get_setup_executors():
             cur_setup_executor.cleanup_empty_executor_branches()
             if len(cur_setup_executor.scenario_executors) == 0:
                 # remove this whole executor because it has no children anymore
@@ -154,7 +153,7 @@ class ExecutorTree(BasicExecutor):
 
         print_line(start_text)
         # check if there exists runnable elements
-        runnables = [cur_exec.has_runnable_elements() for cur_exec in self.setup_executors]
+        runnables = [cur_exec.has_runnable_elements() for cur_exec in self.get_setup_executors()]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
         if one_or_more_runnable_setups:
             super().execute()
@@ -174,7 +173,7 @@ class ExecutorTree(BasicExecutor):
     def print_tree(self) -> None:
         """this method is an auxiliary method which outputs the entire tree"""
         print("RESOLVING OVERVIEW", end="\n\n")
-        for cur_setup_executor in self.setup_executors:
+        for cur_setup_executor in self.get_setup_executors():
             for cur_scenario_executor in cur_setup_executor.scenario_executors:
                 for cur_variation_executor in cur_scenario_executor.variation_executors:
                     print(f"Scenario `{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
