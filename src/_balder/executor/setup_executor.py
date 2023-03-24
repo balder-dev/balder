@@ -42,7 +42,7 @@ class SetupExecutor(BasicExecutor):
 
     @property
     def all_child_executors(self) -> List[ScenarioExecutor]:
-        return self.scenario_executors
+        return self._scenario_executors
 
     @property
     def parent_executor(self) -> ExecutorTree:
@@ -59,11 +59,6 @@ class SetupExecutor(BasicExecutor):
         return self._base_setup_class
 
     @property
-    def scenario_executors(self) -> List[ScenarioExecutor]:
-        """returns a list with all scenario executors that belongs to this setup executor"""
-        return self._scenario_executors
-
-    @property
     def fixture_manager(self) -> FixtureManager:
         """returns the current active fixture manager for this executor"""
         return self._fixture_manager
@@ -74,7 +69,7 @@ class SetupExecutor(BasicExecutor):
         print(f"SETUP {self.base_setup_class.__class__.__name__}")
 
     def _body_execution(self):
-        for cur_scenario_executor in self.scenario_executors:
+        for cur_scenario_executor in self.get_scenario_executors():
             if cur_scenario_executor.has_runnable_elements():
                 cur_scenario_executor.execute()
             elif cur_scenario_executor.prev_mark == PreviousExecutorMark.SKIP:
@@ -89,9 +84,13 @@ class SetupExecutor(BasicExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
+    def get_scenario_executors(self) -> List[ScenarioExecutor]:
+        """returns a list with all scenario executors that belongs to this setup executor"""
+        return self._scenario_executors
+
     def cleanup_empty_executor_branches(self):
         to_remove_executor = []
-        for cur_scenario_executor in self.scenario_executors:
+        for cur_scenario_executor in self.get_scenario_executors():
             cur_scenario_executor.cleanup_empty_executor_branches()
             if len(cur_scenario_executor.variation_executors) == 0:
                 # remove this whole executor because it has no children anymore

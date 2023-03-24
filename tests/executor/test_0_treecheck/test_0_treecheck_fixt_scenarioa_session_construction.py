@@ -140,7 +140,7 @@ class Test0TreecheckFixtScenarioaSessionConstruction(Base0EnvtesterClass):
             assert cur_setup_executor.body_result.result == ResultState.NOT_RUN
             assert cur_setup_executor.teardown_result.result == ResultState.NOT_RUN
 
-            for cur_scenario_executor in cur_setup_executor.scenario_executors:
+            for cur_scenario_executor in cur_setup_executor.get_scenario_executors():
                 assert cur_scenario_executor.executor_result == ResultState.NOT_RUN, \
                     "the scenario executor does not have result NOT_RUN"
 

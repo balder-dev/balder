@@ -34,7 +34,7 @@ def processed(env_dir):
     assert session.executor_tree.get_setup_executors()[0].base_setup_class.__class__.__name__ == \
            "SetupPythonAddChild", "wrong scenario class was executed"
 
-    scenario_executors = session.executor_tree.get_setup_executors()[0].scenario_executors
+    scenario_executors = session.executor_tree.get_setup_executors()[0].get_scenario_executors()
 
     assert len(scenario_executors) == 1, \
         "not exactly one scenario executor found"
