@@ -33,5 +33,5 @@ def processed(env_dir):
     assert session.executor_tree.teardown_result.result == ResultState.NOT_RUN, \
         "global executor tree teardown part does not set ResultState.NOT_RUN"
 
-    assert len(session.executor_tree.setup_executors) == 0, \
+    assert len(session.executor_tree.get_setup_executors()) == 0, \
         "there exists some setup executor - that should not be the case"

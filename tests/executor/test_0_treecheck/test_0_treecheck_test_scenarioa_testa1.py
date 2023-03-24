@@ -341,7 +341,7 @@ class Test0TreecheckTestScenarioaTesta1(Base0EnvtesterClass):
             "global executor tree body part does not set ResultState.ERROR"
         assert session.executor_tree.teardown_result.result == ResultState.SUCCESS, \
             "global executor tree teardown part does not set ResultState.SUCCESS"
-        for cur_setup_executor in session.executor_tree.setup_executors:
+        for cur_setup_executor in session.executor_tree.get_setup_executors():
             if cur_setup_executor.base_setup_class.__class__.__name__ == "SetupA":
                 assert cur_setup_executor.executor_result == ResultState.FAILURE, \
                     "the setup executor does not have result FAILURE"

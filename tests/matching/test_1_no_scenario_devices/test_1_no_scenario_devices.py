@@ -26,7 +26,7 @@ def processed(env_dir):
     assert session.executor_tree.executor_result == ResultState.SUCCESS, \
         "test session does not terminates with success"
     assert len(session.executor_tree.all_child_executors) == 1, "found not exactly one matching setup"
-    setup_executor = session.executor_tree.setup_executors[0]
+    setup_executor = session.executor_tree.get_setup_executors()[0]
     assert setup_executor.base_setup_class.__class__.__name__ == "SetupPythonAdd", "unexpected matching setup"
     assert len(setup_executor.scenario_executors) == 1, "found not exactly one matching scenario"
     scenario_executor = setup_executor.scenario_executors[0]

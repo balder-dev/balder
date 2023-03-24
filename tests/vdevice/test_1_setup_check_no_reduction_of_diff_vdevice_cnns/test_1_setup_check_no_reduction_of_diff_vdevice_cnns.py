@@ -39,13 +39,14 @@ def processed(env_dir):
 
     assert session.executor_tree.executor_result == ResultState.SUCCESS, \
         "test session does not terminates with success"
-    assert len(session.executor_tree.setup_executors) == 1, \
+    assert len(session.executor_tree.get_setup_executors()) == 1, \
         "not exactly one setup executor found"
-    assert session.executor_tree.setup_executors[0].base_setup_class.__class__.__name__ == \
+    assert session.executor_tree.get_setup_executors()[0].base_setup_class.__class__.__name__ == \
            "SetupPythonAdd", "wrong scenario class was executed"
-    assert len(session.executor_tree.setup_executors[0].scenario_executors) == 1, \
+    assert len(session.executor_tree.get_setup_executors()[0].scenario_executors) == 1, \
         "not exactly one scenario executor found"
-    assert session.executor_tree.setup_executors[0].scenario_executors[0].base_scenario_class.__class__.__name__ == \
-           "ScenarioAdding", "wrong scenario class was executed"
-    assert len(session.executor_tree.setup_executors[0].scenario_executors[0].variation_executors) == 1, \
+    assert \
+        session.executor_tree.get_setup_executors()[0].scenario_executors[0].base_scenario_class.__class__.__name__ == \
+        "ScenarioAdding", "wrong scenario class was executed"
+    assert len(session.executor_tree.get_setup_executors()[0].scenario_executors[0].variation_executors) == 1, \
         "not exactly two variation executor found"

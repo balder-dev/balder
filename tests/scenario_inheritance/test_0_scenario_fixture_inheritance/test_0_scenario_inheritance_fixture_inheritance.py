@@ -263,7 +263,7 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
             "global executor tree body part does not set ResultState.SUCCESS"
         assert session.executor_tree.teardown_result.result == ResultState.SUCCESS, \
             "global executor tree teardown part does not set ResultState.SUCCESS"
-        for cur_setup_executor in session.executor_tree.setup_executors:
+        for cur_setup_executor in session.executor_tree.get_setup_executors():
             assert cur_setup_executor.executor_result == ResultState.SUCCESS, \
                 "the setup executor does not have result SUCCESS"
 
