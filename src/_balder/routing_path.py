@@ -301,7 +301,7 @@ class RoutingPath:
                     raise RoutingBrokenChainError(
                         f"can not append gateway, because the device of the gateway (`{elem.device}`) doesn't "
                         f"match with the latest end-device (`{self.end_device}`) of this route")
-                elif self.end_node_name not in [elem.from_node_name, elem.to_node_name]:
+                if self.end_node_name not in [elem.from_node_name, elem.to_node_name]:
                     raise RoutingBrokenChainError(
                         f"can not append gateway, because neither the from-node "
                         f"(`{elem.from_node_name}`) nor the to-node (`{elem.to_node_name}`) of the gateway match with "
