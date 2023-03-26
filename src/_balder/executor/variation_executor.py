@@ -90,7 +90,7 @@ class VariationExecutor(BasicExecutor):
     @property
     def cur_setup_class(self) -> Setup:
         """property returns the current :class:`Setup` for this variation"""
-        return self._parent_executor._parent_executor.base_setup_class
+        return self._parent_executor.parent_executor.base_setup_class
 
     @property
     def base_device_mapping(self) -> Dict[Type[Device], Type[Device]]:
