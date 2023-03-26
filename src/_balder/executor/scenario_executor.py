@@ -115,7 +115,7 @@ class ScenarioExecutor(BasicExecutor):
         """
         to_remove_executor = []
         for cur_variation_executor in self.get_variation_executors():
-            if len(cur_variation_executor.testcase_executors) == 0:
+            if len(cur_variation_executor.get_testcase_executors()) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_variation_executor)
         for cur_variation_executor in to_remove_executor:

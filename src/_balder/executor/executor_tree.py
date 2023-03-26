@@ -101,7 +101,7 @@ class ExecutorTree(BasicExecutor):
         all_testcase_executor = []
         for cur_scenario_executor in self.get_all_scenario_executors():
             for cur_variation_executor in cur_scenario_executor.get_variation_executors():
-                all_testcase_executor += cur_variation_executor.testcase_executors
+                all_testcase_executor += cur_variation_executor.get_testcase_executors()
         return all_testcase_executor
 
     def add_setup_executor(self, setup_executor: SetupExecutor):
@@ -184,5 +184,5 @@ class ExecutorTree(BasicExecutor):
                     max_len = max(len(cur_elem) for cur_elem in mapping_printings.keys())
                     for cur_key, cur_val in mapping_printings.items():
                         print(("{:<" + str(max_len) + "} = {}").format(cur_key, cur_val))
-                    for cur_testcase_excutor in cur_variation_executor.testcase_executors:
+                    for cur_testcase_excutor in cur_variation_executor.get_testcase_executors():
                         print(f"   -> Testcase<{cur_testcase_excutor.base_testcase_callable.__qualname__}>")

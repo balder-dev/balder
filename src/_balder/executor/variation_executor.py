@@ -102,11 +102,6 @@ class VariationExecutor(BasicExecutor):
 
     @property
     def all_child_executors(self) -> List[TestcaseExecutor]:
-        return self.testcase_executors
-
-    @property
-    def testcase_executors(self) -> List[TestcaseExecutor]:
-        """returns all sub testcase executors that belongs to this variation-executor"""
         return self._testcase_executors
 
     @property
@@ -147,7 +142,7 @@ class VariationExecutor(BasicExecutor):
         self.set_conn_dependent_methods()
 
     def _body_execution(self):
-        for cur_testcase_executor in self.testcase_executors:
+        for cur_testcase_executor in self.get_testcase_executors():
             if cur_testcase_executor.has_runnable_elements():
 
                 cur_testcase_executor.execute()
@@ -265,6 +260,10 @@ class VariationExecutor(BasicExecutor):
                     f'between scenario devices `{scenario_cnn.from_device}` and `{scenario_cnn.to_device}`')
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def get_testcase_executors(self) -> List[TestcaseExecutor]:
+        """returns all sub testcase executors that belongs to this variation-executor"""
+        return self._testcase_executors
 
     def add_testcase_executor(self, testcase_executor: TestcaseExecutor):
         """
