@@ -117,13 +117,14 @@ class FeatureController(Controller):
         if self.get_method_based_for_vdevice() is not None:
             for _, method_dict in self.get_method_based_for_vdevice().items():
                 for _, vdevice_dict in method_dict.items():
-                    if for_vdevice in vdevice_dict.keys():
-                        for cur_cnn in vdevice_dict[for_vdevice]:
-                            if isinstance(cur_cnn, type):
-                                cur_cnn = cur_cnn()
-                            # clean metadata here because this is no connection between real devices
-                            cur_cnn.set_metadata_for_all_subitems(None)
-                            intersection.append(cur_cnn)
+                    if for_vdevice not in vdevice_dict.keys():
+                        continue
+                    for cur_cnn in vdevice_dict[for_vdevice]:
+                        if isinstance(cur_cnn, type):
+                            cur_cnn = cur_cnn()
+                        # clean metadata here because this is no connection between real devices
+                        cur_cnn.set_metadata_for_all_subitems(None)
+                        intersection.append(cur_cnn)
         if len(intersection) == 0:
             return [Connection()]
         return intersection
