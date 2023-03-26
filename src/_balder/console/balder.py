@@ -15,6 +15,7 @@ def console_balder(cmd_args: Optional[List[str]] = None, working_dir: Union[str,
     _console_balder_debug(cmd_args=cmd_args, working_dir=working_dir)
 
 
+# pylint: disable-next=too-many-arguments
 def _console_balder_debug(cmd_args: Optional[List[str]] = None, working_dir: Union[str, pathlib.Path, None] = None,
                           cb_session_created: Optional[Callable] = None, cb_run_finished: Optional[Callable] = None,
                           cb_balder_exc: Optional[Callable] = None, cb_unexpected_exc: Optional[Callable] = None):
