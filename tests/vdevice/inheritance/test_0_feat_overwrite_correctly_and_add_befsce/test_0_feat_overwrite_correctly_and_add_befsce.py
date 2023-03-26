@@ -192,7 +192,7 @@ class Test0FeatOverwriteCorrectlyAndAddBefsce(Base0EnvtesterClass):
                 assert cur_scenario_executor.body_result.result == ResultState.SUCCESS
                 assert cur_scenario_executor.teardown_result.result == ResultState.SUCCESS
 
-                for cur_variation_executor in cur_scenario_executor.variation_executors:
+                for cur_variation_executor in cur_scenario_executor.get_variation_executors():
                     assert cur_variation_executor.executor_result == ResultState.SUCCESS, \
                         "the variation executor does not have result SUCCESS"
 

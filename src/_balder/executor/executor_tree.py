@@ -91,7 +91,7 @@ class ExecutorTree(BasicExecutor):
         """
         all_variation_executor = []
         for cur_scenario_executor in self.get_all_scenario_executors():
-            all_variation_executor += cur_scenario_executor.variation_executors
+            all_variation_executor += cur_scenario_executor.get_variation_executors()
         return all_variation_executor
 
     def get_all_testcase_executors(self) -> List[TestcaseExecutor]:
@@ -100,7 +100,7 @@ class ExecutorTree(BasicExecutor):
         """
         all_testcase_executor = []
         for cur_scenario_executor in self.get_all_scenario_executors():
-            for cur_variation_executor in cur_scenario_executor.variation_executors:
+            for cur_variation_executor in cur_scenario_executor.get_variation_executors():
                 all_testcase_executor += cur_variation_executor.testcase_executors
         return all_testcase_executor
 
@@ -175,7 +175,7 @@ class ExecutorTree(BasicExecutor):
         print("RESOLVING OVERVIEW", end="\n\n")
         for cur_setup_executor in self.get_setup_executors():
             for cur_scenario_executor in cur_setup_executor.get_scenario_executors():
-                for cur_variation_executor in cur_scenario_executor.variation_executors:
+                for cur_variation_executor in cur_scenario_executor.get_variation_executors():
                     print(f"Scenario `{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
                           f"Setup `{cur_setup_executor.base_setup_class.__class__.__qualname__}`")
                     mapping_printings = {}

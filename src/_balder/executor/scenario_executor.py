@@ -46,7 +46,7 @@ class ScenarioExecutor(BasicExecutor):
 
     @property
     def all_child_executors(self) -> List[VariationExecutor]:
-        return self.variation_executors
+        return self._variation_executors
 
     @property
     def parent_executor(self) -> SetupExecutor:
@@ -63,11 +63,6 @@ class ScenarioExecutor(BasicExecutor):
     def base_scenario_class(self) -> Scenario:
         """returns the :class:`Scenario` class that belongs to this executor"""
         return self._base_scenario_class
-
-    @property
-    def variation_executors(self) -> List[VariationExecutor]:
-        """returns all variation executors that are child executor of this scenario executor"""
-        return self._variation_executors
 
     @property
     def fixture_manager(self) -> FixtureManager:
@@ -95,7 +90,7 @@ class ScenarioExecutor(BasicExecutor):
         print(f"  SCENARIO {self.base_scenario_class.__class__.__name__}")
 
     def _body_execution(self):
-        for cur_variation_executor in self.variation_executors:
+        for cur_variation_executor in self.get_variation_executors():
             if cur_variation_executor.has_runnable_elements():
                 cur_variation_executor.execute()
             elif cur_variation_executor.prev_mark == PreviousExecutorMark.SKIP:
@@ -110,12 +105,16 @@ class ScenarioExecutor(BasicExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
+    def get_variation_executors(self) -> List[VariationExecutor]:
+        """returns all variation executors that are child executor of this scenario executor"""
+        return self._variation_executors
+
     def cleanup_empty_executor_branches(self):
         """
         This method removes all sub executors that are empty and not relevant anymore.
         """
         to_remove_executor = []
-        for cur_variation_executor in self.variation_executors:
+        for cur_variation_executor in self.get_variation_executors():
             if len(cur_variation_executor.testcase_executors) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_variation_executor)

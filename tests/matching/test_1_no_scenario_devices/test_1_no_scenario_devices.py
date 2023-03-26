@@ -31,4 +31,4 @@ def processed(env_dir):
     assert len(setup_executor.get_scenario_executors()) == 1, "found not exactly one matching scenario"
     scenario_executor = setup_executor.get_scenario_executors()[0]
     assert scenario_executor.base_scenario_class.__class__.__name__ == "ScenarioAdding", "unexpected matching scenario"
-    assert len(scenario_executor.variation_executors) == 1, "found not exactly one matching scenario"
+    assert len(scenario_executor.get_variation_executors()) == 1, "found not exactly one matching scenario"
