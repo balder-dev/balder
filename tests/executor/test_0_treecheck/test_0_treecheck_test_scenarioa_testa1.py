@@ -366,7 +366,7 @@ class Test0TreecheckTestScenarioaTesta1(Base0EnvtesterClass):
                         assert cur_variation_executor.body_result.result == ResultState.FAILURE
                         assert cur_variation_executor.teardown_result.result == ResultState.SUCCESS
 
-                        for cur_testcase_executor in cur_variation_executor.testcase_executors:
+                        for cur_testcase_executor in cur_variation_executor.get_testcase_executors():
                             if cur_testcase_executor.base_testcase_callable.__name__ == "test_a_1":
                                 assert cur_testcase_executor.executor_result == ResultState.FAILURE, \
                                     "the testcase executor does not have result FAILURE"
@@ -405,7 +405,7 @@ class Test0TreecheckTestScenarioaTesta1(Base0EnvtesterClass):
                         assert cur_variation_executor.body_result.result == ResultState.SUCCESS
                         assert cur_variation_executor.teardown_result.result == ResultState.SUCCESS
 
-                        for cur_testcase_executor in cur_variation_executor.testcase_executors:
+                        for cur_testcase_executor in cur_variation_executor.get_testcase_executors():
                             assert cur_testcase_executor.executor_result == ResultState.SUCCESS, \
                                 "the testcase executor does not have result SUCCESS"
 

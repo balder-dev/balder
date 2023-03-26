@@ -367,7 +367,7 @@ class Test0TreecheckFixtSetupaVariationTeardown(Base0EnvtesterClass):
                         assert cur_variation_executor.body_result.result == ResultState.SUCCESS
                         assert cur_variation_executor.teardown_result.result == ResultState.ERROR
 
-                        for cur_testcase_executor in cur_variation_executor.testcase_executors:
+                        for cur_testcase_executor in cur_variation_executor.get_testcase_executors():
                             assert cur_testcase_executor.executor_result == ResultState.SUCCESS, \
                                 "the testcase executor does not have result NOT_RUN"
 
@@ -398,7 +398,7 @@ class Test0TreecheckFixtSetupaVariationTeardown(Base0EnvtesterClass):
                         assert cur_variation_executor.body_result.result == ResultState.SUCCESS
                         assert cur_variation_executor.teardown_result.result == ResultState.SUCCESS
 
-                        for cur_testcase_executor in cur_variation_executor.testcase_executors:
+                        for cur_testcase_executor in cur_variation_executor.get_testcase_executors():
                             assert cur_testcase_executor.executor_result == ResultState.SUCCESS, \
                                 "the testcase executor does not have result SUCCESS"
 
