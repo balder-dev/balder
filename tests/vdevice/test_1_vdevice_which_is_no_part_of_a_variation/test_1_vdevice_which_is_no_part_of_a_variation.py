@@ -35,8 +35,8 @@ def processed(env_dir):
 
     scenario_executors = session.executor_tree.get_setup_executors()[0].get_scenario_executors()
     assert len(scenario_executors) == 1
-    assert len(scenario_executors[0].variation_executors) == 2
-    for cur_variation_executor in scenario_executors[0].variation_executors:
+    assert len(scenario_executors[0].get_variation_executors()) == 2
+    for cur_variation_executor in scenario_executors[0].get_variation_executors():
         all_setup_devices = [cur_device.__name__ for cur_device in cur_variation_executor.base_device_mapping.values()]
         assert "Calculator1" in all_setup_devices, \
             "can not find the expected `Calculator` setup device in mapped-devices"

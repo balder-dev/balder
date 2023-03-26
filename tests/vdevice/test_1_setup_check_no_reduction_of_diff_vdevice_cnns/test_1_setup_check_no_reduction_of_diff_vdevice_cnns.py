@@ -49,4 +49,4 @@ def processed(env_dir):
         "not exactly one scenario executor found"
     assert scenario_executors[0].base_scenario_class.__class__.__name__ == "ScenarioAdding", \
         "wrong scenario class was executed"
-    assert len(scenario_executors[0].variation_executors) == 1, "not exactly two variation executor found"
+    assert len(scenario_executors[0].get_variation_executors()) == 1, "not exactly two variation executor found"

@@ -92,7 +92,7 @@ class SetupExecutor(BasicExecutor):
         to_remove_executor = []
         for cur_scenario_executor in self.get_scenario_executors():
             cur_scenario_executor.cleanup_empty_executor_branches()
-            if len(cur_scenario_executor.variation_executors) == 0:
+            if len(cur_scenario_executor.get_variation_executors()) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_scenario_executor)
         for cur_scenario_executor in to_remove_executor:
