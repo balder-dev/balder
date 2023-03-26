@@ -326,7 +326,8 @@ class VariationExecutor(BasicExecutor):
                     # now check if there is a mapping on setup level too
                     for cur_replacing_feature in replacing_features:
                         mapped_setup_vdevice, mapped_setup_device = cur_replacing_feature.active_vdevice_device_mapping
-                        if mapped_setup_vdevice is not None and not issubclass(mapped_setup_vdevice, used_scenario_vdevice):
+                        if mapped_setup_vdevice is not None and \
+                                not issubclass(mapped_setup_vdevice, used_scenario_vdevice):
                             # drop this feature matching, because we have different vdevice mapped
                             cleanup_replacing_features.remove(cur_replacing_feature)
                         elif mapped_setup_device is not None and \
