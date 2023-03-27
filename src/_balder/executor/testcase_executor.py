@@ -114,9 +114,6 @@ class TestcaseExecutor(BasicExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def has_runnable_tests(self) -> bool:
-        return self.prev_mark == PreviousExecutorMark.RUNNABLE
-
     def should_run(self):
         """returns true if the testcase should be executed (defined in scenario)"""
         if self.base_testcase_callable in self.parent_executor.parent_executor.all_run_tests:
