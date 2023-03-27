@@ -327,7 +327,10 @@ class BalderSession:
         if not self.collect_only:
             self.solve()
             self.create_executor_tree()
-            print(f"  resolve them to {len(self.executor_tree.get_all_variation_executors())} mapping candidates")
+            count_valid = len(self.executor_tree.get_all_variation_executors())
+            count_discarded = len(self.executor_tree.get_all_variation_executors(return_discarded=True)) - count_valid
+            addon_text = f" ({count_discarded} discarded)" if self.show_discarded else ""
+            print(f"  resolve them to {count_valid} valid variations{addon_text}")
             print("")
             if not self.resolve_only:
                 self.executor_tree.execute(show_discarded=self.show_discarded)
