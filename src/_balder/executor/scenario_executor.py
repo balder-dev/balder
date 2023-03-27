@@ -91,7 +91,7 @@ class ScenarioExecutor(BasicExecutor):
 
     def _body_execution(self):
         for cur_variation_executor in self.get_variation_executors():
-            if cur_variation_executor.has_runnable_elements():
+            if cur_variation_executor.has_runnable_tests():
                 cur_variation_executor.execute()
             elif cur_variation_executor.prev_mark == PreviousExecutorMark.SKIP:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.SKIP)

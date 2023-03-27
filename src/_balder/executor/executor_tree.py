@@ -58,7 +58,7 @@ class ExecutorTree(BasicExecutor):
 
     def _body_execution(self):
         for cur_setup_executor in self.get_setup_executors():
-            if cur_setup_executor.has_runnable_elements():
+            if cur_setup_executor.has_runnable_tests():
                 cur_setup_executor.execute()
             elif cur_setup_executor.prev_mark == PreviousExecutorMark.SKIP:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.SKIP)
@@ -153,7 +153,7 @@ class ExecutorTree(BasicExecutor):
 
         print_line(start_text)
         # check if there exists runnable elements
-        runnables = [cur_exec.has_runnable_elements() for cur_exec in self.get_setup_executors()]
+        runnables = [cur_exec.has_runnable_tests() for cur_exec in self.get_setup_executors()]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
         if one_or_more_runnable_setups:
             super().execute()

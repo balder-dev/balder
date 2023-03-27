@@ -114,7 +114,7 @@ class TestcaseExecutor(BasicExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def has_runnable_elements(self) -> bool:
+    def has_runnable_tests(self) -> bool:
         return self.prev_mark == PreviousExecutorMark.RUNNABLE
 
     def should_run(self):

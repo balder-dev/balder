@@ -70,7 +70,7 @@ class SetupExecutor(BasicExecutor):
 
     def _body_execution(self):
         for cur_scenario_executor in self.get_scenario_executors():
-            if cur_scenario_executor.has_runnable_elements():
+            if cur_scenario_executor.has_runnable_tests():
                 cur_scenario_executor.execute()
             elif cur_scenario_executor.prev_mark == PreviousExecutorMark.SKIP:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.SKIP)

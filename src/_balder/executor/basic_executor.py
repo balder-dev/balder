@@ -137,7 +137,7 @@ class BasicExecutor(ABC):
             if isinstance(cur_child_executor.body_result, TestcaseResult):
                 cur_child_executor.body_result.set_result(result=value, exception=None)
 
-    def has_runnable_elements(self) -> bool:
+    def has_runnable_tests(self) -> bool:
         """
         This method returns true if this executor element is runnable. The method returns true if this element has
         `prev_mark=RUNNABLE` and minimum one of its children has `prev_mark=RUNNABLE` too.
@@ -145,7 +145,7 @@ class BasicExecutor(ABC):
         if self.prev_mark != PreviousExecutorMark.RUNNABLE:
             return False
         for cur_child in self.all_child_executors:
-            if cur_child.has_runnable_elements():
+            if cur_child.has_runnable_tests():
                 return True
         return False
 
@@ -165,7 +165,7 @@ class BasicExecutor(ABC):
         # only go through cur_executor == ExecutorTree (do not iterate with this object)
         while cur_executor.parent_executor is not None:
             if isinstance(cur_executor.base_instance, with_type):
-                if not only_runnable_elements or cur_executor.has_runnable_elements():
+                if not only_runnable_elements or cur_executor.has_runnable_tests():
                     return [cur_executor.base_instance]
             cur_executor = cur_executor.parent_executor
 
