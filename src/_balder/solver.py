@@ -198,21 +198,19 @@ class Solver:
             if variation_executor is None:
                 # variation is not available -> create new VariationExecutor
                 variation_executor = VariationExecutor(device_mapping=cur_device_mapping, parent=scenario_executor)
+                variation_executor.verify_applicability()
 
-                # only add if the features for this device mapping matches
-                if variation_executor.can_be_applied():
-                    scenario_executor.add_variation_executor(variation_executor)
+                scenario_executor.add_variation_executor(variation_executor)
+                for cur_testcase in ScenarioController.get_for(cur_scenario).get_all_test_methods():
+                    cur_testcase_executor = TestcaseExecutor(cur_testcase, parent=variation_executor)
+                    variation_executor.add_testcase_executor(cur_testcase_executor)
 
-                    for cur_testcase in ScenarioController.get_for(cur_scenario).get_all_test_methods():
-                        cur_testcase_executor = TestcaseExecutor(cur_testcase, parent=variation_executor)
-                        variation_executor.add_testcase_executor(cur_testcase_executor)
-
-                        # determine prev_mark IGNORE/SKIP for the testcase
-                        if cur_testcase_executor.should_be_skipped():
-                            cur_testcase_executor.prev_mark = PreviousExecutorMark.SKIP
-                        # always overwrite if it should be ignored
-                        if cur_testcase_executor.should_be_ignored():
-                            cur_testcase_executor.prev_mark = PreviousExecutorMark.IGNORE
+                    # determine prev_mark IGNORE/SKIP for the testcase
+                    if cur_testcase_executor.should_be_skipped():
+                        cur_testcase_executor.prev_mark = PreviousExecutorMark.SKIP
+                    # always overwrite if it should be ignored
+                    if cur_testcase_executor.should_be_ignored():
+                        cur_testcase_executor.prev_mark = PreviousExecutorMark.IGNORE
 
         # now filter all elements that have no child elements
         #   -> these are items that have no valid matching, because no variation can be applied for it (there are no

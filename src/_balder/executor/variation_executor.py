@@ -62,6 +62,12 @@ class VariationExecutor(BasicExecutor):
         self._original_active_vdevice_mappings: \
             Dict[Type[Device], Dict[Feature, Dict[Type[VDevice], Type[Device]]]] = {}
 
+        # is True if the applicability check was done
+        self._applicability_check_done = False
+        #: this property holds the exception of type :class:`NotApplicableVariationException` if the variation can not
+        #:  be applied, otherwise this property is None
+        self._not_applicable_variation_exc = None
+
         # contains the result object for the BODY part of this branch
         self.body_result = BranchBodyResult(self)
 
@@ -125,6 +131,10 @@ class VariationExecutor(BasicExecutor):
         """returns the feature replacement that was determined with
         `determine_feature_replacement_and_vdevice_mappings()`"""
         return self._abs_setup_feature_vdevice_mappings
+
+    @property
+    def not_applicable_variation_exc(self) -> Union[NotApplicableVariationException, None]:
+        return self._not_applicable_variation_exc
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
@@ -637,13 +647,14 @@ class VariationExecutor(BasicExecutor):
                         # object
                         setattr(cur_vdevice, cur_vdevice_attr_name, replacing_candidate)
 
-    def can_be_applied(self) -> bool:
+    def verify_applicability(self) -> None:
         """
-        This method returns True if this Variation is executable. First the method checks if all defined
+        This method verifies if this variation is executable. First the method checks if all defined
         :class:`Feature` instances are available and fully implemented in the mapped setup :class:`Device`.
         Furthermore, it checks if their exists a valid routing which also matches the defined class `@for_vdevice`
         definition of the used :class:`Feature` classes.
         """
+        self._applicability_check_done = True
         try:
             self.determine_feature_replacement_and_vdevice_mappings()
 
@@ -652,11 +663,19 @@ class VariationExecutor(BasicExecutor):
             self._verify_applicability_trough_vdevice_feature_impl_matching()
 
             self._verify_applicability_trough_all_valid_routings()
-        except NotApplicableVariationException:
+        except NotApplicableVariationException as not_applicable_variation_exc:
             # this variation can not be used, because the features can not be resolved correctly!
-            return False
+            self._not_applicable_variation_exc = not_applicable_variation_exc
+            self.prev_mark = PreviousExecutorMark.DISCARDED
 
-        return True
+    def can_be_applied(self) -> bool:
+        """
+        :return: returns True if the previous verify_applicability check was successfully
+        """
+        if self._applicability_check_done is not True:
+            raise RuntimeError('this method can not be used before no check was executed')
+
+        return self._not_applicable_variation_exc is None
 
     def determine_absolute_scenario_device_connections(self):
         """
