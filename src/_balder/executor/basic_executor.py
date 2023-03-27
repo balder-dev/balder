@@ -87,21 +87,21 @@ class BasicExecutor(ABC):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     @abstractmethod
-    def _prepare_execution(self):
+    def _prepare_execution(self, show_discarded):
         """
         This method runs before the branch will be executed and before the fixture construction code of this branch
         runs.
         """
 
     @abstractmethod
-    def _body_execution(self):
+    def _body_execution(self, show_discarded):
         """
         This method runs between the fixture construction and teardown code. It should trigger the execution of the
         child branches.
         """
 
     @abstractmethod
-    def _cleanup_execution(self):
+    def _cleanup_execution(self, show_discarded):
         """
         This method runs after the branch was executed (also after the fixture teardown code ran)
         """
@@ -233,32 +233,34 @@ class BasicExecutor(ABC):
                         summary[cur_key] = cur_child_dict[cur_key]
         return summary
 
-    def execute(self):
+    def execute(self, show_discarded=False):
         """
         Executes the whole branch
         """
         start_time = time.perf_counter()
-        self._prepare_execution()
+        self._prepare_execution(show_discarded=show_discarded)
 
         try:
             try:
-                self.fixture_manager.enter(self)
-                self.construct_result.set_result(ResultState.SUCCESS)
+                if self.has_runnable_tests():
+                    self.fixture_manager.enter(self)
+                    self.construct_result.set_result(ResultState.SUCCESS)
 
-                self._body_execution()
+                self._body_execution(show_discarded=show_discarded)
             except Exception as exc:
                 # this has to be a construction fixture error
                 traceback.print_exception(*sys.exc_info())
                 self.construct_result.set_result(ResultState.ERROR, exc)
             finally:
-                if self.fixture_manager.is_allowed_to_leave(self):
-                    self.fixture_manager.leave(self)
-                    self.teardown_result.set_result(ResultState.SUCCESS)
+                if self.has_runnable_tests():
+                    if self.fixture_manager.is_allowed_to_leave(self):
+                        self.fixture_manager.leave(self)
+                        self.teardown_result.set_result(ResultState.SUCCESS)
         except Exception as exc:
             # this has to be a teardown fixture error
             traceback.print_exception(*sys.exc_info())
             self.teardown_result.set_result(ResultState.ERROR, exc)
 
-        self._cleanup_execution()
+        self._cleanup_execution(show_discarded=show_discarded)
 
         self.execution_time_sec = time.perf_counter() - start_time

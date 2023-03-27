@@ -76,7 +76,7 @@ class TestcaseExecutor(BasicExecutor):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def _prepare_execution(self):
+    def _prepare_execution(self, show_discarded):
         print(f"      TEST {self.base_testcase_callable.__qualname__} ", end='')
         if self.should_be_skipped():
             self.body_result.set_result(ResultState.SKIP)
@@ -84,7 +84,7 @@ class TestcaseExecutor(BasicExecutor):
             print("[S]")
             return
 
-    def _body_execution(self):
+    def _body_execution(self, show_discarded):
         start_time = time.perf_counter()
         try:
             _, func_type = inspect_method(self.base_testcase_callable)
@@ -109,7 +109,7 @@ class TestcaseExecutor(BasicExecutor):
             self.body_result.set_result(ResultState.FAILURE, exc)
         self.test_execution_time_sec = time.perf_counter() - start_time
 
-    def _cleanup_execution(self):
+    def _cleanup_execution(self, show_discarded):
         print(f"[{self.body_result.get_result_as_char()}]")
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------

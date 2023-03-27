@@ -18,6 +18,7 @@ class ExecutorTree(BasicExecutor):
     """
     This class is the root object of the executor tree structure
     """
+    LINE_LENGTH = 120
 
     def __init__(self, fixture_manager: FixtureManager):
         super().__init__()
@@ -53,13 +54,13 @@ class ExecutorTree(BasicExecutor):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def _prepare_execution(self):
+    def _prepare_execution(self, show_discarded):
         pass
 
-    def _body_execution(self):
+    def _body_execution(self, show_discarded):
         for cur_setup_executor in self.get_setup_executors():
-            if cur_setup_executor.has_runnable_tests():
-                cur_setup_executor.execute()
+            if cur_setup_executor.has_runnable_tests(consider_discarded_too=show_discarded):
+                cur_setup_executor.execute(show_discarded=show_discarded)
             elif cur_setup_executor.prev_mark == PreviousExecutorMark.SKIP:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.SKIP)
             elif cur_setup_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
@@ -67,7 +68,7 @@ class ExecutorTree(BasicExecutor):
             else:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
 
-    def _cleanup_execution(self):
+    def _cleanup_execution(self, show_discarded):
         pass
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
@@ -138,25 +139,25 @@ class ExecutorTree(BasicExecutor):
         for cur_setup_executor in to_remove_executor:
             self._setup_executors.remove(cur_setup_executor)
 
-    def execute(self) -> None:
+    def execute(self, show_discarded=False) -> None:
         """
         This method executes this branch of the tree
         """
         start_text = "START TESTSESSION"
         end_text = "FINISH TESTSESSION"
-        line_length = 120
 
         def print_line(text):
-            full_text = int((line_length - (len(start_text) + 2)) / 2) * "=" + " " + text + " "
-            full_text += "=" * (line_length - len(full_text))
+            full_text = int((self.LINE_LENGTH - (len(start_text) + 2)) / 2) * "=" + " " + text + " "
+            full_text += "=" * (self.LINE_LENGTH - len(full_text))
             print(full_text)
 
         print_line(start_text)
         # check if there exists runnable elements
-        runnables = [cur_exec.has_runnable_tests() for cur_exec in self.get_setup_executors()]
+        runnables = [cur_exec.has_runnable_tests(consider_discarded_too=show_discarded)
+                     for cur_exec in self.get_setup_executors()]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
         if one_or_more_runnable_setups:
-            super().execute()
+            super().execute(show_discarded=show_discarded)
         else:
             print("NO EXECUTABLE SETUPS/SCENARIOS FOUND")
         print_line(end_text)
@@ -170,19 +171,31 @@ class ExecutorTree(BasicExecutor):
             print(f"TOTAL {cur_key.value}: {cur_val}", end="")
         print("")
 
-    def print_tree(self) -> None:
+    def print_tree(self, show_discarded=False) -> None:
         """this method is an auxiliary method which outputs the entire tree"""
         print("RESOLVING OVERVIEW", end="\n\n")
         for cur_setup_executor in self.get_setup_executors():
             for cur_scenario_executor in cur_setup_executor.get_scenario_executors():
-                for cur_variation_executor in cur_scenario_executor.get_variation_executors():
-                    print(f"Scenario `{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
+                for cur_variation_executor in cur_scenario_executor.get_variation_executors(
+                        return_discarded=show_discarded):
+                    applicable = cur_variation_executor.prev_mark != PreviousExecutorMark.DISCARDED
+                    start_char = '+' if applicable else 'X'
+                    print(start_char * self.LINE_LENGTH)
+                    applicability_str = "[APPLICABLE]" if applicable else "[DISCARDED] "
+                    print(f"{start_char} {applicability_str} Scenario "
+                          f"`{cur_scenario_executor.base_scenario_class.__class__.__qualname__}` <-> "
                           f"Setup `{cur_setup_executor.base_setup_class.__class__.__qualname__}`")
                     mapping_printings = {}
                     for cur_scenario_device, cur_setup_device in cur_variation_executor.base_device_mapping.items():
                         mapping_printings[f"   {cur_scenario_device.__qualname__}"] = str(cur_setup_device.__qualname__)
                     max_len = max(len(cur_elem) for cur_elem in mapping_printings.keys())
                     for cur_key, cur_val in mapping_printings.items():
-                        print(("{:<" + str(max_len) + "} = {}").format(cur_key, cur_val))
+                        print(("{} {:<" + str(max_len) + "} = {}").format(start_char, cur_key, cur_val))
                     for cur_testcase_excutor in cur_variation_executor.get_testcase_executors():
-                        print(f"   -> Testcase<{cur_testcase_excutor.base_testcase_callable.__qualname__}>")
+                        print(f"{start_char}    -> Testcase<{cur_testcase_excutor.base_testcase_callable.__qualname__}>")
+                    if cur_variation_executor.prev_mark == PreviousExecutorMark.DISCARDED:
+                        print(f"{start_char}")
+                        print(f"{start_char}    DISCARDED BECAUSE "
+                              f"`{cur_variation_executor.not_applicable_variation_exc.args[0]}`")
+                    print(('+' if applicable else 'X') * self.LINE_LENGTH)
+                    print('')

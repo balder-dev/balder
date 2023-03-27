@@ -330,8 +330,8 @@ class BalderSession:
             print(f"  resolve them to {len(self.executor_tree.get_all_variation_executors())} mapping candidates")
             print("")
             if not self.resolve_only:
-                self.executor_tree.execute()
+                self.executor_tree.execute(show_discarded=self.show_discarded)
             else:
-                self.executor_tree.print_tree()
+                self.executor_tree.print_tree(show_discarded=self.show_discarded)
 
         self.plugin_manager.execute_session_finished(self.executor_tree)

@@ -65,13 +65,13 @@ class SetupExecutor(BasicExecutor):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def _prepare_execution(self):
+    def _prepare_execution(self, show_discarded):
         print(f"SETUP {self.base_setup_class.__class__.__name__}")
 
-    def _body_execution(self):
+    def _body_execution(self, show_discarded):
         for cur_scenario_executor in self.get_scenario_executors():
-            if cur_scenario_executor.has_runnable_tests():
-                cur_scenario_executor.execute()
+            if cur_scenario_executor.has_runnable_tests(consider_discarded_too=show_discarded):
+                cur_scenario_executor.execute(show_discarded=show_discarded)
             elif cur_scenario_executor.prev_mark == PreviousExecutorMark.SKIP:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.SKIP)
             elif cur_scenario_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
@@ -79,7 +79,7 @@ class SetupExecutor(BasicExecutor):
             else:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
 
-    def _cleanup_execution(self):
+    def _cleanup_execution(self, show_discarded):
         pass
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------

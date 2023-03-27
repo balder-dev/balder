@@ -86,13 +86,13 @@ class ScenarioExecutor(BasicExecutor):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def _prepare_execution(self):
+    def _prepare_execution(self, show_discarded):
         print(f"  SCENARIO {self.base_scenario_class.__class__.__name__}")
 
-    def _body_execution(self):
-        for cur_variation_executor in self.get_variation_executors():
-            if cur_variation_executor.has_runnable_tests():
-                cur_variation_executor.execute()
+    def _body_execution(self, show_discarded):
+        for cur_variation_executor in self.get_variation_executors(return_discarded=show_discarded):
+            if cur_variation_executor.has_runnable_tests(show_discarded):
+                cur_variation_executor.execute(show_discarded=show_discarded)
             elif cur_variation_executor.prev_mark == PreviousExecutorMark.SKIP:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.SKIP)
             elif cur_variation_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
@@ -100,13 +100,20 @@ class ScenarioExecutor(BasicExecutor):
             else:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
 
-    def _cleanup_execution(self):
+    def _cleanup_execution(self, show_discarded):
         pass
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_variation_executors(self) -> List[VariationExecutor]:
-        """returns all variation executors that are child executor of this scenario executor"""
+    def get_variation_executors(self, return_discarded=False) -> List[VariationExecutor]:
+        """
+        :param return_discarded: True if the method should return discarded variations too
+
+        :return: returns all variation executors that are child executor of this scenario executor
+        """
+        if not return_discarded:
+            return [cur_executor for cur_executor in self._variation_executors
+                    if cur_executor.prev_mark != PreviousExecutorMark.DISCARDED]
         return self._variation_executors
 
     def cleanup_empty_executor_branches(self):

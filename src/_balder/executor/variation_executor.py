@@ -138,20 +138,27 @@ class VariationExecutor(BasicExecutor):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def _prepare_execution(self):
+    def _prepare_execution(self, show_discarded):
         print("    VARIATION ", end='')
         device_map_str = [f"{scenario_device.__qualname__}:{setup_device.__qualname__}"
                           for scenario_device, setup_device in self._base_device_mapping.items()]
         print(' | '.join(device_map_str))
-        self.determine_abs_variation_connections()
-        self.update_scenario_device_feature_instances()
-        self.update_active_vdevice_device_mappings_in_all_features()
-        self.update_inner_referenced_feature_instances()
-        self.exchange_unmapped_vdevice_references()
-        self.update_vdevice_referenced_feature_instances()
-        self.set_conn_dependent_methods()
+        if show_discarded and not self.can_be_applied():
+            print(f"      DISCARDED BECAUSE `{self.not_applicable_variation_exc.args[0]}`")
+        else:
+            self.determine_abs_variation_connections()
+            self.update_scenario_device_feature_instances()
+            self.update_active_vdevice_device_mappings_in_all_features()
+            self.update_inner_referenced_feature_instances()
+            self.exchange_unmapped_vdevice_references()
+            self.update_vdevice_referenced_feature_instances()
+            self.set_conn_dependent_methods()
 
-    def _body_execution(self):
+    def _body_execution(self, show_discarded):
+        if show_discarded and not self.can_be_applied():
+            # do nothing if this variation can not be applied (is discarded)
+            return
+
         for cur_testcase_executor in self.get_testcase_executors():
             if cur_testcase_executor.has_runnable_tests():
 
@@ -163,7 +170,11 @@ class VariationExecutor(BasicExecutor):
             else:
                 cur_testcase_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
 
-    def _cleanup_execution(self):
+    def _cleanup_execution(self, show_discarded):
+        if show_discarded and not self.can_be_applied():
+            # do nothing if this variation can not be applied (is discarded)
+            return
+
         self.restore_original_vdevice_references()
         self.revert_active_vdevice_device_mappings_in_all_features()
         self.revert_scenario_device_feature_instances()
@@ -270,6 +281,18 @@ class VariationExecutor(BasicExecutor):
                     f'between scenario devices `{scenario_cnn.from_device}` and `{scenario_cnn.to_device}`')
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def testsummary(self):
+        if self.can_be_applied():
+            return super().testsummary()
+        return {
+            ResultState.NOT_RUN: 0,
+            ResultState.FAILURE: 0,
+            ResultState.ERROR: 0,
+            ResultState.SUCCESS: 0,
+            ResultState.SKIP: 0,
+            ResultState.COVERED_BY: 0
+        }
 
     def get_testcase_executors(self) -> List[TestcaseExecutor]:
         """returns all sub testcase executors that belongs to this variation-executor"""
