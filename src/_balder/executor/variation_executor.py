@@ -143,7 +143,7 @@ class VariationExecutor(BasicExecutor):
 
     def _body_execution(self):
         for cur_testcase_executor in self.get_testcase_executors():
-            if cur_testcase_executor.has_runnable_elements():
+            if cur_testcase_executor.has_runnable_tests():
 
                 cur_testcase_executor.execute()
             elif cur_testcase_executor.prev_mark == PreviousExecutorMark.SKIP:
