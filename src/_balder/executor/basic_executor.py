@@ -137,17 +137,29 @@ class BasicExecutor(ABC):
             if isinstance(cur_child_executor.body_result, TestcaseResult):
                 cur_child_executor.body_result.set_result(result=value, exception=None)
 
-    def has_runnable_tests(self) -> bool:
+    def has_runnable_tests(self, consider_discarded_too=False) -> bool:
         """
         This method returns true if this executor element is runnable. The method returns true if this element has
         `prev_mark=RUNNABLE` and minimum one of its children has `prev_mark=RUNNABLE` too.
+
+        :param consider_discarded_too: True if the method allows DISCARDED elements too
         """
-        if self.prev_mark != PreviousExecutorMark.RUNNABLE:
+        allowed_prev_marks = [PreviousExecutorMark.RUNNABLE]
+
+        if consider_discarded_too:
+            allowed_prev_marks.append(PreviousExecutorMark.DISCARDED)
+
+        if self.prev_mark not in allowed_prev_marks:
             return False
-        for cur_child in self.all_child_executors:
-            if cur_child.has_runnable_tests():
-                return True
-        return False
+
+        if self.all_child_executors is not None:
+            # the executor has child executors -> check them
+            for cur_child in self.all_child_executors:
+                if cur_child.has_runnable_tests(consider_discarded_too):
+                    return True
+            return False
+        else:
+            return True
 
     def get_all_base_instances_of_this_branch(
             self, with_type: Union[Type[Setup], Type[Scenario], Type[types.FunctionType]],
