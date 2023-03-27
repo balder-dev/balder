@@ -209,10 +209,10 @@ class Solver:
 
                         # determine prev_mark IGNORE/SKIP for the testcase
                         if cur_testcase_executor.should_be_skipped():
-                            variation_executor.prev_mark = PreviousExecutorMark.SKIP
+                            cur_testcase_executor.prev_mark = PreviousExecutorMark.SKIP
                         # always overwrite if it should be ignored
                         if cur_testcase_executor.should_be_ignored():
-                            variation_executor.prev_mark = PreviousExecutorMark.IGNORE
+                            cur_testcase_executor.prev_mark = PreviousExecutorMark.IGNORE
 
         # now filter all elements that have no child elements
         #   -> these are items that have no valid matching, because no variation can be applied for it (there are no
