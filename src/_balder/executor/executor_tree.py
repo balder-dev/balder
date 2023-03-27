@@ -86,13 +86,13 @@ class ExecutorTree(BasicExecutor):
             all_scenario_executor += cur_setup_executor.get_scenario_executors()
         return all_scenario_executor
 
-    def get_all_variation_executors(self) -> List[VariationExecutor]:
+    def get_all_variation_executors(self, return_discarded=False) -> List[VariationExecutor]:
         """
         returns a list with all variation executors
         """
         all_variation_executor = []
         for cur_scenario_executor in self.get_all_scenario_executors():
-            all_variation_executor += cur_scenario_executor.get_variation_executors()
+            all_variation_executor += cur_scenario_executor.get_variation_executors(return_discarded=return_discarded)
         return all_variation_executor
 
     def get_all_testcase_executors(self) -> List[TestcaseExecutor]:
