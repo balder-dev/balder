@@ -305,12 +305,6 @@ class BalderSession:
         self.executor_tree = self.solver.get_executor_tree(plugin_manager=self.plugin_manager)
         self.plugin_manager.execute_filter_executor_tree(executor_tree=self.executor_tree)
 
-    def execute_executor_tree(self):
-        """
-        This method executes the :class:`ExecutorTree`.
-        """
-        self.executor_tree.execute()
-
     def run(self):
         """
         This method executes the whole session
@@ -336,7 +330,7 @@ class BalderSession:
             print(f"  resolve them to {len(self.executor_tree.get_all_variation_executors())} mapping candidates")
             print("")
             if not self.resolve_only:
-                self.execute_executor_tree()
+                self.executor_tree.execute()
             else:
                 self.executor_tree.print_tree()
 
