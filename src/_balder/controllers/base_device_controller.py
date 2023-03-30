@@ -58,9 +58,8 @@ class BaseDeviceController(Controller, ABC):
         This method returns the original instanced feature objects of the related device
         """
         if self._original_instanced_features is None:
-            # todo we should use a balder exception here!!
-            raise EnvironmentError('can not access the original instantiated features before they were set with '
-                                   '`save_all_original_instanced_features`')
+            raise RuntimeError('can not access the original instantiated features before they were set with '
+                               '`save_all_original_instanced_features`')
         return self._original_instanced_features
 
     def save_all_original_instanced_features(self):
