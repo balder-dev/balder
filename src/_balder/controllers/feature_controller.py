@@ -152,8 +152,7 @@ class FeatureController(Controller):
         This method returns the absolute calculated class-based-for-vdevice data for this feature.
         """
         if self._abs_cls_for_vdevice is None:
-            # todo we should use a balder exception here!!
-            raise EnvironmentError('can not access the absolute class based for-vdevices because they are not set')
+            raise RuntimeError('can not access the absolute class based for-vdevices because they are not set yet')
         return self._abs_cls_for_vdevice
 
     def set_class_based_for_vdevice(
@@ -719,9 +718,8 @@ class FeatureController(Controller):
         This method returns the :class:`VDevice` definitions that are the original definitions for this feature.
         """
         if self._original_vdevice_definitions is None:
-            # todo we should use a balder exception here!!
-            raise EnvironmentError('can not access the original VDevice definitions before they were set with '
-                                   '`save_all_current_vdevice_references_as_originals`')
+            raise RuntimeError('can not access the original VDevice definitions before they were set with '
+                               '`save_all_current_vdevice_references_as_originals`')
         return self._original_vdevice_definitions
 
     def save_all_current_vdevice_references_as_originals(self):
