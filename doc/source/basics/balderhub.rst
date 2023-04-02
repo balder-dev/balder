@@ -7,8 +7,8 @@ BalderHub - the share place of tests
 
     Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
-Balder' grand vision is to create a open-source, share place for testing-projects. We call them **BalderHub** packages.
-These packages are normal python packages. You can easily install them like normal python package and simply include
+Balder' grand vision is to create a shared place for open-source testing-projects. We call them **BalderHub** packages.
+These packages are normal python packages. You can easily install them like normal and simply include
 them into your specific project. That allows you to reuse scenario and feature implementation by your own. You only have
 to provide your custom implementation that really depends on your device, but not the general test logic.
 
@@ -58,17 +58,15 @@ Which scenarios are used?
 
 If you want to use a scenario of a BalderHub project, you have to create a new scenario class in your project and
 inherit from the installed package. For example, if you want to use the scenario ``ScenarioExample`` of the
-project ``balderhub-example``, you have to  create a new scenario file in your project and inherit from it:
+project ``balderhub-example``, you have to create a new scenario file in your project and imports the BalderHub
+scenario:
 
 .. code-block:: python
 
     # file tests/scenarios/scenario_for_me.py
     from balderhub.example.scenarios import ScenarioExample
 
-    class ScenarioForMe(ScenarioExample):
-        pass
-
-With that the whole scenario will be active and all test methods of the inherited scenario ``ScenarioExample`` will be
+With that the whole scenario will be active and all test methods of the scenario ``ScenarioExample`` will be
 used. Of course your setup-devices have to implement the features of the scenario-devices too.
 
 ..
