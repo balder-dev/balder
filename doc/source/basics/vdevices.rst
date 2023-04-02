@@ -7,11 +7,15 @@ VDevices and method-variations
 
     Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
-During the development of :ref:`Features` you might have noticed, that you require some information from other devices.
+In many circumstances, it can be helpful, that you are able to access the :ref:`Features` of other :ref:`Devices`
+inside a feature. This allows you to get information from outside the feature and also allows you to definite the
+expected outside environment in features too.
+
 For example if you have a ``LoadSiteFeature``, which allows to load a website or a ``SendMessageFeature``, which allows
 to send a message *to another device*, you need some information about this other device.
 
-Of course, you can think about to provide the data through a method argument, like showing in the following example:
+One possibility to get data from one device to another is the providing of data through a method argument, like shown
+in the following example:
 
 .. code-block:: python
 
@@ -38,9 +42,12 @@ scope. Actually it would be enough if the feature gets access to the other devic
 vDevices
 ========
 
-A vDevice is a inner-feature device that describes a possible other device this feature interacts with. You simply
-create a vDevice, describe which features it should have (by instantiating them like it is done with normal devices) and
-use them. All other things will be automatically managed from Balder.
+A vDevice is a device-like class that describes a virtual device this feature interacts with. It is defined as an inner
+class of a feature which is a subclass of :class:`VDevice`. Balder will ensure that in case you are using this feature
+inside an scenario/setup, a real device (which implements at least the features of your VDevice) is mapped to it.
+
+You simply create a vDevice, describe which features it should have (by instantiating them like it is done with normal
+devices) and use them. All other things will be automatically managed from Balder.
 
 Let's go back to the example from earlier. Instead of giving the attribute as method parameters, you can create a
 vDevice that uses the ``HttpServerFeature``. This allows you to access the properties and methods of the
