@@ -126,10 +126,10 @@ Autonomous-Features
 Autonomous-Features are a special type of :class:`Feature` classes. These features has no own methods or
 properties, they are only used to say:
 
-*This device has the feature ``IsRedFeature``*
+*This device has the feature* ``IsRedFeature``
 
 So we want to filter them, because we only want a match with a device that has the same feature, but we can't or
-don't want to influence or interact with this device over the autonomous :class:`.Feature`.
+don't want to influence or interact with this device over the autonomous :class:`Feature`.
 
 The definition for such a autonomous feature, is really easy:
 
@@ -162,10 +162,10 @@ recommend that you assign it to a property name with a beginning underscore:
             _pipe_mirror = PipeMirrorAutonomousFeature()
 
 This example shows a good real world example. Imagine, you want to test if the ``ReceiverDevice`` can mirror a
-message you have send with another ``SenderDevice``. Physically we can only influence the ``SenderDevice``, but have
+message you have send with another ``SenderDevice``. Picture that we can only influence the ``SenderDevice``, but have
 no possibilities to interact with the ``ReceiverDevice``. We only know, that this device can mirror the messages
-we sent. In this case you can use a Autonomous-Feature, because you know that the device must have it, but you
-can not influence it.
+we sent. Here we can use a so-called Autonomous-Feature for our ``ReceiverDevice``, because we know that the device
+must have it, but you can not influence it.
 
 Your setup can use the same object. You don't have to overwrite it, because you don't want to add functionality
 to it, like we have done with the other features before. So we simply reuse this feature from scenario level in our
@@ -185,9 +185,8 @@ setup:
 
         @balder.connect(PipeDevice, over_connection=PipeConnection)
         class MirrorDevice(balder.Device):
-            # autonomous-device - nothing to implement
-            class PipeMirrorFeature(setup_my_features.PipeMirrorAutonomousFeature):
-                pass
+            # autonomous-device
+            mirror = setup_my_features.PipeMirrorAutonomousFeature()
 
 
 Bind features
@@ -261,8 +260,10 @@ attribute ``OtherPipeVDevice="PipeDevice2"`` to the feature constructor to defin
 
 
 .. note::
-    Often you can not access the device type objects inside the feature constructor. For this Balder also allows to use
-    simple strings, that contains the same name than the referencing device type.
+    In Python it depends on the definition order if you can reference the device inside the ``@balder.connect(..)``
+    decorator. If the device is defined above your decorator, it is possible, otherwise not. For this, Balder always
+    allows to provide the device as string too.
+
 
 You can do this with different devices that could stand for different usages of this feature. So you can also add
 the ``PipeSendReceive`` feature of the ``PipeDevice2`` should use a vdevice-device mapping with the ``PipeDevice1`` too:
