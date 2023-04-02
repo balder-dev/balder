@@ -1,4 +1,4 @@
-Balder Execution mechanism
+Balder execution mechanism
 **************************
 
 .. important::
@@ -71,7 +71,7 @@ Only for classes that meet all these criteria, Balder will acknowledge these cla
 them to the internal collection of executable scenarios.
 
 In the same way, Balder searches for scenarios, it will do that for setups. These setups have to be in files that have
-the name ``setup_*.py` and whose classes have the name ``Setup*`` and are child classes of :class:`Setup`.
+the name ``setup_*.py`` and whose classes have the name ``Setup*`` and are child classes of :class:`Setup`.
 
 .. note::
     Note that every ``.py`` file will be loaded that starts with ``scenario_*`` or ``setup_*``.
@@ -435,11 +435,11 @@ Using Fixtures
 ==============
 
 Balder also supports the concept of fixtures. Fixtures are functions (or methods) that will be executed to prepare or
-for follow-up devices or other things before or after a testcase or a scenario/setup will be executed.
+clean-up devices or other things before or after a testcase or a scenario/setup will be executed.
 
-Fixtures can be divided into two areas. First they have a **definition-scope**, that describes where the fixture is
-defined. In addition to that, they have a **execution-level**, that defines at which point the fixture should be
-executed.
+Fixtures have two main properties that determine the behaviour and validity of a fixture. First they have a
+**definition-scope**, that describes where the fixture is defined. In addition to that, they have a **execution-level**,
+that defines at which point the fixture should be executed.
 
 The execution-level
 -------------------
@@ -601,4 +601,4 @@ provide a method here too:
             yield
             self.ClientDevice.req.logout()
 
-For more about features, take a look :ref:`here <Features>`.
+For more about fixtures, take a look :ref:`here <Fixtures>`.
