@@ -215,7 +215,7 @@ Balder provides an global connection tree. This tree is already specified for al
 Overwrite the default global tree
 ---------------------------------
 
-Per default, the ``@balder.insert_into_tree(..)`` decorator inserted the connection in the global connection tree. If
+Per default, the ``@balder.insert_into_tree(..)`` decorator inserts the connection in the global connection tree. If
 you want to use another connection tree, you can specify the ``tree_name=".."`` argument in the
 ``@balder.insert_into_tree(..)``. This allows to specify an complete own connection tree by your own.
 
