@@ -8,10 +8,9 @@ Fixtures
     Please note that this part of the documentation is not yet finished. It will still be revised and updated.
 
 Fixtures are functions or methods that ensure that code is executed before or after specific times of a test run.
-Fixtures can be executed at different times (**execution-level**) and can be defined on different positions
-(**definition-scope**). The order in which these fixtures will be executed, depends on the definition position (in which
-module the code is implemented) and often also depending on some chained dependency between them. You can learn more
-about this in this section.
+Fixtures can be executed at different times in the Balder process (**execution-level**) and can be defined on different
+positions (**definition-scope**). The order, in which these fixtures will be executed, can be influenced by chained
+dependencies too. You can learn more about this in this section.
 
 A simple fixture
 ================
@@ -77,7 +76,7 @@ uses the ``ScenarioB`` this behavior will change. In this case our fixture won't
 **definition-scope** is not active (fixture is defined in the not executed ``ScenarioA``).
 
 You can find more detailed information about the **definition-scope** at the
-:ref:`Definition-Scopes <Definition-Scopes>`.
+:ref:`Definition-Scopes <Definition-Scope possibilities>`.
 
 Fixture ordering
 ----------------
@@ -169,7 +168,7 @@ directly be used there. This example would produce the following output:
 
 You can also refer fixtures from another **execution-level** or **definition-scope**, but you have to secure that your
 referred fixture runs before the fixture that references it. For more information about the referencing of fixtures and
-the related ordering, see :ref:`Order or/and referencing fixtures`.
+the related ordering, see :ref:`reference fixtures`.
 
 Execution-Level possibilities
 =============================
@@ -203,8 +202,8 @@ execution. The following table shows all possible **execution-level** attributes
 |                        | that is in the defined **definition-scope**.                                                |
 +------------------------+---------------------------------------------------------------------------------------------+
 
-Definition-Scopes
-=================
+Definition-Scope possibilities
+==============================
 
 Balder has three different **definition-scopes**. These scopes define the validity of the fixtures.
 
@@ -233,14 +232,14 @@ The following table shows these scopes:
 |                        |                        | currently active in the test run.                                  |
 +------------------------+------------------------+--------------------------------------------------------------------+
 
-Order or/and referencing fixtures
-=================================
+Reference fixtures
+==================
 
-As mentioned above, Balder can referencing fixtures among each other.
+As mentioned above, Balder can reference fixtures among each other.
 
-Sometimes you want to use the values of some fixtures into testcases or other fixtures. For example if you prepare an
+Sometimes you want to use the values of some fixtures in testcases or other fixtures. For example if you prepare an
 object in a fixture you maybe want to use this object in another fixture or in your testcase too. This can be
-realized in Balder by simply referencing fixtures throw method/function attributes.
+realized in Balder by simply referencing fixtures through method/function attributes.
 
 .. code-block:: py
 
@@ -493,7 +492,7 @@ for the referenced fixture. In this case here, the next fixture with the referen
 
     print_it from scenario: calculation is 15
 
-Special case: Unclear-Setup_Scoped_Fixture-Reference problematic
+Special case: Unclear-Setup-Scoped-Fixture-Reference problematic
 ----------------------------------------------------------------
 
 There is one single case, you should be aware with. If you want to reference a session-fixture
