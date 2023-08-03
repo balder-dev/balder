@@ -193,10 +193,12 @@ class BasicExecutor(ABC):
         return list(set(result))
 
     @abstractmethod
-    def cleanup_empty_executor_branches(self):
+    def cleanup_empty_executor_branches(self, consider_discarded=False):
         """
         This method searches the whole tree and removes branches where an executor item has no own children. It can
         remove these branches, because they have no valid matchings.
+
+        :param consider_discarded: true if this method should consider discarded branches, otherwise False
         """
 
     def filter_tree_for_user_filters(self):

@@ -170,9 +170,13 @@ class Solver:
         self._mapping = initial_mapping
         self._resolving_was_executed = True
 
-    def get_executor_tree(self, plugin_manager: PluginManager) -> ExecutorTree:  # pylint: disable=unused-argument
+    # pylint: disable-next=unused-argument
+    def get_executor_tree(self, plugin_manager: PluginManager, add_discarded=False) -> ExecutorTree:
         """
         This method builds the ExecutorTree from the resolved data and returns it
+
+        :param plugin_manager: the related plugin manager object
+        :param add_discarded: True in case discarded elements should be added to the tree, otherwise False
 
         :return: the executor tree is built on the basis of the mapping data
         """
@@ -215,7 +219,7 @@ class Solver:
         # now filter all elements that have no child elements
         #   -> these are items that have no valid matching, because no variation can be applied for it (there are no
         #      required :class:`Feature` matching or there exists no possible routing for the variation)
-        executor_tree.cleanup_empty_executor_branches()
+        executor_tree.cleanup_empty_executor_branches(consider_discarded=add_discarded)
 
         self._set_data_for_covered_by_in_tree(executor_tree=executor_tree)
 

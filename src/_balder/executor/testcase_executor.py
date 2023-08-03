@@ -132,7 +132,7 @@ class TestcaseExecutor(BasicExecutor):
             return True
         return False
 
-    def cleanup_empty_executor_branches(self):
+    def cleanup_empty_executor_branches(self, consider_discarded=False):
         """
         This method searches the whole tree and removes branches where an executor item has no own children. It can
         remove these branches, because they have no valid matchings.
