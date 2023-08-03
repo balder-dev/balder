@@ -129,10 +129,10 @@ class ExecutorTree(BasicExecutor):
         # can not find some
         return None
 
-    def cleanup_empty_executor_branches(self):
+    def cleanup_empty_executor_branches(self, consider_discarded=False):
         to_remove_executor = []
         for cur_setup_executor in self.get_setup_executors():
-            cur_setup_executor.cleanup_empty_executor_branches()
+            cur_setup_executor.cleanup_empty_executor_branches(consider_discarded=consider_discarded)
             if len(cur_setup_executor.get_scenario_executors()) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_setup_executor)

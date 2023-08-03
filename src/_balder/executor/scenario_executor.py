@@ -116,12 +116,12 @@ class ScenarioExecutor(BasicExecutor):
                     if cur_executor.prev_mark != PreviousExecutorMark.DISCARDED]
         return self._variation_executors
 
-    def cleanup_empty_executor_branches(self):
+    def cleanup_empty_executor_branches(self, consider_discarded=False):
         """
         This method removes all sub executors that are empty and not relevant anymore.
         """
         to_remove_executor = []
-        for cur_variation_executor in self.get_variation_executors():
+        for cur_variation_executor in self.get_variation_executors(return_discarded=consider_discarded):
             if len(cur_variation_executor.get_testcase_executors()) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_variation_executor)

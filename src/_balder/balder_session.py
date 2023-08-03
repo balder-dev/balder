@@ -302,7 +302,8 @@ class BalderSession:
         .. note::
             Note that the method creates an :class:`ExecutorTree`, that hasn't to be completely resolved yet.
         """
-        self.executor_tree = self.solver.get_executor_tree(plugin_manager=self.plugin_manager)
+        self.executor_tree = self.solver.get_executor_tree(plugin_manager=self.plugin_manager,
+                                                           add_discarded=self.show_discarded)
         self.plugin_manager.execute_filter_executor_tree(executor_tree=self.executor_tree)
 
     def run(self):

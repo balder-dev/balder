@@ -88,11 +88,11 @@ class SetupExecutor(BasicExecutor):
         """returns a list with all scenario executors that belongs to this setup executor"""
         return self._scenario_executors
 
-    def cleanup_empty_executor_branches(self):
+    def cleanup_empty_executor_branches(self, consider_discarded=False):
         to_remove_executor = []
         for cur_scenario_executor in self.get_scenario_executors():
-            cur_scenario_executor.cleanup_empty_executor_branches()
-            if len(cur_scenario_executor.get_variation_executors()) == 0:
+            cur_scenario_executor.cleanup_empty_executor_branches(consider_discarded=consider_discarded)
+            if len(cur_scenario_executor.get_variation_executors(return_discarded=consider_discarded)) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_scenario_executor)
         for cur_scenario_executor in to_remove_executor:
