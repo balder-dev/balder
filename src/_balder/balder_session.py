@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from _balder.scenario import Scenario
     from _balder.connection import Connection
 
-
+# pylint: disable-next=too-many-instance-attributes
 class BalderSession:
     """
     This is the main balder executable object. It contains all information about the current session and executes the
