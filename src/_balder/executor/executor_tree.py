@@ -192,7 +192,8 @@ class ExecutorTree(BasicExecutor):
                     for cur_key, cur_val in mapping_printings.items():
                         print(("{} {:<" + str(max_len) + "} = {}").format(start_char, cur_key, cur_val))
                     for cur_testcase_excutor in cur_variation_executor.get_testcase_executors():
-                        print(f"{start_char}    -> Testcase<{cur_testcase_excutor.base_testcase_callable.__qualname__}>")
+                        print(f"{start_char}    -> Testcase<"
+                              f"{cur_testcase_excutor.base_testcase_callable.__qualname__}>")
                     if cur_variation_executor.prev_mark == PreviousExecutorMark.DISCARDED:
                         print(f"{start_char}")
                         print(f"{start_char}    DISCARDED BECAUSE "
