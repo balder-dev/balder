@@ -158,8 +158,7 @@ class BasicExecutor(ABC):
                 if cur_child.has_runnable_tests(consider_discarded_too):
                     return True
             return False
-        else:
-            return True
+        return True
 
     def get_all_base_instances_of_this_branch(
             self, with_type: Union[Type[Setup], Type[Scenario], Type[types.FunctionType]],
