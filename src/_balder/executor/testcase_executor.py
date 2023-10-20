@@ -7,7 +7,6 @@ import traceback
 from _balder.utils import inspect_method
 from _balder.testresult import ResultState, TestcaseResult
 from _balder.executor.basic_executor import BasicExecutor
-from _balder.previous_executor_mark import PreviousExecutorMark
 
 if TYPE_CHECKING:
     from _balder.executor.variation_executor import VariationExecutor
