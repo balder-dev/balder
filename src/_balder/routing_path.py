@@ -284,8 +284,6 @@ class RoutingPath:
 
         if elem_before is not None:
             # check if device and nodes of the two elements are the same -> have to be a chain
-            last_device, last_node_name = self._get_end_device_and_node()
-
             if isinstance(elem, Connection):
                 if (self.end_device, self.end_node_name) not in \
                         [(elem.from_device, elem.from_node_name), (elem.to_device, elem.to_node_name)]:
