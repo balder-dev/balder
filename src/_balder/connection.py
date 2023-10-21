@@ -88,6 +88,17 @@ class Connection:
             all_hashes += hash(cur_child)
         return hash(all_hashes)
 
+    def clone_without_based_on_elements(self) -> Connection:
+        """
+        This method returns a copied version of this element, while all `_based_on_connections` are removed (the copied
+        element has an empty list here).
+
+        :return: a python copied object of this item
+        """
+        self_copy = copy.copy(self)
+        self_copy._based_on_connections = []  # pylint: disable=protected-access
+        return self_copy
+
     def clone(self) -> Connection:
         """
         This method returns an exact clone of this connection. For this clone every inner connection object will be
@@ -95,18 +106,17 @@ class Connection:
         same for this object and the clone). The method will make a normal copy for every connection object in the
         `_based_on_elements` list.
         """
-        self_copy = copy.copy(self)
-        self_copy._based_on_connections = []
+        self_copy = self.clone_without_based_on_elements()
 
         for cur_based_on in self._based_on_connections:
             if isinstance(cur_based_on, tuple):
                 cloned_tuple = ()
                 for cur_tuple_element in cur_based_on:
                     cloned_tuple = cloned_tuple + (cur_tuple_element.clone(), )
-                self_copy._based_on_connections.append(cloned_tuple)
+                self_copy.append_to_based_on(cloned_tuple)
             elif isinstance(cur_based_on, Connection):
                 cloned_cur_based_on = cur_based_on.clone()
-                self_copy._based_on_connections.append(cloned_cur_based_on)
+                self_copy.append_to_based_on(cloned_cur_based_on)
             else:
                 raise TypeError('based on element is not from valid type')
         return self_copy
@@ -132,22 +142,21 @@ class Connection:
             for cur_tuple in Connection.__cut_tuple_from_only_parent_to_child(elem.based_on_elements[0]):
                 # for this we do not have to use `clone`, because we copy the base object with `copy.copy` and
                 # completely replace the `_based_on_connections` by our own
-                copied_conn = copy.copy(elem)
-                copied_conn._based_on_connections = [cur_tuple]
+                copied_conn = elem.clone_without_based_on_elements()
+                copied_conn.append_to_based_on(cur_tuple)
                 all_pieces.append(copied_conn)
             return all_pieces
         # if this element is the last element with a parent -> copy it and remove the parent, return it
         if len(elem.based_on_elements[0].based_on_elements) == 0:
-            new_elem = copy.copy(elem)
-            new_elem._based_on_connections = []
+            new_elem = elem.clone_without_based_on_elements()
             all_pieces.append(new_elem)
             return all_pieces
         # otherwise, the current item has grandparents, so call the method recursively for parents and add a copy of
         # this object as child
         all_possible_parents = Connection.__cut_conn_from_only_parent_to_child(elem.based_on_elements[0])
         for cur_parent in all_possible_parents:
-            copied_conn = copy.copy(elem)
-            copied_conn._based_on_connections = [cur_parent]
+            copied_conn = elem.clone_without_based_on_elements()
+            copied_conn.append_to_based_on(cur_parent)
             all_pieces.append(copied_conn)
         return all_pieces
 
@@ -844,9 +853,11 @@ class Connection:
             method returns this child connection directly without any :class:`Connection` container otherwise the
             :class:`Connection` container class with all resolved child classes will be returned.
         """
-        copied_base = copy.copy(self)
-        if not copied_base.is_resolved():
-            copied_base._based_on_connections = []
+        if self.is_resolved():
+            copied_base = self.clone()
+        else:
+            copied_base = self.clone_without_based_on_elements()
+
             if self.__class__ == Connection:
                 # the base object is a container Connection - iterate over the items and determine the values for them
                 for cur_item in self.based_on_elements.copy():
@@ -854,9 +865,9 @@ class Connection:
                         new_tuple = ()
                         for cur_tuple_item in cur_item:
                             new_tuple += (cur_tuple_item.get_resolved(), )
-                        copied_base._based_on_connections.append(new_tuple)
+                        copied_base.append_to_based_on(new_tuple)
                     else:
-                        copied_base._based_on_connections.append(cur_item.get_resolved())
+                        copied_base.append_to_based_on(cur_item.get_resolved())
             else:
                 for next_higher_parent in self.based_on_elements:
                     if isinstance(next_higher_parent, tuple):
@@ -879,18 +890,18 @@ class Connection:
                             new_child_tuple = ()
                             for cur_tuple_element in cur_possibility:
                                 new_child_tuple += (cur_tuple_element.get_resolved(), )
-                            copied_base._based_on_connections.append(new_child_tuple)
+                            copied_base.append_to_based_on(new_child_tuple)
                     else:
                         if next_higher_parent.__class__ in self.__class__.get_parents():
                             # is already a direct parent
-                            copied_base._based_on_connections.append(next_higher_parent.get_resolved())
+                            copied_base.append_to_based_on(next_higher_parent.get_resolved())
                         else:
                             # only add the first level of direct parents - deeper will be added by recursively call of
                             # `get_resolved`
                             for cur_self_direct_parent in self.__class__.get_parents():
                                 if next_higher_parent.__class__.is_parent_of(cur_self_direct_parent):
                                     new_child = cur_self_direct_parent.based_on(next_higher_parent)
-                                    copied_base._based_on_connections.append(new_child.get_resolved())
+                                    copied_base.append_to_based_on(new_child.get_resolved())
         # if it is a connection container, where only one element exists that is no tuple -> return this directly
         # instead of the container
         if copied_base.__class__ == Connection and len(copied_base.based_on_elements) == 1 and not \
@@ -930,8 +941,8 @@ class Connection:
                     return [resolved_obj]
                 for cur_child in resolved_obj.based_on_elements:
                     for cur_single_child in cur_child.get_singles():
-                        copied_base = copy.copy(resolved_obj)
-                        copied_base._based_on_connections = [cur_single_child]
+                        copied_base = resolved_obj.clone_without_based_on_elements()
+                        copied_base.append_to_based_on(cur_single_child)
                         all_singles.append(copied_base)
         # convert all tuple objects in a connection object and set metadata of self object
         cleaned_singles = []
@@ -1274,7 +1285,8 @@ class Connection:
 
         return intersection_filtered[0].clone()
 
-    def append_to_based_on(self, *args: Union[Tuple[Union[Type[Connection], Connection]]]) -> None:
+    def append_to_based_on(
+            self, *args: Union[Connection, Type[Connection], Tuple[Union[Type[Connection], Connection]]]) -> None:
         """
         with this method you can extend the internal based_on list with the transferred elements. Any number of
         :meth:`Connection` objects or tuples with :meth:`Connection` objects can be given to this method
