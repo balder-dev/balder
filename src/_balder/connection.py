@@ -224,11 +224,9 @@ class Connection:
                 while len(cur_sub_other_single) > 0:
                     if isinstance(cur_sub_other_single[0], tuple):
                         # found a tuple -> check if length does match
-                        if len(cur_sub_other_single[0]) >= len(cur_tuple_single):
-                            # length does match
-                            if tuple_is_contained_in_other(
-                                    cur_tuple_single, contained_in_tuple=cur_sub_other_single[0]):
-                                return True
+                        if len(cur_sub_other_single[0]) >= len(cur_tuple_single) and tuple_is_contained_in_other(
+                                cur_tuple_single, contained_in_tuple=cur_sub_other_single[0]):
+                            return True
                         # otherwise, this complete element is not possible - skip this single!
                         break
                     cur_sub_other_single = cur_sub_other_single[0].based_on_elements
