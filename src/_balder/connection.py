@@ -562,7 +562,7 @@ class Connection:
 
         return False
 
-    def _get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
+    def get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
             -> List[Connection, Tuple[Connection]]:
         """
         A helper method that returns an intersection between the two connections (self and the given one).
@@ -1257,7 +1257,7 @@ class Connection:
         # determine intersections between all of these single components
         for cur_self_conn in self_conn_singles:
             for cur_other_conn in other_conn_singles:
-                for cur_intersection in cur_self_conn._get_intersection_with_other_single(cur_other_conn):
+                for cur_intersection in cur_self_conn.get_intersection_with_other_single(cur_other_conn):
                     if isinstance(cur_intersection, tuple):
                         cur_intersection = Connection.based_on(cur_intersection)
                     if cur_intersection not in intersections:
