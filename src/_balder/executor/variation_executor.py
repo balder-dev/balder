@@ -134,6 +134,7 @@ class VariationExecutor(BasicExecutor):
 
     @property
     def not_applicable_variation_exc(self) -> Union[NotApplicableVariationException, None]:
+        """holds the :class:`NotApplicableVariationException` that describes why this variation in not applicable"""
         return self._not_applicable_variation_exc
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
