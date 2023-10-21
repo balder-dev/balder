@@ -588,27 +588,23 @@ class Connection:
 
         intersection = []
 
+        def determine_for(pieces: List[Union[Connection, Tuple[Connection]]], in_other_cnn: Connection):
+            for cur_piece in pieces:
+                if isinstance(cur_piece, Connection):
+                    if cur_piece.contained_in(in_other_cnn, ignore_metadata=True):
+                        intersection.append(cur_piece)
+                else:
+                    # isinstance of tuple
+                    if Connection.check_if_tuple_contained_in_connection(cur_piece, in_other_cnn):
+                        intersection.append(cur_piece)
+
         #: check if some sub elements of self connection are contained in `other_conn`
         self_pieces = self.cut_into_all_possible_subtrees()
-        for cur_piece in self_pieces:
-            if isinstance(cur_piece, Connection):
-                if cur_piece.contained_in(other_conn, ignore_metadata=True):
-                    intersection.append(cur_piece)
-            else:
-                # isinstance of tuple
-                if Connection.check_if_tuple_contained_in_connection(cur_piece, other_conn):
-                    intersection.append(cur_piece)
+        determine_for(pieces=self_pieces, in_other_cnn=other_conn)
 
         #: check if some sub elements of `other_conn` are contained in self connection
         other_pieces = other_conn.cut_into_all_possible_subtrees()
-        for cur_piece in other_pieces:
-            if isinstance(cur_piece, Connection):
-                if cur_piece.contained_in(self, ignore_metadata=True):
-                    intersection.append(cur_piece)
-            else:
-                # isinstance of tuple
-                if Connection.check_if_tuple_contained_in_connection(cur_piece, self):
-                    intersection.append(cur_piece)
+        determine_for(pieces=other_pieces, in_other_cnn=self)
 
         #: filter all duplicated (and contained in each other) connections
         intersection_without_duplicates = []
