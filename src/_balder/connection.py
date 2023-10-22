@@ -110,9 +110,7 @@ class Connection:
 
         for cur_based_on in self._based_on_connections:
             if isinstance(cur_based_on, tuple):
-                cloned_tuple = ()
-                for cur_tuple_element in cur_based_on:
-                    cloned_tuple = cloned_tuple + (cur_tuple_element.clone(), )
+                cloned_tuple = tuple([cur_tuple_element.clone() for cur_tuple_element in cur_based_on])
                 self_copy.append_to_based_on(cloned_tuple)
             elif isinstance(cur_based_on, Connection):
                 cloned_cur_based_on = cur_based_on.clone()
@@ -174,15 +172,12 @@ class Connection:
             Note that this method also returns every possible ordering
         """
 
-        tuple_with_all_possibilities = ()
-        for cur_tuple_item in elem:
-            tuple_with_all_possibilities += (Connection.__cut_conn_from_only_parent_to_child(cur_tuple_item), )
+        tuple_with_all_possibilities = (
+            tuple([Connection.__cut_conn_from_only_parent_to_child(cur_tuple_item) for cur_tuple_item in elem]))
 
         cloned_tuple_list = []
         for cur_tuple in list(itertools.product(*tuple_with_all_possibilities)):
-            cloned_tuple: Tuple[Connection] = ()
-            for cur_tuple_item in cur_tuple:
-                cloned_tuple += (cur_tuple_item.clone(), )
+            cloned_tuple = tuple([cur_tuple_item.clone() for cur_tuple_item in cur_tuple])
             cloned_tuple_list.append(cloned_tuple)
         return cloned_tuple_list
 
@@ -860,9 +855,7 @@ class Connection:
                 # the base object is a container Connection - iterate over the items and determine the values for them
                 for cur_item in self.based_on_elements.copy():
                     if isinstance(cur_item, tuple):
-                        new_tuple = ()
-                        for cur_tuple_item in cur_item:
-                            new_tuple += (cur_tuple_item.get_resolved(), )
+                        new_tuple = tuple([cur_tuple_item.get_resolved() for cur_tuple_item in cur_item])
                         copied_base.append_to_based_on(new_tuple)
                     else:
                         copied_base.append_to_based_on(cur_item.get_resolved())
@@ -885,9 +878,8 @@ class Connection:
                         # resolve the opportunities and create multiple possible tuples where all elements are direct
                         # parents
                         for cur_possibility in itertools.product(*direct_ancestors_tuple):
-                            new_child_tuple = ()
-                            for cur_tuple_element in cur_possibility:
-                                new_child_tuple += (cur_tuple_element.get_resolved(), )
+                            new_child_tuple = (
+                                tuple([cur_tuple_element.get_resolved() for cur_tuple_element in cur_possibility]))
                             copied_base.append_to_based_on(new_child_tuple)
                     else:
                         if next_higher_parent.__class__ in self.__class__.get_parents():
