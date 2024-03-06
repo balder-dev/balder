@@ -268,11 +268,6 @@ class BalderSession:
 
         self.parsed_args = self.cmd_arg_parser.parse_args(self._alt_cmd_args)
 
-        if self.parsed_args.only_with_scenario is not None:
-            raise NotImplementedError("the parameter `--only-with-scenario` is not supported in this version of balder")
-        if self.parsed_args.only_with_setup is not None:
-            raise NotImplementedError("the parameter `--only-with-setup` is not supported in this version of balder")
-
         self.working_dir = self.parsed_args.working_dir
         self.collect_only = self.parsed_args.collect_only
         self.resolve_only = self.parsed_args.resolve_only
