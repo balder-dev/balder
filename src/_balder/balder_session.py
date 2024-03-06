@@ -280,7 +280,10 @@ class BalderSession:
         """
         This method collects all data.
         """
-        self.collector.collect(plugin_manager=self.plugin_manager)
+        self.collector.collect(
+            plugin_manager=self.plugin_manager,
+            scenario_filter_patterns=self.only_with_scenario,
+            setup_filter_patterns=self.only_with_setup)
 
     def solve(self):
         """

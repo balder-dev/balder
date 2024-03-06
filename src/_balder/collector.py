@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING
+from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING, Any
 
 import os
 import sys
 import types
 import logging
+import fnmatch
 import inspect
 import pathlib
 import functools
@@ -677,27 +678,58 @@ class Collector:
         for cur_setup in self.all_setups:
             SetupController.get_for(cur_setup).validate_feature_possibility()
 
-    def collect(self, plugin_manager: PluginManager):
+    def _filter_paths_after_allowed_paths(self, paths: List[pathlib.Path], filter_patterns: List[str]) -> List[pathlib.Path]:
+        """
+        This method filters the given list of filepaths for the given filter_patterns. It returns a list with all
+        remaining paths that are mathing the filter statements in `filter_paths`.
+
+        Patterns are the same like for `fnmatch <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`_.
+
+        :param paths: a list of all filepaths that should be filtered
+        :param filter_patterns: a list of relative filter patterns that should be applied on the files of the classes
+        :return: returns all classes of items that match any of the given patterns.
+        """
+        remaining = []
+
+        for cur_pattern in filter_patterns:
+            remaining += [cur_abs_path for cur_abs_path in paths
+                          if fnmatch.fnmatch(str(cur_abs_path.relative_to(self.working_dir)), cur_pattern)]
+        return list(set(remaining))
+
+
+    def collect(self, plugin_manager: PluginManager, scenario_filter_patterns: Union[List[str], None],
+                setup_filter_patterns: Union[List[str], None]):
         """
         This method manages the entire collection process.
 
         :param plugin_manager: contains the reference to the used plugin manager
+        :param scenario_filter_patterns: a list with filter patterns for scenarios
+        :param setup_filter_patterns: a list with filter patterns for setups
         """
         # load all py files
         self.load_balderglob_py_file()
         self._all_py_files = self.get_all_py_files()
         self._all_py_files = plugin_manager.execute_modify_collected_pyfiles(self._all_py_files)
 
+        if scenario_filter_patterns:
+            all_scenario_filepaths = self._filter_paths_after_allowed_paths(
+                paths=self._all_py_files, filter_patterns=scenario_filter_patterns)
+        else:
+            all_scenario_filepaths = self._all_py_files
+        if setup_filter_patterns:
+            all_setup_filepaths = self._filter_paths_after_allowed_paths(
+                paths=self._all_py_files, filter_patterns=setup_filter_patterns)
+        else:
+            all_setup_filepaths = self._all_py_files
+
         # collect all `Connection` classes (has to be first, because scenarios/setups can use them)
         self.load_all_connection_classes(py_file_paths=self._all_py_files)
         self._all_connections = self.get_all_connection_classes()
 
         # collect all `Scenario` classes
-        self._all_scenarios = self.get_all_scenario_classes(
-            py_file_paths=self._all_py_files, filter_abstracts=True)
+        self._all_scenarios = self.get_all_scenario_classes(py_file_paths=all_scenario_filepaths, filter_abstracts=True)
         # collect all `Setup` classes
-        self._all_setups = self.get_all_setup_classes(
-            py_file_paths=self._all_py_files, filter_abstracts=True)
+        self._all_setups = self.get_all_setup_classes(py_file_paths=all_setup_filepaths, filter_abstracts=True)
 
         self._all_scenarios, self._all_setups = plugin_manager.execute_collected_classes(
             scenarios=self._all_scenarios, setups=self._all_setups)
