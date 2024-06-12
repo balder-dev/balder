@@ -8,8 +8,9 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
     """
     This testcase executes the basic ENVTESTER environment. Additionally, it provides a child scenario class per
     scenario. One of it (the `ScenarioAChild`) defines no own fixtures, while the other (the `ScenarioBChild`)
-    overwrites some fixtures. The test expects, that only the overwritten fixtures are executed. No scenario should
-    inherit fixtures from a higher class without redefining and decorating it.
+    overwrites some fixtures. The test expects, that the overwritten fixtures are executed while the fixture that is
+    overwritten will be ignored. It also expects, that all fixtures of the parent class that are not explicitly
+    overwritten will also be executed here!
     """
 
     @property
@@ -31,10 +32,20 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
                     {"cls": "SetupFeatureIV", "meth": "do_something", "category": "feature"},
                 )
             ],
-            # FIXTURE-CONSTRUCTION: ScenarioBChild.fixture_session
-            {"cls": "ScenarioBChild", "meth": "fixture_session", "part": "construction"},
-            {"cls": "FeatureIII", "meth": "do_something", "category": "feature"},
-            {"cls": "FeatureIV", "meth": "do_something", "category": "feature"},
+            [
+                (
+                    # FIXTURE-CONSTRUCTION: ScenarioA.fixture_session
+                    {"cls": "ScenarioA", "meth": "fixture_session", "part": "construction"},
+                    {"cls": "FeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureII", "meth": "do_something", "category": "feature"},
+                ),
+                (
+                    # FIXTURE-CONSTRUCTION: ScenarioBChild.fixture_session
+                    {"cls": "ScenarioBChild", "meth": "fixture_session", "part": "construction"},
+                    {"cls": "FeatureIII", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureIV", "meth": "do_something", "category": "feature"},
+                )
+            ],
             [
                 (
                     # FIXTURE-CONSTRUCTION: balderglob_fixture_setup
@@ -43,16 +54,28 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
                     {"cls": "SetupA", "meth": "fixture_setup", "part": "construction"},
                     {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                     {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                    # FIXTURE-CONSTRUCTION: ScenarioA.fixture_setup
+                    {"cls": "ScenarioA", "meth": "fixture_setup", "part": "construction"},
+                    {"cls": "FeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-CONSTRUCTION: balderglob_fixture_scenario
                     {"file": "balderglob.py", "meth": "balderglob_fixture_scenario", "part": "construction"},
                     # FIXTURE-CONSTRUCTION: SetupA.fixture_scenario
                     {"cls": "SetupA", "meth": "fixture_scenario", "part": "construction"},
                     {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                     {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                    # FIXTURE-CONSTRUCTION: ScenarioA.fixture_scenario
+                    {"cls": "ScenarioA", "meth": "fixture_scenario", "part": "construction"},
+                    {"cls": "FeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-CONSTRUCTION: balderglob_fixture_variation
                     {"file": "balderglob.py", "meth": "balderglob_fixture_variation", "part": "construction"},
                     # FIXTURE-CONSTRUCTION: SetupA.fixture_variation
                     {"cls": "SetupA", "meth": "fixture_variation", "part": "construction"},
+                    {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                    # FIXTURE-CONSTRUCTION: ScenarioA.fixture_variation
+                    {"cls": "ScenarioA", "meth": "fixture_variation", "part": "construction"},
                     {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                     {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                     [
@@ -63,8 +86,16 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
                             {"cls": "SetupA", "meth": "fixture_testcase", "part": "construction"},
                             {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                             {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                            # FIXTURE-CONSTRUCTION: ScenarioBChild.fixture_testcase
+                            {"cls": "ScenarioA", "meth": "fixture_testcase", "part": "construction"},
+                            {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                            {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                             # TESTCASE: ScenarioAChild.test_a_1
                             {"cls": "ScenarioAChild", "meth": "test_a_1"},
+                            {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                            {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                            # FIXTURE-TEARDOWN: ScenarioA.fixture_testcase
+                            {"cls": "ScenarioA", "meth": "fixture_testcase", "part": "teardown"},
                             {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                             {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                             # FIXTURE-TEARDOWN: SetupA.fixture_testcase
@@ -81,8 +112,16 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
                             {"cls": "SetupA", "meth": "fixture_testcase", "part": "construction"},
                             {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                             {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                            # FIXTURE-CONSTRUCTION: ScenarioBChild.fixture_testcase
+                            {"cls": "ScenarioA", "meth": "fixture_testcase", "part": "construction"},
+                            {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                            {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                             # TESTCASE: ScenarioAChild.test_a_2
                             {"cls": "ScenarioAChild", "meth": "test_a_2"},
+                            {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                            {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
+                            # FIXTURE-TEARDOWN: ScenarioA.fixture_testcase
+                            {"cls": "ScenarioA", "meth": "fixture_testcase", "part": "teardown"},
                             {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                             {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                             # FIXTURE-TEARDOWN: SetupA.fixture_testcase
@@ -93,18 +132,30 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
                             {"file": "balderglob.py", "meth": "balderglob_fixture_testcase", "part": "teardown"},
                         ),
                     ],
+                    # FIXTURE-TEARDOWN: ScenarioA.fixture_variation
+                    {"cls": "ScenarioA", "meth": "fixture_variation", "part": "teardown"},
+                    {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-TEARDOWN: SetupA.fixture_variation
                     {"cls": "SetupA", "meth": "fixture_variation", "part": "teardown"},
                     {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                     {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-TEARDOWN: balderglob_fixture_variation
                     {"file": "balderglob.py", "meth": "balderglob_fixture_variation", "part": "teardown"},
+                    # FIXTURE-TEARDOWN: ScenarioA.fixture_scenario
+                    {"cls": "ScenarioA", "meth": "fixture_scenario", "part": "teardown"},
+                    {"cls": "FeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-TEARDOWN: SetupA.fixture_scenario
                     {"cls": "SetupA", "meth": "fixture_scenario", "part": "teardown"},
                     {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
                     {"cls": "SetupFeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-TEARDOWN: balderglob_fixture_scenario
                     {"file": "balderglob.py", "meth": "balderglob_fixture_scenario", "part": "teardown"},
+                    # FIXTURE-TEARDOWN: ScenarioA.fixture_setup
+                    {"cls": "ScenarioA", "meth": "fixture_setup", "part": "teardown"},
+                    {"cls": "FeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureII", "meth": "do_something", "category": "feature"},
                     # FIXTURE-TEARDOWN: SetupA.fixture_setup
                     {"cls": "SetupA", "meth": "fixture_setup", "part": "teardown"},
                     {"cls": "SetupFeatureI", "meth": "do_something", "category": "feature"},
@@ -229,10 +280,20 @@ class Test0ScenarioInheritanceFixtureInheritance(Base0EnvtesterClass):
                     {"file": "balderglob.py", "meth": "balderglob_fixture_setup", "part": "teardown"},
                 ),
             ],
-            # FIXTURE-TEARDOWN: ScenarioBChild.fixture_session
-            {"cls": "ScenarioBChild", "meth": "fixture_session", "part": "teardown"},
-            {"cls": "FeatureIII", "meth": "do_something", "category": "feature"},
-            {"cls": "FeatureIV", "meth": "do_something", "category": "feature"},
+            [
+                (
+                    # FIXTURE-TEARDOWN: ScenarioA.fixture_session
+                    {"cls": "ScenarioA", "meth": "fixture_session", "part": "teardown"},
+                    {"cls": "FeatureI", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureII", "meth": "do_something", "category": "feature"},
+                ),
+                (
+                    # FIXTURE-TEARDOWN: ScenarioBChild.fixture_session
+                    {"cls": "ScenarioBChild", "meth": "fixture_session", "part": "teardown"},
+                    {"cls": "FeatureIII", "meth": "do_something", "category": "feature"},
+                    {"cls": "FeatureIV", "meth": "do_something", "category": "feature"},
+                )
+            ],
             [
                 (
                     # FIXTURE-TEARDOWN: SetupA.fixture_session
