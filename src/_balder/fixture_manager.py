@@ -394,6 +394,41 @@ class FixtureManager:
         if exception:
             raise exception
 
+    def get_fixture_for_class(
+            self,
+            execution_level: Union[Type[ExecutorTree], Type[SetupExecutor], Type[ScenarioExecutor],
+                                   Type[VariationExecutor], Type[TestcaseExecutor]],
+            setup_or_scenario_class: Union[None, Type[Setup], Type[Scenario]],
+            parent_classes: bool = True
+    ) -> List[Tuple[MethodLiteralType, Callable]]:
+        """
+        This method returns all classes of a specific Setup/Scenario class for a specific execution-level.
+
+        :param execution_level: the execution level the fixture should be returned for
+        :param setup_or_scenario_class: the scenario or setup class, the fixtures should be returned for
+        :param parent_classes: true if the method should look for fixtures in parent classes too
+        :return: list with all fixtures that are matching search criteria
+        """
+        # current relevant EXECUTION LEVEL - all other levels are not relevant for this call
+        cur_execution_level = self.resolve_type_level[execution_level]
+        # get all fixtures of the current relevant level
+        fixtures_of_exec_level = self.fixtures.get(cur_execution_level, {})
+        if setup_or_scenario_class is not None and parent_classes:
+            all_fixtures = []
+            for cur_parent_class in inspect.getmro(setup_or_scenario_class):
+                if issubclass(cur_parent_class, (Scenario, Setup)):
+                    all_fixtures += self.get_fixture_for_class(execution_level, cur_parent_class, False)
+            # go through list and remove all overwritten fixtures
+            _added_fixtures = []
+            remaining_fixtures = []
+            for cur_fixture_tuple in all_fixtures:
+                if cur_fixture_tuple[1].__name__ not in _added_fixtures:
+                    _added_fixtures.append(cur_fixture_tuple[1].__name__)
+                    remaining_fixtures.append(cur_fixture_tuple)
+            return remaining_fixtures
+        else:
+            return fixtures_of_exec_level.get(setup_or_scenario_class, [])
+
     def get_all_fixtures_for_current_level(
             self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \
             -> Dict[Union[Type[ExecutorTree], Type[Scenario], Type[Setup]],
@@ -416,28 +451,24 @@ class FixtureManager:
                  argument (this list is ordered after the call hierarchy)
         """
         from _balder.executor.executor_tree import ExecutorTree
-        # current relevant EXECUTION LEVEL - all other levels are not relevant for this call
-        cur_execution_level = self.resolve_type_level[branch.__class__]
-        # get all fixtures of the current relevant level
-        fixtures_of_exec_level = self.fixtures.get(cur_execution_level, {})
 
         all_fixtures = {}
         # get all relevant fixtures of `balderglob.py` (None is key for balderglob fixtures)
-        glob_fixtures = fixtures_of_exec_level.get(None, [])
+        glob_fixtures = self.get_fixture_for_class(branch.__class__, None)
         all_fixtures[ExecutorTree] = {}
         all_fixtures[ExecutorTree][ExecutorTree] = glob_fixtures
         # get all relevant fixtures with definition scope "setup"
         all_fixtures[Setup] = {}
         for cur_setup in branch.get_all_base_instances_of_this_branch(Setup, only_runnable_elements=True):
             # check if there exists fixtures for the current setup
-            cur_setup_fixtures = fixtures_of_exec_level.get(cur_setup.__class__, [])
+            cur_setup_fixtures = self.get_fixture_for_class(branch.__class__, cur_setup.__class__)
             if cur_setup_fixtures:
                 all_fixtures[Setup][cur_setup.__class__] = cur_setup_fixtures
 
         # get all relevant fixtures with definition scope "scenario"
         all_fixtures[Scenario] = {}
         for cur_scenario in branch.get_all_base_instances_of_this_branch(Scenario, only_runnable_elements=True):
-            cur_scenario_fixtures = fixtures_of_exec_level.get(cur_scenario.__class__, [])
+            cur_scenario_fixtures = self.get_fixture_for_class(branch.__class__, cur_scenario.__class__)
             if cur_scenario_fixtures:
                 all_fixtures[Scenario][cur_scenario.__class__] = cur_scenario_fixtures
 
