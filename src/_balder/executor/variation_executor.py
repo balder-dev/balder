@@ -715,10 +715,7 @@ class VariationExecutor(BasicExecutor):
                     if cur_scenario_device not in abs_var_scenario_device_cnns.keys():
                         abs_var_scenario_device_cnns[cur_scenario_device] = {}
 
-                    if cur_cnn.from_device == cur_scenario_device:
-                        cur_to_device = cur_cnn.to_device
-                    else:
-                        cur_to_device = cur_cnn.from_device
+                    cur_to_device, _ = cur_cnn.get_conn_partner_of(cur_scenario_device)
 
                     if cur_to_device not in abs_var_scenario_device_cnns[cur_scenario_device].keys():
                         abs_var_scenario_device_cnns[cur_scenario_device][cur_to_device] = []
