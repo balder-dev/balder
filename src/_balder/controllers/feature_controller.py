@@ -129,6 +129,39 @@ class FeatureController(Controller):
             return [Connection()]
         return intersection
 
+    def _determine_all_theoretically_unordered_method_variations(
+            self, of_method_name: str, for_vdevice: Type[VDevice],
+            with_connection: Union[Connection, Tuple[Connection]]) -> Dict[Callable, Connection]:
+        """
+        This method returns all theoretically matching method variations. It returns more than one, if there are
+        multiple method variation for the given VDevice in this feature, where the given connection is part of the
+        connection described by the method variation.
+
+        :param of_method_name: the name of the method that should be returned
+        :param for_vdevice: the VDevice that is mapped
+        :param with_connection: the connection that is used between the device that uses the related feature and the
+                                VDevice
+        :return: a dictionary that holds all available method variation that matches here
+        """
+        all_possible_method_variations = {}
+        for cur_impl_method, cur_method_impl_dict in self.get_method_based_for_vdevice()[of_method_name].items():
+            if for_vdevice in cur_method_impl_dict.keys():
+                cur_impl_method_cnns = []
+                for cur_cnn in cur_method_impl_dict[for_vdevice]:
+                    cur_impl_method_cnns += cur_cnn.get_singles()
+                for cur_single_impl_method_cnn in cur_impl_method_cnns:
+                    if cur_single_impl_method_cnn.contained_in(with_connection, ignore_metadata=True):
+                        # this variation is possible
+                        # ADD IT if it is not available yet
+                        if cur_impl_method not in all_possible_method_variations.keys():
+                            all_possible_method_variations[cur_impl_method] = cur_single_impl_method_cnn
+                        # COMBINE IT if it is already available
+                        else:
+                            all_possible_method_variations[cur_impl_method] = Connection.based_on(
+                                all_possible_method_variations[cur_impl_method], cur_single_impl_method_cnn)
+        return all_possible_method_variations
+
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def get_class_based_for_vdevice(self) -> Union[Dict[Type[VDevice], List[Connection]], None]:
@@ -321,24 +354,10 @@ class FeatureController(Controller):
             raise ValueError(f"can not find the method `{of_method_name}` in method variation data dictionary")
 
         # first determine all possible method-variations
-        all_possible_method_variations = {}
-        for cur_impl_method, cur_method_impl_dict in self.get_method_based_for_vdevice()[of_method_name].items():
-            if for_vdevice in cur_method_impl_dict.keys():
-                cur_impl_method_cnns = []
-                for cur_cnn in cur_method_impl_dict[for_vdevice]:
-                    cur_impl_method_cnns += cur_cnn.get_singles()
-                for cur_single_impl_method_cnn in cur_impl_method_cnns:
-                    if cur_single_impl_method_cnn.contained_in(with_connection, ignore_metadata=True):
-                        # this variation is possible
-                        # ADD IT if it is not available yet
-                        if cur_impl_method not in all_possible_method_variations.keys():
-                            all_possible_method_variations[cur_impl_method] = cur_single_impl_method_cnn
-                        # COMBINE IT if it is already available
-                        else:
-                            all_possible_method_variations[cur_impl_method] = Connection.based_on(
-                                all_possible_method_variations[cur_impl_method], cur_single_impl_method_cnn)
+        all_possible_method_variations = self._determine_all_theoretically_unordered_method_variations(
+            of_method_name=of_method_name, for_vdevice=for_vdevice, with_connection=with_connection)
 
-        # if there are more than one possible method variation, try to sort them hierarchical
+        # there are no method variations in this feature directly -> check parent classes
         if len(all_possible_method_variations) == 0:
             # try to execute this method in parent classes
             for cur_base in self.related_cls.__bases__:
@@ -355,9 +374,11 @@ class FeatureController(Controller):
                     f"and usable connection `{with_connection.get_tree_str()}´")
             return None
 
+        # we only have one -> selection is clear
         if len(all_possible_method_variations) == 1:
             return list(all_possible_method_variations.keys())[0]
 
+        # if there are more than one possible method variation, try to sort them hierarchical
         # we have to determine the outer one
         length_before = None
         while length_before is None or length_before != len(all_possible_method_variations):
