@@ -188,7 +188,7 @@ class NormalScenarioSetupController(Controller, ABC):
 
         devices = self.get_all_inner_device_classes()
         abs_parent_devices = parent_scenario_or_setup_controller.get_all_abs_inner_device_classes()
-        abs_parent_devices_as_names = [cur_parent.__name__ for cur_parent in abs_parent_devices]
+        abs_parent_devices_by_name = {cur_parent.__name__: cur_parent for cur_parent in abs_parent_devices}
 
         if len(devices) == 0:
             # ignore it because cur item has no own device definitions
@@ -197,10 +197,7 @@ class NormalScenarioSetupController(Controller, ABC):
         # check that a device is newly defined or has the same name as the parent device
         for cur_item_device in devices:
             # check if name exists in parent
-            relevant_parent_according_naming = None
-            if cur_item_device.__name__ in abs_parent_devices_as_names:
-                relevant_parent_according_naming = \
-                    abs_parent_devices[abs_parent_devices_as_names.index(cur_item_device.__name__)]
+            relevant_parent_according_naming = abs_parent_devices_by_name.get(cur_item_device.__name__, None)
 
             # check if device is inherited from a parent
             relevant_parent_device_according_inheritance = None
@@ -236,11 +233,7 @@ class NormalScenarioSetupController(Controller, ABC):
 
         # secure that all parent devices are implemented here too
         for cur_parent in abs_parent_devices:
-            found_parent = False
-            for cur_item_device in devices:
-                if issubclass(cur_item_device, cur_parent):
-                    found_parent = True
-                    break
+            found_parent = len([dev for dev in devices if issubclass(dev, cur_parent)]) > 0
             if not found_parent:
                 raise DeviceOverwritingError(
                     f"found a device `{cur_parent.__qualname__}` which is part of a parent class, but it is "
