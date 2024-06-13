@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING, Any
+from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING
 
 import os
 import sys
@@ -678,7 +678,8 @@ class Collector:
         for cur_setup in self.all_setups:
             SetupController.get_for(cur_setup).validate_feature_possibility()
 
-    def _filter_paths_after_allowed_paths(self, paths: List[pathlib.Path], filter_patterns: List[str]) -> List[pathlib.Path]:
+    def _filter_paths_after_allowed_paths(self, paths: List[pathlib.Path], filter_patterns: List[str]) \
+            -> List[pathlib.Path]:
         """
         This method filters the given list of filepaths for the given filter_patterns. It returns a list with all
         remaining paths that are mathing the filter statements in `filter_paths`.
