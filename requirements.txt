@@ -3,7 +3,7 @@ Babel==2.9.1
 certifi==2023.7.22
 charset-normalizer==2.0.6
 docutils==0.17.1
-idna==3.2
+idna==3.7
 imagesize==1.2.0
 furo==2022.1.2
 Jinja2==3.1.4
