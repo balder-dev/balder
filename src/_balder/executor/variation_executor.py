@@ -5,7 +5,7 @@ import inspect
 import logging
 from _balder.device import Device
 from _balder.connection import Connection
-from _balder.testresult import ResultState, BranchBodyResult
+from _balder.testresult import ResultState, BranchBodyResult, ResultSummary
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
@@ -283,17 +283,10 @@ class VariationExecutor(BasicExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def testsummary(self):
+    def testsummary(self) -> ResultSummary:
         if self.can_be_applied():
             return super().testsummary()
-        return {
-            ResultState.NOT_RUN: 0,
-            ResultState.FAILURE: 0,
-            ResultState.ERROR: 0,
-            ResultState.SUCCESS: 0,
-            ResultState.SKIP: 0,
-            ResultState.COVERED_BY: 0
-        }
+        return ResultSummary()
 
     def get_testcase_executors(self) -> List[TestcaseExecutor]:
         """returns all sub testcase executors that belongs to this variation-executor"""

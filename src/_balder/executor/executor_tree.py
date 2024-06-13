@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import Union, List, Type, TYPE_CHECKING
 
+from dataclasses import fields
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.fixture_manager import FixtureManager
-from _balder.testresult import ResultState, BranchBodyResult
+from _balder.testresult import ResultState, BranchBodyResult, ResultSummary
 from _balder.previous_executor_mark import PreviousExecutorMark
 
 if TYPE_CHECKING:
@@ -163,12 +164,12 @@ class ExecutorTree(BasicExecutor):
         print_line(end_text)
         summary = self.testsummary()
         is_first = True
-        for cur_key, cur_val in summary.items():
+        for cur_field in fields(ResultSummary):
             if is_first:
                 is_first = False
             else:
                 print(" | ", end="")
-            print(f"TOTAL {cur_key.value}: {cur_val}", end="")
+            print(f"TOTAL {cur_field.name}: {getattr(summary, cur_field.name)}", end="")
         print("")
 
     def print_tree(self, show_discarded=False) -> None:

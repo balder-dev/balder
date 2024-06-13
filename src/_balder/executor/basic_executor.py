@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import time
-from typing import List, Dict, Union, Type, TYPE_CHECKING
+from typing import List, Union, Type, TYPE_CHECKING
 
 import sys
 import types
 import traceback
 from abc import ABC, abstractmethod
-from _balder.testresult import FixturePartResult, ResultState
+from _balder.testresult import FixturePartResult, ResultState, ResultSummary
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import TestcaseResult
 
@@ -207,31 +207,19 @@ class BasicExecutor(ABC):
         for cur_child_executor in self.all_child_executors:
             cur_child_executor.filter_tree_for_user_filters()
 
-    def testsummary(self) -> Dict[ResultState, int]:
+    def testsummary(self) -> ResultSummary:
         """
         returns a dictionary with all possible :class:`ResultState` as keys and the number of times they have occurred
         in this branch as values
         """
 
-        summary = {
-            ResultState.NOT_RUN: 0,
-            ResultState.FAILURE: 0,
-            ResultState.ERROR: 0,
-            ResultState.SUCCESS: 0,
-            ResultState.SKIP: 0,
-            ResultState.COVERED_BY: 0
-        }
+        summary = ResultSummary()
 
         if isinstance(self.body_result, TestcaseResult):
-            summary[self.executor_result] = 1
+            setattr(summary, self.executor_result.value, 1)
         else:
             for cur_child_exec in self.all_child_executors:
-                cur_child_dict = cur_child_exec.testsummary()
-                for cur_key in cur_child_dict.keys():
-                    if cur_key in summary:
-                        summary[cur_key] += cur_child_dict[cur_key]
-                    else:
-                        summary[cur_key] = cur_child_dict[cur_key]
+                summary += cur_child_exec.testsummary()
         return summary
 
     def execute(self, show_discarded=False):
