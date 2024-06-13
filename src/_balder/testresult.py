@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING, List, Union
 
 from enum import Enum
@@ -12,21 +14,21 @@ class ResultState(Enum):
     enumeration that describes the possible results of a testcase-/fixture-executor
     """
     # this state will be assigned if the executor doesn't run yet
-    NOT_RUN = 'NOT_RUN'
+    NOT_RUN = 'not_run'
     # this state will be assigned if the test fails (only assignable to :class:`TestcaseExecutor`)
-    FAILURE = 'FAILURE'
+    FAILURE = 'failure'
     # this state will be assigned if the executor can not be executed because the fixture fails (only possible in
     # construction part of fixtures, if the error occurs in teardown the next higher executer get this state) - will be
     # assigned to the executor which has the fixture that fails
-    ERROR = 'ERROR'
+    ERROR = 'error'
     # this state will be assigned if the executor was executed successfully (session fixture and teardown fixture; for
     # :class:`TestcaseExecutor` also the testcase itself)
-    SUCCESS = 'SUCCESS'
+    SUCCESS = 'success'
     # this state will be assigned if the executor was skipped
-    SKIP = 'SKIP'
+    SKIP = 'skip'
     # this state will be assigned if the executor is covered by another executor and wasn't executed (only assignable
     # to :class:`ScenarioExecutor` and :class:`TestcaseExecutor`)
-    COVERED_BY = 'COVERED_BY'
+    COVERED_BY = 'covered_by'
 
     @staticmethod
     def priority_order() -> List[ResultState]:
@@ -128,3 +130,33 @@ class TestcaseResult(_SettableResult):
     #: contains the possible values that can be set for this Result type
     ALLOWED_STATES = [ResultState.NOT_RUN, ResultState.FAILURE, ResultState.SUCCESS, ResultState.SKIP,
                       ResultState.COVERED_BY]
+
+@dataclass
+class ResultSummary:
+    """
+    object that holds the test results for multiple tests like on branch or global level
+    """
+    # this state will be assigned if the executor doesn't run yet
+    not_run: int = 0
+    # this state will be assigned if the test fails (only assignable to :class:`TestcaseExecutor`)
+    failure: int = 0
+    # this state will be assigned if the executor can not be executed because the fixture fails (only possible in
+    # construction part of fixtures, if the error occurs in teardown the next higher executer get this state) - will be
+    # assigned to the executor which has the fixture that fails
+    error: int = 0
+    # this state will be assigned if the executor was executed successfully (session fixture and teardown fixture; for
+    # :class:`TestcaseExecutor` also the testcase itself)
+    success: int = 0
+    # this state will be assigned if the executor was skipped
+    skip: int = 0
+    # this state will be assigned if the executor is covered by another executor and wasn't executed (only assignable
+    # to :class:`ScenarioExecutor` and :class:`TestcaseExecutor`)
+    covered_by: int = 0
+
+    def __add__(self, other) -> ResultSummary:
+        new_summary = ResultSummary()
+        for cur_field in fields(self.__class__):
+            self_val = getattr(self, cur_field.name)
+            other_val = getattr(other, cur_field.name)
+            setattr(new_summary, cur_field.name, self_val + other_val)
+        return new_summary
