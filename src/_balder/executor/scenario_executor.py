@@ -6,6 +6,7 @@ from _balder.utils import get_class_that_defines_method
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.variation_executor import VariationExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
+from _balder.controllers.scenario_controller import ScenarioController
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
@@ -63,6 +64,10 @@ class ScenarioExecutor(BasicExecutor):
     def base_scenario_class(self) -> Scenario:
         """returns the :class:`Scenario` class that belongs to this executor"""
         return self._base_scenario_class
+
+    @property
+    def base_scenario_controller(self) -> ScenarioController:
+        return ScenarioController.get_for(self.base_scenario_class.__class__)
 
     @property
     def fixture_manager(self) -> FixtureManager:
