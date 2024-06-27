@@ -5,6 +5,7 @@ from _balder.testresult import ResultState, BranchBodyResult
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
+from _balder.controllers.setup_controller import SetupController
 
 if TYPE_CHECKING:
     from _balder.setup import Setup
@@ -57,6 +58,10 @@ class SetupExecutor(BasicExecutor):
     def base_setup_class(self) -> Setup:
         """returns the base :class:`Setup` that belongs to this executor"""
         return self._base_setup_class
+
+    @property
+    def base_setup_controller(self) -> SetupController:
+        return SetupController.get_for(self.base_setup_class.__class__)
 
     @property
     def fixture_manager(self) -> FixtureManager:
