@@ -1,6 +1,7 @@
 import balder
 import logging
-from .setup_features import SetupFeatureI, SetupFeatureII, SetupFeatureIII, SetupFeatureIV
+from .setup_features import (SetupFeatureI, SetupFeatureII, SetupFeatureIII, SetupFeatureIV, SetupFeatureV,
+                             SetupFeatureVI, SetupFeatureVII, SetupFeatureVIII)
 from ..lib.connections import AConnection
 from ..balderglob import RuntimeObserver
 
@@ -19,6 +20,14 @@ class SetupA(balder.Setup):
         s_iii = SetupFeatureIII()
         s_iv = SetupFeatureIV()
 
+    class SetupUnmappedDevice1(balder.Device):
+        s_v = SetupFeatureV()
+        s_vi = SetupFeatureVI()
+
+    class SetupUnmappedDevice2(balder.Device):
+        s_vii = SetupFeatureVII()
+        s_viii = SetupFeatureVIII()
+
     @balder.fixture(level="session")
     def fixture_session(self):
         RuntimeObserver.add_entry(__file__, SetupA, SetupA.fixture_session, category="fixture", part="construction",
@@ -28,7 +37,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
-
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
         yield
 
         RuntimeObserver.add_entry(__file__, SetupA, SetupA.fixture_session, category="fixture", part="teardown",
@@ -38,6 +50,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
     @balder.fixture(level="setup")
     def fixture_setup(self):
@@ -48,6 +64,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
         yield
 
@@ -58,6 +78,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
     @balder.fixture(level="scenario")
     def fixture_scenario(self):
@@ -68,6 +92,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
         yield
 
@@ -78,6 +106,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
     @balder.fixture(level="variation")
     def fixture_variation(self):
@@ -88,6 +120,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
         yield
 
@@ -98,6 +134,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
     @balder.fixture(level="testcase")
     def fixture_testcase(self):
@@ -108,6 +148,10 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
 
         yield
 
@@ -118,3 +162,7 @@ class SetupA(balder.Setup):
         self.SetupDevice1.s_ii.do_something()
         self.SetupDevice2.s_iii.do_something()
         self.SetupDevice2.s_iv.do_something()
+        self.SetupUnmappedDevice1.s_v.do_something()
+        self.SetupUnmappedDevice1.s_vi.do_something()
+        self.SetupUnmappedDevice2.s_vii.do_something()
+        self.SetupUnmappedDevice2.s_viii.do_something()
