@@ -150,7 +150,6 @@ class VariationExecutor(BasicExecutor):
             self.determine_abs_variation_connections()
             self.update_scenario_device_feature_instances()
             self.update_active_vdevice_device_mappings_in_all_features()
-            self.update_inner_referenced_feature_instances()
             self.exchange_unmapped_vdevice_references()
             self.update_vdevice_referenced_feature_instances()
             self.set_conn_dependent_methods()
@@ -562,34 +561,6 @@ class VariationExecutor(BasicExecutor):
         for _, cur_feature_mapping_dict in self._original_active_vdevice_mappings.items():
             for cur_feature, cur_original_mapping in cur_feature_mapping_dict.items():
                 cur_feature.active_vdevices = cur_original_mapping
-
-    def update_inner_referenced_feature_instances(self):
-        """
-        This method ensures that all inner referenced feature instances of the used feature object, will be replaced
-        with the related feature instances of the device object itself.
-
-        .. note::
-            Note that this method expects that the true defined scenario features are already replaced with the real
-            setup features. So the method requires that the method `update_scenario_device_feature_instances()` was
-            called before.
-        """
-        for scenario_device, _ in self._base_device_mapping.items():
-            # these features are subclasses of the real defined one (because they are already the replaced ones)
-            all_device_features = DeviceController.get_for(scenario_device).get_all_instantiated_feature_objects()
-            all_instantiated_feature_objs = [cur_feature for _, cur_feature in all_device_features.items()]
-            for _, cur_feature in all_device_features.items():
-                cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
-                # now check the inner referenced features of this feature and check if that exists in the device
-                for cur_ref_feature_name, cur_ref_feature in \
-                        cur_feature_controller.get_inner_referenced_features().items():
-                    potential_candidates = [candidate_feature for candidate_feature in all_instantiated_feature_objs
-                                            if isinstance(candidate_feature, cur_ref_feature.__class__)]
-                    if len(potential_candidates) != 1:
-                        raise RuntimeError("found none or more than one potential replacing candidates")
-                    replacing_candidate = potential_candidates[0]
-                    # because `cur_feature` is only the object instance, the value will be overwritten only for this
-                    # object
-                    setattr(cur_feature, cur_ref_feature_name, replacing_candidate)
 
     def exchange_unmapped_vdevice_references(self):
         """
