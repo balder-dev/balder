@@ -74,8 +74,6 @@ class SetupExecutor(BasicExecutor):
 
     def _prepare_execution(self, show_discarded):
         print(f"SETUP {self.base_setup_class.__class__.__name__}")
-        if not show_discarded:
-            self.update_inner_referenced_feature_instances()
 
     def _body_execution(self, show_discarded):
         for cur_scenario_executor in self.get_scenario_executors():
