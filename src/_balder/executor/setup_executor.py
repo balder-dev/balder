@@ -6,6 +6,8 @@ from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.controllers.setup_controller import SetupController
+from _balder.controllers.device_controller import DeviceController
+from _balder.controllers.feature_controller import FeatureController
 
 if TYPE_CHECKING:
     from _balder.setup import Setup
@@ -72,6 +74,8 @@ class SetupExecutor(BasicExecutor):
 
     def _prepare_execution(self, show_discarded):
         print(f"SETUP {self.base_setup_class.__class__.__name__}")
+        if not show_discarded:
+            self.update_inner_referenced_feature_instances()
 
     def _body_execution(self, show_discarded):
         for cur_scenario_executor in self.get_scenario_executors():
@@ -88,6 +92,34 @@ class SetupExecutor(BasicExecutor):
         pass
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def update_inner_referenced_feature_instances(self):
+        """
+        This method ensures that all inner referenced feature instances of all devices that are used in this setup are
+        set to the correct feature instance. For every existing device, this method goes trough all assigned features
+        and checks for a inner-referenced feature. It makes sure, that every inner-referenced feature variable has the
+        final assigned setup feature that belongs to it.
+
+        # TODO check where we validate that inner references feature exists in setup
+        """
+        for cur_setup_device in self.base_setup_controller.get_all_abs_inner_device_classes():
+            # these features are subclasses of the real defined one (because they are already the replaced ones)
+            all_device_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
+            all_instantiated_feature_objs_of_this_dev = [cur_feature for _, cur_feature in all_device_features.items()]
+            for _, cur_feature in all_device_features.items():
+                cur_feature_controller = FeatureController.get_for(cur_feature.__class__)
+                # now check the inner referenced features of this feature and check if that exists in the device
+                for cur_ref_feature_name, cur_ref_feature in \
+                        cur_feature_controller.get_inner_referenced_features().items():
+                    potential_candidates = [
+                        candidate_feature for candidate_feature in all_instantiated_feature_objs_of_this_dev
+                        if isinstance(candidate_feature, cur_ref_feature.__class__)]
+                    if len(potential_candidates) != 1:
+                        raise RuntimeError("found none or more than one potential replacing candidates")
+                    replacing_candidate = potential_candidates[0]
+                    # because `cur_feature` is only the object instance, the value will be overwritten only for this
+                    # object
+                    setattr(cur_feature, cur_ref_feature_name, replacing_candidate)
 
     def get_scenario_executors(self) -> List[ScenarioExecutor]:
         """returns a list with all scenario executors that belongs to this setup executor"""
