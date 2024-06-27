@@ -56,7 +56,8 @@ class ExecutorTree(BasicExecutor):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     def _prepare_execution(self, show_discarded):
-        pass
+        if not show_discarded:
+            self.update_inner_feature_reference_in_all_setups()
 
     def _body_execution(self, show_discarded):
         for cur_setup_executor in self.get_setup_executors():
@@ -139,6 +140,16 @@ class ExecutorTree(BasicExecutor):
                 to_remove_executor.append(cur_setup_executor)
         for cur_setup_executor in to_remove_executor:
             self._setup_executors.remove(cur_setup_executor)
+
+    def update_inner_feature_reference_in_all_setups(self):
+        """
+        This method iterates over all setups and triggers the method that updates the inner feature references.
+
+        This needs to be done on ExecutorTree level, because this reference should also be accessible within session
+        fixtures (in case they have setup scope).
+        """
+        for cur_setup_executor in self.get_setup_executors():
+            cur_setup_executor.update_inner_referenced_feature_instances()
 
     def execute(self, show_discarded=False) -> None:
         """
