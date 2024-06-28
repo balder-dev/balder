@@ -4,6 +4,7 @@ from typing import Union, List, Type, TYPE_CHECKING
 from dataclasses import fields
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.basic_executor import BasicExecutor
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.fixture_manager import FixtureManager
 from _balder.testresult import ResultState, BranchBodyResult, ResultSummary
 from _balder.previous_executor_mark import PreviousExecutorMark
@@ -19,6 +20,7 @@ class ExecutorTree(BasicExecutor):
     """
     This class is the root object of the executor tree structure
     """
+    fixture_execution_level = FixtureExecutionLevel.SESSION
     LINE_LENGTH = 120
 
     def __init__(self, fixture_manager: FixtureManager):

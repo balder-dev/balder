@@ -4,6 +4,8 @@ from typing import List, Union, TYPE_CHECKING
 import sys
 import time
 import traceback
+
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.utils import inspect_method
 from _balder.testresult import ResultState, TestcaseResult
 from _balder.executor.basic_executor import BasicExecutor
@@ -19,6 +21,7 @@ class TestcaseExecutor(BasicExecutor):
     A TestcaseExecutor class represents an actual single test that can be executed. It therefore references exactly to a
     test method of a scenario that can be executed on the specific setup this executor belongs to.
     """
+    fixture_execution_level = FixtureExecutionLevel.TESTCASE
 
     def __init__(self, testcase: callable, parent: VariationExecutor):
         super().__init__()

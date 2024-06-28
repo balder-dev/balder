@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from _balder.setup import Setup
     from _balder.scenario import Scenario
     from _balder.fixture_manager import FixtureManager
+    from _balder.fixture_execution_level import FixtureExecutionLevel
 
 
 class BasicExecutor(ABC):
@@ -23,6 +24,7 @@ class BasicExecutor(ABC):
     executor classes, an executor forms a tree structure in which individual tests, which later on are executed, are
     assigned to individual scenarios
     """
+    fixture_execution_level: FixtureExecutionLevel = None
     # this property describes the runnable state of the executor branch before the executor is really used
     #  with this you can declare a whole branch as inactive, while the collecting process is active
     prev_mark = PreviousExecutorMark.RUNNABLE

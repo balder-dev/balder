@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Type, Union, List, Dict, TYPE_CHECKING
 
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.utils import get_class_that_defines_method
 from _balder.executor.basic_executor import BasicExecutor
@@ -18,6 +19,7 @@ class ScenarioExecutor(BasicExecutor):
     """
     A ScenarioExecutor can contain :meth:`VariationExecutor` as children.
     """
+    fixture_execution_level = FixtureExecutionLevel.SCENARIO
 
     def __init__(self, scenario: Type[Scenario], parent: SetupExecutor):
         super().__init__()

@@ -5,6 +5,7 @@ import inspect
 import logging
 from _balder.device import Device
 from _balder.connection import Connection
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult, ResultSummary
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.testcase_executor import TestcaseExecutor
@@ -30,6 +31,7 @@ class VariationExecutor(BasicExecutor):
     """
     A VariationExecutor only contains :meth:`TestcaseExecutor` children.
     """
+    fixture_execution_level = FixtureExecutionLevel.VARIATION
 
     def __init__(self, device_mapping: Dict[Type[Device], Type[Device]], parent: ScenarioExecutor):
         super().__init__()
