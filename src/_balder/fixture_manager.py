@@ -6,6 +6,7 @@ from graphlib import TopologicalSorter
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.scenario import Scenario
 from _balder.setup import Setup
+from _balder.fixture_definition_scope import FixtureDefinitionScope
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.setup_executor import SetupExecutor
@@ -34,21 +35,13 @@ class FixtureManager:
         # contains all active fixtures with their namespace, their func_type, their callable, the generator object
         # (otherwise an empty generator, if the fixture is not a generator) and the result according to the fixture's
         # construction code (will be cleaned after it leaves a level)
-        self.current_tree_fixtures: Dict[FixtureExecutionLevel, List[Tuple[Union[Type[ExecutorTree], Type[Setup], Type[Scenario]], str, Callable, Generator, object]]] = {}
+        self.current_tree_fixtures: Dict[FixtureExecutionLevel, List[Tuple[Union[None, Type[Setup], Type[Scenario]], str, Callable, Generator, object]]] = {}
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     # ---------------------------------- CLASS METHODS ----------------------------------------------------------------
 
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
-
-    @property
-    def definition_scope_order(self):
-        """
-        returns a list with the definition scope objects in the priority order (ExecutorTree stands for global fixtures)
-        """
-        from _balder.executor.executor_tree import ExecutorTree
-        return [ExecutorTree, Setup, Scenario]
 
     @property
     def all_already_run_fixtures(self) -> List[Callable]:
@@ -66,7 +59,7 @@ class FixtureManager:
 
     def get_all_attribute_values(
             self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor],
-            callable_func_namespace: Union[Type[ExecutorTree], Type[Scenario], Type[Setup]], callable_func: Callable,
+            callable_func_namespace: Union[None, Type[Scenario], Type[Setup]], callable_func: Callable,
             func_type: str) -> Dict[str, object]:
         """
         This method tries to fill the unresolved function/method arguments of the given fixture callable. For this it
@@ -81,7 +74,8 @@ class FixtureManager:
 
         :param branch: the current active branch
 
-        :param callable_func_namespace: the namespace of the current fixture
+        :param callable_func_namespace: the namespace of the current fixture or `None` if it is defined in balderglob
+                                        file
 
         :param callable_func: the callable with the arguments
 
@@ -90,8 +84,6 @@ class FixtureManager:
 
         :return: the method returns a dictionary with the attribute name as key and the return value as value
         """
-        from _balder.executor.executor_tree import ExecutorTree
-
         arguments = inspect.getfullargspec(callable_func).args
         result_dict = {}
 
@@ -100,14 +92,14 @@ class FixtureManager:
 
         self._validate_for_unclear_setup_scoped_fixture_reference(
             callable_func_namespace, callable_func, arguments, cur_execution_level=branch.fixture_execution_level)
-        all_possible_namespaces = [ExecutorTree]
+        all_possible_namespaces = [None]
         # determine namespaces (in the correct order)
         setup_type = None
         scenario_type = None
         if isinstance(branch, SetupExecutor):
             setup_type = branch.base_setup_class.__class__
             # normally the scenario is None - only if the current namespace is a scenario we can use it
-            if issubclass(callable_func_namespace, Scenario):
+            if callable_func_namespace is not None and issubclass(callable_func_namespace, Scenario):
                 scenario_type = callable_func_namespace
             else:
                 scenario_type = None
@@ -122,11 +114,12 @@ class FixtureManager:
             scenario_type = branch.parent_executor.cur_scenario_class.__class__
 
         # add to possible namespaces only if the namespace of the current fixture allows this
-        if (issubclass(callable_func_namespace, Setup) or issubclass(callable_func_namespace, Scenario)) \
-                and setup_type is not None:
-            all_possible_namespaces.append(setup_type)
-        if issubclass(callable_func_namespace, Scenario) and scenario_type is not None:
-            all_possible_namespaces.append(scenario_type)
+        if callable_func_namespace is not None:
+            if (issubclass(callable_func_namespace, Setup) or issubclass(callable_func_namespace, Scenario)) \
+                    and setup_type is not None:
+                all_possible_namespaces.append(setup_type)
+            if issubclass(callable_func_namespace, Scenario) and scenario_type is not None:
+                all_possible_namespaces.append(scenario_type)
 
         for cur_arg in arguments:
             # go to the most specific fixture, because more specific ones overwrite the more global ones
@@ -144,7 +137,7 @@ class FixtureManager:
         return result_dict
 
     def _validate_for_unclear_setup_scoped_fixture_reference(
-            self, fixture_callable_namespace: Union[Type[ExecutorTree], Type[Scenario], Type[Setup]],
+            self, fixture_callable_namespace: Union[None, Type[Scenario], Type[Setup]],
             fixture_callable: Callable, arguments: List[str], cur_execution_level: FixtureExecutionLevel):
         """
         This helper method validates a given fixture reference for the unclear setup scoped fixture reference.
@@ -163,7 +156,7 @@ class FixtureManager:
             The error will be thrown if a scenario scoped fixture with the execution level SESSION references a fixture
             name that exists in one or more setup scoped fixtures with the execution level SESSION.
 
-        :param fixture_callable_namespace: the namespace of the current fixture
+        :param fixture_callable_namespace: the namespace of the current fixture or None if it is a `balderglob.py` file
 
         :param fixture_callable: the callable with the arguments
 
@@ -173,7 +166,8 @@ class FixtureManager:
         """
         # this method is only interested in fixtures with execution level SESSION!
 
-        if isinstance(fixture_callable_namespace, Scenario) and cur_execution_level == FixtureExecutionLevel.SESSION:
+        if (fixture_callable_namespace is not None and isinstance(fixture_callable_namespace, Scenario)
+                and cur_execution_level == FixtureExecutionLevel.SESSION):
             all_setup_scoped_fixtures = []
 
             for cur_namespace_type, fixtures in self.fixtures.get(FixtureExecutionLevel.SESSION, {}).items():
@@ -187,9 +181,9 @@ class FixtureManager:
                         f"fixtures with the definition scope that have the same name - please rename them!")
 
     def _sort_fixture_list_of_same_definition_scope(
-            self, fixture_namespace_dict: Dict[Tuple[str, Union[Type[ExecutorTree], Type[Scenario], Type[Setup]]],
-                                               List[object]], outer_scope_fixtures: List[object]) \
-            -> List[Tuple[Union[Type[ExecutorTree], Type[Scenario], Type[Setup]], str, Callable]]:
+            self, fixture_namespace_dict: Dict[Union[None, Type[Scenario], Type[Setup]], List[object]],
+            outer_scope_fixtures: List[object]) \
+            -> List[Tuple[Union[None, Type[Scenario], Type[Setup]], str, Callable]]:
         """
         This is a helper method that allows to sort the fixtures given in `fixture_namespace_dict`, depending on their
         arguments.
@@ -212,7 +206,7 @@ class FixtureManager:
 
         # returns the func_type for the given fixture
         fixture_func_types = {}
-        for cur_namespace_type, cur_fixture_list in fixture_namespace_dict.items():
+        for _, cur_fixture_list in fixture_namespace_dict.items():
             for cur_func_type, cur_fixture in cur_fixture_list:
                 fixture_func_types[cur_fixture] = cur_func_type
 
@@ -297,7 +291,7 @@ class FixtureManager:
             yield None
         # now iterate over all fixtures that should be executed in this enter() call
         #  -> collect them with all different DEFINITION-SCOPES
-        for cur_definition_scope in self.definition_scope_order:
+        for cur_definition_scope in FixtureDefinitionScope:
             cur_fixture_list = self.get_all_fixtures_for_current_level(branch=branch).get(cur_definition_scope)
             for cur_scope_namespace_type, cur_fixture_func_type, cur_fixture in cur_fixture_list:
                 try:
@@ -400,8 +394,7 @@ class FixtureManager:
 
     def get_all_fixtures_for_current_level(
             self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \
-            -> Dict[Union[Type[ExecutorTree], Type[Scenario], Type[Setup]],
-                    List[Tuple[Union[Type[ExecutorTree], Type[Scenario], Type[Setup]], str, object]]]:
+            -> Dict[FixtureDefinitionScope, List[Tuple[Union[None, Type[Scenario], Type[Setup]], str, object]]]:
         """
         This method delivers all fixtures which should be executed for the given branch of the executor tree.
 
@@ -419,46 +412,46 @@ class FixtureManager:
                  or :class:`Setup`) as first argument, the fixture func_type as second and the fixture callable as third
                  argument (this list is ordered after the call hierarchy)
         """
-        from _balder.executor.executor_tree import ExecutorTree
-
         all_fixtures = {}
         # get all relevant fixtures of `balderglob.py` (None is key for balderglob fixtures)
         glob_fixtures = self.get_fixture_for_class(branch.fixture_execution_level, None)
-        all_fixtures[ExecutorTree] = {}
-        all_fixtures[ExecutorTree][ExecutorTree] = glob_fixtures
+        all_fixtures[FixtureDefinitionScope.GLOB] = {}
+        all_fixtures[FixtureDefinitionScope.GLOB][None] = glob_fixtures
         # get all relevant fixtures with definition scope "setup"
-        all_fixtures[Setup] = {}
+        all_fixtures[FixtureDefinitionScope.SETUP] = {}
         for cur_setup in branch.get_all_base_instances_of_this_branch(Setup, only_runnable_elements=True):
             # check if there exists fixtures for the current setup
             cur_setup_fixtures = self.get_fixture_for_class(branch.fixture_execution_level, cur_setup.__class__)
             if cur_setup_fixtures:
-                all_fixtures[Setup][cur_setup.__class__] = cur_setup_fixtures
+                all_fixtures[FixtureDefinitionScope.SETUP][cur_setup.__class__] = cur_setup_fixtures
 
         # get all relevant fixtures with definition scope "scenario"
-        all_fixtures[Scenario] = {}
+        all_fixtures[FixtureDefinitionScope.SCENARIO] = {}
         for cur_scenario in branch.get_all_base_instances_of_this_branch(Scenario, only_runnable_elements=True):
             cur_scenario_fixtures = self.get_fixture_for_class(branch.fixture_execution_level, cur_scenario.__class__)
             if cur_scenario_fixtures:
-                all_fixtures[Scenario][cur_scenario.__class__] = cur_scenario_fixtures
+                all_fixtures[FixtureDefinitionScope.SCENARIO][cur_scenario.__class__] = cur_scenario_fixtures
 
         ordered_fixtures = {}
         # Now the basic order is: [All of ExecutorTree] -> [All of Setup] -> [All of Scenario]
         #  but the order within these DEFINITION SCOPES has to be determined now!
         outer_scope_fixtures = self.all_already_run_fixtures
-        ordered_fixtures[ExecutorTree] = self._sort_fixture_list_of_same_definition_scope(
-            fixture_namespace_dict=all_fixtures[ExecutorTree], outer_scope_fixtures=outer_scope_fixtures)
+        ordered_fixtures[FixtureDefinitionScope.GLOB] = self._sort_fixture_list_of_same_definition_scope(
+            fixture_namespace_dict=all_fixtures[FixtureDefinitionScope.GLOB], outer_scope_fixtures=outer_scope_fixtures)
 
         outer_scope_fixtures = \
             self.all_already_run_fixtures + \
-            [cur_fixture for _, _, cur_fixture in ordered_fixtures[ExecutorTree]]
-        ordered_fixtures[Setup] = self._sort_fixture_list_of_same_definition_scope(
-            fixture_namespace_dict=all_fixtures[Setup], outer_scope_fixtures=outer_scope_fixtures)
+            [cur_fixture for _, _, cur_fixture in ordered_fixtures[FixtureDefinitionScope.GLOB]]
+        ordered_fixtures[FixtureDefinitionScope.SETUP] = self._sort_fixture_list_of_same_definition_scope(
+            fixture_namespace_dict=all_fixtures[FixtureDefinitionScope.SETUP],
+            outer_scope_fixtures=outer_scope_fixtures)
 
         outer_scope_fixtures = \
             self.all_already_run_fixtures + \
-            [cur_fixture for _, _, cur_fixture in ordered_fixtures[ExecutorTree]] + \
-            [cur_fixture for _, _, cur_fixture in ordered_fixtures[Setup]]
-        ordered_fixtures[Scenario] = self._sort_fixture_list_of_same_definition_scope(
-            fixture_namespace_dict=all_fixtures[Scenario], outer_scope_fixtures=outer_scope_fixtures)
+            [cur_fixture for _, _, cur_fixture in ordered_fixtures[FixtureDefinitionScope.GLOB]] + \
+            [cur_fixture for _, _, cur_fixture in ordered_fixtures[FixtureDefinitionScope.SETUP]]
+        ordered_fixtures[FixtureDefinitionScope.SCENARIO] = self._sort_fixture_list_of_same_definition_scope(
+            fixture_namespace_dict=all_fixtures[FixtureDefinitionScope.SCENARIO],
+            outer_scope_fixtures=outer_scope_fixtures)
 
         return ordered_fixtures
