@@ -62,86 +62,6 @@ class FixtureManager:
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
-    def get_all_attribute_values(
-            self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor],
-            callable_func_namespace: Union[None, Type[Scenario], Type[Setup]], callable_func: Callable,
-            func_type: str) -> Dict[str, object]:
-        """
-        This method tries to fill the unresolved function/method arguments of the given fixture callable. For this it
-        searches the return values of all already executed fixtures and supplies the argument values of the
-        given ``fixture`` callable in a dictionary.
-
-        It automatically manages `self` / `cls` references for func_type `instancemethod` or `classmethod`. It
-        only returns the fixture references and ignores `self` / `cls`
-
-        First the method tries to find the arguments in all fixtures that are in the same namespace. If it does not find
-        any references, it will look in the next higher scope. It only uses fixture that has run before!
-
-        :param branch: the current active branch
-
-        :param callable_func_namespace: the namespace of the current fixture or `None` if it is defined in balderglob
-                                        file
-
-        :param callable_func: the callable with the arguments
-
-        :param func_type: returns the func_type of the fixture - depending on this value the first argument will be
-                          ignored, because it has to be `cls` for `classmethod` and `self` for `instancemethod`
-
-        :return: the method returns a dictionary with the attribute name as key and the return value as value
-        """
-        arguments = inspect.getfullargspec(callable_func).args
-        result_dict = {}
-
-        if func_type in ["classmethod", "instancemethod"]:
-            arguments = arguments[1:]
-
-        self._validate_for_unclear_setup_scoped_fixture_reference(
-            callable_func_namespace, callable_func, arguments, cur_execution_level=branch.fixture_execution_level)
-        all_possible_namespaces = [None]
-        # determine namespaces (in the correct order)
-        setup_type = None
-        scenario_type = None
-        if isinstance(branch, SetupExecutor):
-            setup_type = branch.base_setup_class.__class__
-            # normally the scenario is None - only if the current namespace is a scenario we can use it
-            if callable_func_namespace is not None and issubclass(callable_func_namespace, Scenario):
-                scenario_type = callable_func_namespace
-            else:
-                scenario_type = None
-        elif isinstance(branch, ScenarioExecutor):
-            setup_type = branch.parent_executor.base_setup_class.__class__
-            scenario_type = branch.base_scenario_class.__class__
-        elif isinstance(branch, VariationExecutor):
-            setup_type = branch.cur_setup_class.__class__
-            scenario_type = branch.cur_scenario_class.__class__
-        elif isinstance(branch, TestcaseExecutor):
-            setup_type = branch.parent_executor.cur_setup_class.__class__
-            scenario_type = branch.parent_executor.cur_scenario_class.__class__
-
-        # add to possible namespaces only if the namespace of the current fixture allows this
-        if callable_func_namespace is not None:
-            if (issubclass(callable_func_namespace, Setup) or issubclass(callable_func_namespace, Scenario)) \
-                    and setup_type is not None:
-                all_possible_namespaces.append(setup_type)
-            if issubclass(callable_func_namespace, Scenario) and scenario_type is not None:
-                all_possible_namespaces.append(scenario_type)
-
-        for cur_arg in arguments:
-            # go to the most specific fixture, because more specific ones overwrite the more global ones
-            for cur_possible_namespace in all_possible_namespaces:
-                for cur_level in FixtureExecutionLevel:
-                    if cur_level not in self.current_tree_fixtures.keys():
-                        continue
-                    # filter only these fixtures that have the same namespace
-                    for cur_fixture_metadata in self.current_tree_fixtures[cur_level]:
-                        if (cur_fixture_metadata.namespace == cur_possible_namespace
-                                and cur_fixture_metadata.callable.__name__ == cur_arg):
-                            result_dict[cur_arg] = cur_fixture_metadata.retval
-            if cur_arg not in result_dict.keys():
-                raise FixtureReferenceError(
-                        f"the argument `{cur_arg}` in fixture `{callable_func.__qualname__}` could not be resolved")
-        return result_dict
-
     def _validate_for_unclear_setup_scoped_fixture_reference(
             self, fixture_callable_namespace: Union[None, Type[Scenario], Type[Setup]],
             fixture_callable: Callable, arguments: List[str], cur_execution_level: FixtureExecutionLevel):
@@ -369,6 +289,86 @@ class FixtureManager:
 
         if exception:
             raise exception
+
+    def get_all_attribute_values(
+            self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor],
+            callable_func_namespace: Union[None, Type[Scenario], Type[Setup]], callable_func: Callable,
+            func_type: str) -> Dict[str, object]:
+        """
+        This method tries to fill the unresolved function/method arguments of the given fixture callable. For this it
+        searches the return values of all already executed fixtures and supplies the argument values of the
+        given ``fixture`` callable in a dictionary.
+
+        It automatically manages `self` / `cls` references for func_type `instancemethod` or `classmethod`. It
+        only returns the fixture references and ignores `self` / `cls`
+
+        First the method tries to find the arguments in all fixtures that are in the same namespace. If it does not find
+        any references, it will look in the next higher scope. It only uses fixture that has run before!
+
+        :param branch: the current active branch
+
+        :param callable_func_namespace: the namespace of the current fixture or `None` if it is defined in balderglob
+                                        file
+
+        :param callable_func: the callable with the arguments
+
+        :param func_type: returns the func_type of the fixture - depending on this value the first argument will be
+                          ignored, because it has to be `cls` for `classmethod` and `self` for `instancemethod`
+
+        :return: the method returns a dictionary with the attribute name as key and the return value as value
+        """
+        arguments = inspect.getfullargspec(callable_func).args
+        result_dict = {}
+
+        if func_type in ["classmethod", "instancemethod"]:
+            arguments = arguments[1:]
+
+        self._validate_for_unclear_setup_scoped_fixture_reference(
+            callable_func_namespace, callable_func, arguments, cur_execution_level=branch.fixture_execution_level)
+        all_possible_namespaces = [None]
+        # determine namespaces (in the correct order)
+        setup_type = None
+        scenario_type = None
+        if isinstance(branch, SetupExecutor):
+            setup_type = branch.base_setup_class.__class__
+            # normally the scenario is None - only if the current namespace is a scenario we can use it
+            if callable_func_namespace is not None and issubclass(callable_func_namespace, Scenario):
+                scenario_type = callable_func_namespace
+            else:
+                scenario_type = None
+        elif isinstance(branch, ScenarioExecutor):
+            setup_type = branch.parent_executor.base_setup_class.__class__
+            scenario_type = branch.base_scenario_class.__class__
+        elif isinstance(branch, VariationExecutor):
+            setup_type = branch.cur_setup_class.__class__
+            scenario_type = branch.cur_scenario_class.__class__
+        elif isinstance(branch, TestcaseExecutor):
+            setup_type = branch.parent_executor.cur_setup_class.__class__
+            scenario_type = branch.parent_executor.cur_scenario_class.__class__
+
+        # add to possible namespaces only if the namespace of the current fixture allows this
+        if callable_func_namespace is not None:
+            if (issubclass(callable_func_namespace, Setup) or issubclass(callable_func_namespace, Scenario)) \
+                    and setup_type is not None:
+                all_possible_namespaces.append(setup_type)
+            if issubclass(callable_func_namespace, Scenario) and scenario_type is not None:
+                all_possible_namespaces.append(scenario_type)
+
+        for cur_arg in arguments:
+            # go to the most specific fixture, because more specific ones overwrite the more global ones
+            for cur_possible_namespace in all_possible_namespaces:
+                for cur_level in FixtureExecutionLevel:
+                    if cur_level not in self.current_tree_fixtures.keys():
+                        continue
+                    # filter only these fixtures that have the same namespace
+                    for cur_fixture_metadata in self.current_tree_fixtures[cur_level]:
+                        if (cur_fixture_metadata.namespace == cur_possible_namespace
+                                and cur_fixture_metadata.callable.__name__ == cur_arg):
+                            result_dict[cur_arg] = cur_fixture_metadata.retval
+            if cur_arg not in result_dict.keys():
+                raise FixtureReferenceError(
+                        f"the argument `{cur_arg}` in fixture `{callable_func.__qualname__}` could not be resolved")
+        return result_dict
 
     def get_fixture_for_class(self, execution_level: FixtureExecutionLevel,
                               setup_or_scenario_class: Union[None, Type[Setup], Type[Scenario]],
