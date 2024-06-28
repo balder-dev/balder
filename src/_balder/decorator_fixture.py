@@ -3,7 +3,7 @@ from typing import Literal
 
 import functools
 from _balder.collector import Collector
-from _balder.fixture_manager import FixtureManager
+from _balder.fixture_execution_level import FixtureExecutionLevel
 
 
 def fixture(level: Literal['session', 'setup', 'scenario', 'variation', 'testcase']):
@@ -12,7 +12,7 @@ def fixture(level: Literal['session', 'setup', 'scenario', 'variation', 'testcas
 
     :param level: the execution level the fixture should have
     """
-    allowed_levels = FixtureManager.EXECUTION_LEVEL_ORDER
+    allowed_levels = [level.value for level in FixtureExecutionLevel]
 
     if level not in allowed_levels:
         raise ValueError(f"the value of `level` must be a `str` with one of the values `{'`, `'.join(allowed_levels)}`")

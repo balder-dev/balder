@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple, Type, Union, Callable, TYPE_CHECKING
 import itertools
 from _balder.utils import inspect_method
 from _balder.fixture_manager import FixtureManager
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.executor.executor_tree import ExecutorTree
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
@@ -123,7 +124,8 @@ class Solver:
         :return: the fixture manager that is valid for this session
         """
         resolved_dict = {}
-        for cur_level, cur_module_fixture_dict in self._raw_fixtures.items():
+        for cur_level_as_str, cur_module_fixture_dict in self._raw_fixtures.items():
+            cur_level = FixtureExecutionLevel(cur_level_as_str)
             resolved_dict[cur_level] = {}
             for cur_fn in cur_module_fixture_dict:
                 cls, func_type = inspect_method(cur_fn)

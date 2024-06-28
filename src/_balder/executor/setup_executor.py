@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Type, Union, List, TYPE_CHECKING
 
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
@@ -21,6 +22,7 @@ class SetupExecutor(BasicExecutor):
     A SetupExecutor is the highest branch object of an :class:`ExecutorTree`. It contains all scenarios and the
     underlying device mappings and their test cases that exist with this setup.
     """
+    fixture_execution_level = FixtureExecutionLevel.SETUP
 
     def __init__(self, setup: Type[Setup], parent: ExecutorTree):
         super().__init__()

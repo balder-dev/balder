@@ -6,6 +6,7 @@ from graphlib import TopologicalSorter
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.scenario import Scenario
 from _balder.setup import Setup
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
@@ -22,44 +23,24 @@ class FixtureManager:
     """
     This class is the global fixture manager. It provides various methods to manage fixtures in the balder system.
     """
-    #: the ordering for the execution levels
-    EXECUTION_LEVEL_ORDER = ['session', 'setup', 'scenario', 'variation', 'testcase']
 
-    def __init__(self, fixtures: Dict[str, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]]):
+    def __init__(self, fixtures: Dict[FixtureExecutionLevel, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]]):
 
         # The first key is the fixture level, the second key is the namespace in which the fixture is defined (for
         # example the scenario class), which describes the definition-scope. As value a list with tuples is returned.
         #  The first element is the type of the method/function and the second is the callable itself.
-        self.fixtures: Dict[str, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]] = fixtures
+        self.fixtures: Dict[FixtureExecutionLevel, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]] = fixtures
 
         # contains all active fixtures with their namespace, their func_type, their callable, the generator object
         # (otherwise an empty generator, if the fixture is not a generator) and the result according to the fixture's
         # construction code (will be cleaned after it leaves a level)
-        self.current_tree_fixtures: \
-            Dict[str, List[
-                Tuple[Union[Type[ExecutorTree], Type[Setup], Type[Scenario]], str, Callable, Generator, object]]] = {}
+        self.current_tree_fixtures: Dict[FixtureExecutionLevel, List[Tuple[Union[Type[ExecutorTree], Type[Setup], Type[Scenario]], str, Callable, Generator, object]]] = {}
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     # ---------------------------------- CLASS METHODS ----------------------------------------------------------------
 
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
-
-    @property
-    def resolve_type_level(self):
-        """
-        returns a dictionary that holds the executor class as key and the fixture definition that belongs to this
-        executor class as key
-        """
-        from _balder.executor.executor_tree import ExecutorTree
-
-        return {
-            ExecutorTree: 'session',
-            SetupExecutor: 'setup',
-            ScenarioExecutor: 'scenario',
-            VariationExecutor: 'variation',
-            TestcaseExecutor: 'testcase'
-        }
 
     @property
     def definition_scope_order(self):
@@ -75,7 +56,7 @@ class FixtureManager:
         returns a list of all fixtures that have already been run
         """
         complete_list_in_order = []
-        for cur_level in self.EXECUTION_LEVEL_ORDER:
+        for cur_level in FixtureExecutionLevel:
             if cur_level in self.current_tree_fixtures.keys():
                 complete_list_in_order += [
                     cur_fixture for _, _, cur_fixture, _, _ in self.current_tree_fixtures[cur_level]]
@@ -118,8 +99,7 @@ class FixtureManager:
             arguments = arguments[1:]
 
         self._validate_for_unclear_setup_scoped_fixture_reference(
-            callable_func_namespace, callable_func, arguments,
-            cur_execution_level=self.resolve_type_level[branch.__class__])
+            callable_func_namespace, callable_func, arguments, cur_execution_level=branch.fixture_execution_level)
         all_possible_namespaces = [ExecutorTree]
         # determine namespaces (in the correct order)
         setup_type = None
@@ -151,14 +131,13 @@ class FixtureManager:
         for cur_arg in arguments:
             # go to the most specific fixture, because more specific ones overwrite the more global ones
             for cur_possible_namespace in all_possible_namespaces:
-                for cur_level in self.EXECUTION_LEVEL_ORDER:
-                    if cur_level in self.current_tree_fixtures.keys():
-                        # filter only these fixtures that have the same namespace
-                        for cur_fixt_namespace, _, cur_fixt, _, cur_fixt_retval in \
-                                self.current_tree_fixtures[cur_level]:
-                            if cur_fixt_namespace == cur_possible_namespace:
-                                if cur_fixt.__name__ == cur_arg:
-                                    result_dict[cur_arg] = cur_fixt_retval
+                for cur_level in FixtureExecutionLevel:
+                    if cur_level not in self.current_tree_fixtures.keys():
+                        continue
+                    # filter only these fixtures that have the same namespace
+                    for cur_fixt_namespace, _, cur_fixt, _, cur_fixt_retval in self.current_tree_fixtures[cur_level]:
+                        if cur_fixt_namespace == cur_possible_namespace and cur_fixt.__name__ == cur_arg:
+                            result_dict[cur_arg] = cur_fixt_retval
             if cur_arg not in result_dict.keys():
                 raise FixtureReferenceError(
                         f"the argument `{cur_arg}` in fixture `{callable_func.__qualname__}` could not be resolved")
@@ -166,7 +145,7 @@ class FixtureManager:
 
     def _validate_for_unclear_setup_scoped_fixture_reference(
             self, fixture_callable_namespace: Union[Type[ExecutorTree], Type[Scenario], Type[Setup]],
-            fixture_callable: Callable, arguments: List[str], cur_execution_level: str):
+            fixture_callable: Callable, arguments: List[str], cur_execution_level: FixtureExecutionLevel):
         """
         This helper method validates a given fixture reference for the unclear setup scoped fixture reference.
 
@@ -194,10 +173,10 @@ class FixtureManager:
         """
         # this method is only interested in fixtures with execution level SESSION!
 
-        if isinstance(fixture_callable_namespace, Scenario) and cur_execution_level == "session":
+        if isinstance(fixture_callable_namespace, Scenario) and cur_execution_level == FixtureExecutionLevel.SESSION:
             all_setup_scoped_fixtures = []
 
-            for cur_namespace_type, fixtures in self.fixtures.get('session', {}).items():
+            for cur_namespace_type, fixtures in self.fixtures.get(FixtureExecutionLevel.SESSION, {}).items():
                 if cur_namespace_type is not None and issubclass(cur_namespace_type, Setup):
                     all_setup_scoped_fixtures += [cur_fixt.__name__ for _, cur_fixt in fixtures]
             for cur_arg in arguments:
@@ -287,8 +266,7 @@ class FixtureManager:
         """
         This method return true if the given branch can be entered, otherwise false
         """
-        execution_level = self.resolve_type_level[branch.__class__]
-        return execution_level not in self.current_tree_fixtures.keys()
+        return branch.fixture_execution_level not in self.current_tree_fixtures.keys()
 
     def is_allowed_to_leave(
             self, branch: Union[BasicExecutor, ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor,
@@ -298,8 +276,7 @@ class FixtureManager:
         This method returns true if the given branch can be left now (there exist entries from earlier run enter()
         for this branch), otherwise false
         """
-        execution_level = self.resolve_type_level[branch.__class__]
-        return execution_level in self.current_tree_fixtures.keys()
+        return branch.fixture_execution_level in self.current_tree_fixtures.keys()
 
     def enter(self, branch: Union[BasicExecutor, ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor,
                                   TestcaseExecutor]):
@@ -311,7 +288,6 @@ class FixtureManager:
 
         :raise BalderFixtureException: is thrown if an error occurs while executing a user fixture
         """
-        execution_level = self.resolve_type_level[branch.__class__]
 
         if not self.is_allowed_to_enter(branch):
             raise LostInExecutorTreeException(
@@ -354,9 +330,9 @@ class FixtureManager:
                         cur_generator = empty()
                         next(cur_generator)
                     # add the executed fixtures to global reference
-                    if execution_level not in self.current_tree_fixtures.keys():
-                        self.current_tree_fixtures[execution_level] = []
-                    self.current_tree_fixtures[execution_level].append(
+                    if branch.fixture_execution_level not in self.current_tree_fixtures.keys():
+                        self.current_tree_fixtures[branch.fixture_execution_level] = []
+                    self.current_tree_fixtures[branch.fixture_execution_level].append(
                         (cur_scope_namespace_type, cur_fixture_func_type, cur_fixture, cur_generator, cur_retvalue))
                 except StopIteration:
                     pass
@@ -371,11 +347,10 @@ class FixtureManager:
         :param branch: specifies the element of the ExecutorTree that should be left (note that the current position
                        is very important here)
         """
-        execution_level = self.resolve_type_level[branch.__class__]
-        if execution_level not in self.current_tree_fixtures.keys():
+        if branch.fixture_execution_level not in self.current_tree_fixtures.keys():
             raise LostInExecutorTreeException("can not leave the current branch, because it was not entered before")
 
-        current_tree_fixtures_reversed = self.current_tree_fixtures[execution_level]
+        current_tree_fixtures_reversed = self.current_tree_fixtures[branch.fixture_execution_level]
         current_tree_fixtures_reversed.reverse()
         exception = None
         for _, _, _, cur_generator, _ in current_tree_fixtures_reversed:
@@ -389,18 +364,14 @@ class FixtureManager:
                     exception = exc
 
         # reset the left location
-        del self.current_tree_fixtures[execution_level]
+        del self.current_tree_fixtures[branch.fixture_execution_level]
 
         if exception:
             raise exception
 
-    def get_fixture_for_class(
-            self,
-            execution_level: Union[Type[ExecutorTree], Type[SetupExecutor], Type[ScenarioExecutor],
-                                   Type[VariationExecutor], Type[TestcaseExecutor]],
-            setup_or_scenario_class: Union[None, Type[Setup], Type[Scenario]],
-            parent_classes: bool = True
-    ) -> List[Tuple[MethodLiteralType, Callable]]:
+    def get_fixture_for_class(self, execution_level: FixtureExecutionLevel,
+                              setup_or_scenario_class: Union[None, Type[Setup], Type[Scenario]],
+                              parent_classes: bool = True) -> List[Tuple[MethodLiteralType, Callable]]:
         """
         This method returns all classes of a specific Setup/Scenario class for a specific execution-level.
 
@@ -409,10 +380,9 @@ class FixtureManager:
         :param parent_classes: true if the method should look for fixtures in parent classes too
         :return: list with all fixtures that are matching search criteria
         """
-        # current relevant EXECUTION LEVEL - all other levels are not relevant for this call
-        cur_execution_level = self.resolve_type_level[execution_level]
-        # get all fixtures of the current relevant level
-        fixtures_of_exec_level = self.fixtures.get(cur_execution_level, {})
+        # get all fixtures of the current relevant level (only `execution_level` is relevant - all other levels are
+        # not relevant for this call)
+        fixtures_of_exec_level = self.fixtures.get(execution_level, {})
         if setup_or_scenario_class is not None and parent_classes:
             all_fixtures = []
             for cur_parent_class in inspect.getmro(setup_or_scenario_class):
@@ -426,8 +396,7 @@ class FixtureManager:
                     _added_fixtures.append(cur_fixture_tuple[1].__name__)
                     remaining_fixtures.append(cur_fixture_tuple)
             return remaining_fixtures
-        else:
-            return fixtures_of_exec_level.get(setup_or_scenario_class, [])
+        return fixtures_of_exec_level.get(setup_or_scenario_class, [])
 
     def get_all_fixtures_for_current_level(
             self, branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor]) \
@@ -454,21 +423,21 @@ class FixtureManager:
 
         all_fixtures = {}
         # get all relevant fixtures of `balderglob.py` (None is key for balderglob fixtures)
-        glob_fixtures = self.get_fixture_for_class(branch.__class__, None)
+        glob_fixtures = self.get_fixture_for_class(branch.fixture_execution_level, None)
         all_fixtures[ExecutorTree] = {}
         all_fixtures[ExecutorTree][ExecutorTree] = glob_fixtures
         # get all relevant fixtures with definition scope "setup"
         all_fixtures[Setup] = {}
         for cur_setup in branch.get_all_base_instances_of_this_branch(Setup, only_runnable_elements=True):
             # check if there exists fixtures for the current setup
-            cur_setup_fixtures = self.get_fixture_for_class(branch.__class__, cur_setup.__class__)
+            cur_setup_fixtures = self.get_fixture_for_class(branch.fixture_execution_level, cur_setup.__class__)
             if cur_setup_fixtures:
                 all_fixtures[Setup][cur_setup.__class__] = cur_setup_fixtures
 
         # get all relevant fixtures with definition scope "scenario"
         all_fixtures[Scenario] = {}
         for cur_scenario in branch.get_all_base_instances_of_this_branch(Scenario, only_runnable_elements=True):
-            cur_scenario_fixtures = self.get_fixture_for_class(branch.__class__, cur_scenario.__class__)
+            cur_scenario_fixtures = self.get_fixture_for_class(branch.fixture_execution_level, cur_scenario.__class__)
             if cur_scenario_fixtures:
                 all_fixtures[Scenario][cur_scenario.__class__] = cur_scenario_fixtures
 
