@@ -8,6 +8,7 @@ from _balder.scenario import Scenario
 from _balder.setup import Setup
 from _balder.fixture_definition_scope import FixtureDefinitionScope
 from _balder.fixture_execution_level import FixtureExecutionLevel
+from _balder.fixture_metadata import FixtureMetadata
 from _balder.executor.basic_executor import BasicExecutor
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
@@ -25,17 +26,21 @@ class FixtureManager:
     This class is the global fixture manager. It provides various methods to manage fixtures in the balder system.
     """
 
-    def __init__(self, fixtures: Dict[FixtureExecutionLevel, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]]):
+    def __init__(
+            self,
+            fixtures: Dict[FixtureExecutionLevel,
+                           Dict[Union[None, Type[Scenario], Type[Setup]], List[Tuple[MethodLiteralType, Callable]]]]):
 
-        # The first key is the fixture level, the second key is the namespace in which the fixture is defined (for
-        # example the scenario class), which describes the definition-scope. As value a list with tuples is returned.
-        #  The first element is the type of the method/function and the second is the callable itself.
-        self.fixtures: Dict[FixtureExecutionLevel, Dict[Union[type, None], List[Tuple[MethodLiteralType, Callable]]]] = fixtures
+        # The first key is the fixture level, the second key is the namespace in which the fixture is defined. As value
+        # a list with tuples is returned. The first element is the type of the method/function and the second is the
+        # callable itself.
+        self.fixtures: Dict[FixtureExecutionLevel,
+                            Dict[Union[None, Type[Scenario], Type[Setup]], List[Tuple[MethodLiteralType, Callable]]]] \
+            = fixtures
 
-        # contains all active fixtures with their namespace, their func_type, their callable, the generator object
-        # (otherwise an empty generator, if the fixture is not a generator) and the result according to the fixture's
-        # construction code (will be cleaned after it leaves a level)
-        self.current_tree_fixtures: Dict[FixtureExecutionLevel, List[Tuple[Union[None, Type[Setup], Type[Scenario]], str, Callable, Generator, object]]] = {}
+        # contains all active fixtures with their namespace, their func_type, their callable, the generator object and
+        # the result according to the fixture's construction code (will be cleaned after it leaves a level)
+        self.current_tree_fixtures: Dict[FixtureExecutionLevel, List[FixtureMetadata]] = {}
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
@@ -52,7 +57,7 @@ class FixtureManager:
         for cur_level in FixtureExecutionLevel:
             if cur_level in self.current_tree_fixtures.keys():
                 complete_list_in_order += [
-                    cur_fixture for _, _, cur_fixture, _, _ in self.current_tree_fixtures[cur_level]]
+                    cur_fixture_metadata.callable for cur_fixture_metadata in self.current_tree_fixtures[cur_level]]
         return complete_list_in_order
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
@@ -128,9 +133,10 @@ class FixtureManager:
                     if cur_level not in self.current_tree_fixtures.keys():
                         continue
                     # filter only these fixtures that have the same namespace
-                    for cur_fixt_namespace, _, cur_fixt, _, cur_fixt_retval in self.current_tree_fixtures[cur_level]:
-                        if cur_fixt_namespace == cur_possible_namespace and cur_fixt.__name__ == cur_arg:
-                            result_dict[cur_arg] = cur_fixt_retval
+                    for cur_fixture_metadata in self.current_tree_fixtures[cur_level]:
+                        if (cur_fixture_metadata.namespace == cur_possible_namespace
+                                and cur_fixture_metadata.callable.__name__ == cur_arg):
+                            result_dict[cur_arg] = cur_fixture_metadata.retval
             if cur_arg not in result_dict.keys():
                 raise FixtureReferenceError(
                         f"the argument `{cur_arg}` in fixture `{callable_func.__qualname__}` could not be resolved")
@@ -327,7 +333,8 @@ class FixtureManager:
                     if branch.fixture_execution_level not in self.current_tree_fixtures.keys():
                         self.current_tree_fixtures[branch.fixture_execution_level] = []
                     self.current_tree_fixtures[branch.fixture_execution_level].append(
-                        (cur_scope_namespace_type, cur_fixture_func_type, cur_fixture, cur_generator, cur_retvalue))
+                        FixtureMetadata(namespace=cur_scope_namespace_type, function_type=cur_fixture_func_type,
+                                        callable=cur_fixture, generator=cur_generator, retval=cur_retvalue))
                 except StopIteration:
                     pass
                 # every other exception that is thrown, will be recognized and rethrown
@@ -347,9 +354,9 @@ class FixtureManager:
         current_tree_fixtures_reversed = self.current_tree_fixtures[branch.fixture_execution_level]
         current_tree_fixtures_reversed.reverse()
         exception = None
-        for _, _, _, cur_generator, _ in current_tree_fixtures_reversed:
+        for cur_fixture_metadata in current_tree_fixtures_reversed:
             try:
-                next(cur_generator)
+                next(cur_fixture_metadata.generator)
             except StopIteration:
                 pass
             except Exception as exc:
