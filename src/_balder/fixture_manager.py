@@ -178,6 +178,39 @@ class FixtureManager:
         return [(cur_definition_scope, fixture_func_types[cur_func], cur_func)
                 for cur_definition_scope, cur_func in sorter.static_order()]
 
+    def _determine_setup_and_scenario_type(
+            self,
+            from_branch: Union[ExecutorTree, SetupExecutor, ScenarioExecutor, VariationExecutor, TestcaseExecutor],
+            callable_func_namespace: Union[None, Type[Scenario], Type[Setup]]) \
+            -> Tuple[Union[None, Type[Setup]], Union[None, Type[Scenario]]]:
+        """
+        determines the setup and scenario type for a specific fixture based on the branch the system is in
+
+        :param from_branch: the branch for which the types should be determined
+        :param callable_func_namespace: the namespace of the current fixture or `None` if it is defined in balderglob
+                                        file
+        """
+        # determine namespaces (in the correct order)
+        setup_type = None
+        scenario_type = None
+        if isinstance(from_branch, SetupExecutor):
+            setup_type = from_branch.base_setup_class.__class__
+            # normally the scenario is None - only if the current namespace is a scenario we can use it
+            if callable_func_namespace is not None and issubclass(callable_func_namespace, Scenario):
+                scenario_type = callable_func_namespace
+            else:
+                scenario_type = None
+        elif isinstance(from_branch, ScenarioExecutor):
+            setup_type = from_branch.parent_executor.base_setup_class.__class__
+            scenario_type = from_branch.base_scenario_class.__class__
+        elif isinstance(from_branch, VariationExecutor):
+            setup_type = from_branch.cur_setup_class.__class__
+            scenario_type = from_branch.cur_scenario_class.__class__
+        elif isinstance(from_branch, TestcaseExecutor):
+            setup_type = from_branch.parent_executor.cur_setup_class.__class__
+            scenario_type = from_branch.parent_executor.cur_scenario_class.__class__
+        return setup_type, scenario_type
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def is_allowed_to_enter(
@@ -326,25 +359,8 @@ class FixtureManager:
         self._validate_for_unclear_setup_scoped_fixture_reference(
             callable_func_namespace, callable_func, arguments, cur_execution_level=branch.fixture_execution_level)
         all_possible_namespaces = [None]
-        # determine namespaces (in the correct order)
-        setup_type = None
-        scenario_type = None
-        if isinstance(branch, SetupExecutor):
-            setup_type = branch.base_setup_class.__class__
-            # normally the scenario is None - only if the current namespace is a scenario we can use it
-            if callable_func_namespace is not None and issubclass(callable_func_namespace, Scenario):
-                scenario_type = callable_func_namespace
-            else:
-                scenario_type = None
-        elif isinstance(branch, ScenarioExecutor):
-            setup_type = branch.parent_executor.base_setup_class.__class__
-            scenario_type = branch.base_scenario_class.__class__
-        elif isinstance(branch, VariationExecutor):
-            setup_type = branch.cur_setup_class.__class__
-            scenario_type = branch.cur_scenario_class.__class__
-        elif isinstance(branch, TestcaseExecutor):
-            setup_type = branch.parent_executor.cur_setup_class.__class__
-            scenario_type = branch.parent_executor.cur_scenario_class.__class__
+        setup_type, scenario_type = self._determine_setup_and_scenario_type(
+            from_branch=branch, callable_func_namespace=callable_func_namespace)
 
         # add to possible namespaces only if the namespace of the current fixture allows this
         if callable_func_namespace is not None:
