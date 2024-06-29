@@ -84,7 +84,6 @@ class TestcaseExecutor(BasicExecutor):
             self.body_result.set_result(ResultState.SKIP)
             self.execution_time_sec = 0
             print("[S]")
-            return
 
     def _body_execution(self, show_discarded):
         start_time = time.perf_counter()
