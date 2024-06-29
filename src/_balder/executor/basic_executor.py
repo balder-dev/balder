@@ -238,7 +238,7 @@ class BasicExecutor(ABC):
                     self.construct_result.set_result(ResultState.SUCCESS)
 
                 self._body_execution(show_discarded=show_discarded)
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-exception-caught
                 # this has to be a construction fixture error
                 traceback.print_exception(*sys.exc_info())
                 self.construct_result.set_result(ResultState.ERROR, exc)
@@ -247,7 +247,7 @@ class BasicExecutor(ABC):
                     if self.fixture_manager.is_allowed_to_leave(self):
                         self.fixture_manager.leave(self)
                         self.teardown_result.set_result(ResultState.SUCCESS)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             # this has to be a teardown fixture error
             traceback.print_exception(*sys.exc_info())
             self.teardown_result.set_result(ResultState.ERROR, exc)
