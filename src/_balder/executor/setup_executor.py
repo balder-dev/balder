@@ -65,6 +65,7 @@ class SetupExecutor(BasicExecutor):
 
     @property
     def base_setup_controller(self) -> SetupController:
+        """returns the :class:`SetupController` for the setup object of this executor"""
         return SetupController.get_for(self.base_setup_class.__class__)
 
     @property
