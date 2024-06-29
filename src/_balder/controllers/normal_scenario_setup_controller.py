@@ -10,7 +10,7 @@ from _balder.scenario import Scenario
 from _balder.controllers.controller import Controller
 from _balder.controllers.device_controller import DeviceController
 from _balder.controllers.vdevice_controller import VDeviceController
-from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError
+from _balder.exceptions import MultiInheritanceError, DeviceOverwritingError, MissingFeaturesOfVDeviceError
 
 if TYPE_CHECKING:
     from _balder.connection import Connection
@@ -278,7 +278,7 @@ class NormalScenarioSetupController(Controller, ABC):
                             found_it = True
                             break
                     if not found_it:
-                        raise Exception(
+                        raise MissingFeaturesOfVDeviceError(
                             f"the device `{related_device.__name__}` which is mapped to the VDevice "
                             f"`{active_vdevice.__name__}` doesn't have an implementation for the feature "
                             f"`{cur_vdevice_feature.__class__.__name__}` required by the VDevice class "
