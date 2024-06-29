@@ -158,6 +158,12 @@ class IllegalVDeviceMappingError(BalderException):
     """
 
 
+class MissingFeaturesOfVDeviceError(BalderException):
+    """
+    is thrown if the related device does not implement all features specified in its mapped VDevice.
+    """
+
+
 class NotApplicableVariationException(BalderException):
     """
     is thrown internally after the current variation is not applicable
