@@ -105,7 +105,7 @@ class TestcaseExecutor(BasicExecutor):
                                  f"`{self.base_testcase_callable.__name__}`")
 
             self.body_result.set_result(ResultState.SUCCESS)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             # this has to be a test error
             traceback.print_exception(*sys.exc_info())
             self.body_result.set_result(ResultState.FAILURE, exc)
