@@ -50,7 +50,7 @@ def _console_balder_debug(cmd_args: Optional[List[str]] = None, working_dir: Uni
             cb_balder_exc(exc)
         traceback.print_exception(*sys.exc_info())
         sys.exit(ExitCode.BALDER_USAGE_ERROR.value)
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-exception-caught
         # a unexpected error occurs
         if cb_unexpected_exc:
             cb_unexpected_exc(exc)
