@@ -312,7 +312,7 @@ class FixtureManager:
                 next(cur_fixture_metadata.generator)
             except StopIteration:
                 pass
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-exception-caught
                 if not exception:
                     # only save the first exception
                     exception = exc
