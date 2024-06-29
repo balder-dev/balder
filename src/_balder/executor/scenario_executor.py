@@ -69,6 +69,7 @@ class ScenarioExecutor(BasicExecutor):
 
     @property
     def base_scenario_controller(self) -> ScenarioController:
+        """returns the :class:`ScenarioController` for the setup object of this executor"""
         return ScenarioController.get_for(self.base_scenario_class.__class__)
 
     @property
