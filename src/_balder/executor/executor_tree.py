@@ -182,7 +182,7 @@ class ExecutorTree(BasicExecutor):
                 is_first = False
             else:
                 print(" | ", end="")
-            print(f"TOTAL {cur_field.name}: {getattr(summary, cur_field.name)}", end="")
+            print(f"TOTAL {cur_field.name.upper()}: {getattr(summary, cur_field.name)}", end="")
         print("")
 
     def print_tree(self, show_discarded=False) -> None:
