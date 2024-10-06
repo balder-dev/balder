@@ -4,7 +4,6 @@ from typing import List, Union, Type, Tuple
 import inspect
 from _balder.collector import Collector
 from _balder.feature import Feature
-from _balder.device import Device
 from _balder.vdevice import VDevice
 from _balder.connection import Connection
 from _balder.controllers import FeatureController
@@ -12,7 +11,7 @@ from _balder.exceptions import DuplicateForVDeviceError, UnknownVDeviceException
 
 
 def for_vdevice(
-        vdevice: Union[str, Device],
+        vdevice: Union[str, Type[VDevice]],
         with_connections: Union[
             Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]],
             List[Union[Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]]]]] = Connection(),
@@ -58,9 +57,10 @@ def for_vdevice(
                              f"a element of it")
 
         idx += 1
+
     # note: if `args` is an empty list - no special sub-connection-tree bindings
 
-    if not isinstance(vdevice, str) and not isinstance(vdevice, VDevice):
+    if not (isinstance(vdevice, str) or (isinstance(vdevice, type) and issubclass(vdevice, VDevice))):
         raise ValueError('the given element for `vdevice` has to be a `str` or has to be a subclass of'
                          '`VDevice`')
 
