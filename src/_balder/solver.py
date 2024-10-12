@@ -1,10 +1,8 @@
 from __future__ import annotations
-from typing import List, Dict, Tuple, Type, Union, Callable, TYPE_CHECKING
+from typing import List, Dict, Tuple, Type, Union, TYPE_CHECKING
 
 import itertools
-from _balder.utils import inspect_method
 from _balder.fixture_manager import FixtureManager
-from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.executor.executor_tree import ExecutorTree
 from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
@@ -28,7 +26,7 @@ class Solver:
     """
 
     def __init__(self, setups: List[Type[Setup]], scenarios: List[Type[Scenario]], connections: List[Type[Connection]],
-                 raw_fixtures: Dict[str, List[Callable]]):
+                 fixture_manager: Union[FixtureManager, None]):
         #: contains all available setup classes
         self._all_existing_setups = setups
         #: contains all available scenario classes
@@ -41,8 +39,7 @@ class Solver:
         self._mapping: List[Tuple[Type[Setup], Type[Scenario], Dict[Type[Device], Type[Device]]]] = []
         self._resolving_was_executed = False
 
-        self._raw_fixtures = raw_fixtures
-        self._fixture_manager: Union[FixtureManager, None] = None
+        self._fixture_manager = fixture_manager
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
@@ -118,23 +115,6 @@ class Solver:
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_fixture_manager(self) -> FixtureManager:
-        """
-        Resolves all fixtures and returns the fixture manager for this session
-        :return: the fixture manager that is valid for this session
-        """
-        resolved_dict = {}
-        for cur_level_as_str, cur_module_fixture_dict in self._raw_fixtures.items():
-            cur_level = FixtureExecutionLevel(cur_level_as_str)
-            resolved_dict[cur_level] = {}
-            for cur_fn in cur_module_fixture_dict:
-                cls, func_type = inspect_method(cur_fn)
-                # mechanism also works for balderglob fixtures (`func_type` is 'function' and `cls` is None)
-                if cls not in resolved_dict[cur_level].keys():
-                    resolved_dict[cur_level][cls] = []
-                resolved_dict[cur_level][cls].append((func_type, cur_fn))
-        return FixtureManager(resolved_dict)
-
     def get_initial_mapping(self) -> List[Tuple[Type[Setup], Type[Scenario], Dict[Device, Device]]]:
         """
         This method creates the initial amount of data for `self._mapping`. Only those elements are returned where the
@@ -165,7 +145,6 @@ class Solver:
         This method carries out the entire resolve process and saves the end result in the object property
         `self._mapping`.
         """
-        self._fixture_manager = self.get_fixture_manager()
         # reset mapping list
         self._mapping = []
         initial_mapping = self.get_initial_mapping()

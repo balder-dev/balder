@@ -289,8 +289,10 @@ class BalderSession:
         """
         This method resolves all classes and executes different checks, that can be done before the test session starts.
         """
-        self.solver = Solver(setups=self.all_collected_setups, scenarios=self.all_collected_scenarios,
-                             connections=self.all_collected_connections, raw_fixtures=self.collector._raw_fixtures)
+        self.solver = Solver(setups=self.all_collected_setups,
+                             scenarios=self.all_collected_scenarios,
+                             connections=self.all_collected_connections,
+                             fixture_manager=self.collector.get_fixture_manager())
         self.solver.resolve(plugin_manager=self.plugin_manager)
 
     def create_executor_tree(self):
