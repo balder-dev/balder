@@ -59,6 +59,18 @@ class Collector:
         self.balderglob_was_loaded = False
 
     @staticmethod
+    def register_raw_fixture(fixture: Callable, level: str):
+        """
+        allows to register a new fixture - used by decorator `@balder.fixture()`
+
+        :param level: the fixture level
+        :param fixture: the fixture callable itself
+        """
+        if level not in Collector._raw_fixtures.keys():
+            Collector._raw_fixtures[level] = []
+        Collector._raw_fixtures[level].append(fixture)
+
+    @staticmethod
     def register_possible_method_variation(
             meth: Callable,
             vdevice: Union[Type[VDevice], str],
