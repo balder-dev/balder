@@ -35,7 +35,7 @@ class Collector:
     but secures that all relevant data is being collected.
     """
     # metadata object that contains all raw fixtures (classes that were not be resolved yet)
-    raw_fixtures = {}
+    _raw_fixtures = {}
 
     # this static attribute will be managed by the decorator `@for_vdevice(..)`. It holds all functions/methods that
     # were decorated with `@for_vdevice(..)` (without checking their correctness). The collector will check them later

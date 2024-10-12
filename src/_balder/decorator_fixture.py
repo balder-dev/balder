@@ -20,9 +20,9 @@ def fixture(level: Literal['session', 'setup', 'scenario', 'variation', 'testcas
     def decorator_fixture(func):
         # always add the fixture to FixtureManager.raw_fixtures - class determination will be done later by
         # :meth:`Collector`
-        if level not in Collector.raw_fixtures.keys():
-            Collector.raw_fixtures[level] = []
-        Collector.raw_fixtures[level].append(func)
+        if level not in Collector._raw_fixtures.keys():
+            Collector._raw_fixtures[level] = []
+        Collector._raw_fixtures[level].append(func)
 
         @functools.wraps(func)
         def wrapper_fixture(*args, **kwargs):
