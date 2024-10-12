@@ -24,6 +24,7 @@ from _balder.utils import get_scenario_inheritance_list_of
 
 if TYPE_CHECKING:
     from _balder.plugin_manager import PluginManager
+    ConnectionType = Union[Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]]]
 
 logger = logging.getLogger(__file__)
 
@@ -41,9 +42,8 @@ class Collector:
     # with the method `rework_method_variation_decorators()`
     _possible_method_variations: Dict[
         Callable,
-        List[Tuple[Union[Type[VDevice], str],
-                   Union[Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]],
-                         List[Union[Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]]]]]]]] = {}
+        List[Tuple[Union[Type[VDevice], str], Union[ConnectionType, List[ConnectionType]]]]
+    ] = {}
 
     def __init__(self, working_dir: pathlib.Path):
         self.working_dir = pathlib.Path(working_dir)
@@ -57,6 +57,22 @@ class Collector:
         self._all_connections: Union[List[Type[Connection]], None] = None
 
         self.balderglob_was_loaded = False
+
+    @staticmethod
+    def register_possible_method_variation(
+            meth: Callable,
+            vdevice: Union[Type[VDevice], str],
+            with_connections: Union[ConnectionType, List[ConnectionType]]):
+        """
+        allows to register a new method variation - used by decorator `@balder.for_vdevice()`
+
+        :param meth: the method that should be registered
+        :param vdevice: the vdevice the method is for
+        :param with_connections: the connections the method is for
+        """
+        if meth not in Collector._possible_method_variations.keys():
+            Collector._possible_method_variations[meth] = []
+        Collector._possible_method_variations[meth].append((vdevice, with_connections))
 
     @property
     def all_pyfiles(self) -> List[pathlib.Path]:

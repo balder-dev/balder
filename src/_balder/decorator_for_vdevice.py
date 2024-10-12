@@ -74,9 +74,7 @@ def for_vdevice(
             self.func = func
 
             # we detect a decorated non-class object -> save it and check it later in collector
-            if func not in Collector._possible_method_variations.keys():
-                Collector._possible_method_variations[func] = []
-            Collector._possible_method_variations[func].append((vdevice, with_connections))
+            Collector.register_possible_method_variation(func, vdevice, with_connections)
 
         def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
             nonlocal vdevice
