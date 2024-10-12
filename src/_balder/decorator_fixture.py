@@ -18,11 +18,8 @@ def fixture(level: Literal['session', 'setup', 'scenario', 'variation', 'testcas
         raise ValueError(f"the value of `level` must be a `str` with one of the values `{'`, `'.join(allowed_levels)}`")
 
     def decorator_fixture(func):
-        # always add the fixture to FixtureManager.raw_fixtures - class determination will be done later by
-        # :meth:`Collector`
-        if level not in Collector._raw_fixtures.keys():
-            Collector._raw_fixtures[level] = []
-        Collector._raw_fixtures[level].append(func)
+        # always register the raw fixture in Collector - class determination will be done later by :meth:`Collector`
+        Collector.register_raw_fixture(func, level)
 
         @functools.wraps(func)
         def wrapper_fixture(*args, **kwargs):
