@@ -10,13 +10,15 @@ import inspect
 import pathlib
 import functools
 import importlib.util
-from _balder.utils import get_class_that_defines_method
+from _balder.utils import get_class_that_defines_method, inspect_method
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.feature import Feature
 from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.connection import Connection
+from _balder.fixture_manager import FixtureManager
+from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import DuplicateForVDeviceError, UnknownVDeviceException
@@ -123,6 +125,23 @@ class Collector:
         if self._all_connections is None:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_connections
+
+    def get_fixture_manager(self) -> FixtureManager:
+        """
+        Resolves all fixtures and returns the fixture manager for this session
+        :return: the fixture manager that is valid for this session
+        """
+        resolved_dict = {}
+        for cur_level_as_str, cur_module_fixture_dict in self._raw_fixtures.items():
+            cur_level = FixtureExecutionLevel(cur_level_as_str)
+            resolved_dict[cur_level] = {}
+            for cur_fn in cur_module_fixture_dict:
+                cls, func_type = inspect_method(cur_fn)
+                # mechanism also works for balderglob fixtures (`func_type` is 'function' and `cls` is None)
+                if cls not in resolved_dict[cur_level].keys():
+                    resolved_dict[cur_level][cls] = []
+                resolved_dict[cur_level][cls].append((func_type, cur_fn))
+        return FixtureManager(resolved_dict)
 
     def load_balderglob_py_file(self) -> Union[types.ModuleType, None]:
         """
