@@ -5,10 +5,11 @@ import sys
 import time
 import traceback
 
-from _balder.fixture_execution_level import FixtureExecutionLevel
-from _balder.utils import inspect_method
-from _balder.testresult import ResultState, TestcaseResult
 from _balder.executor.basic_executor import BasicExecutor
+from _balder.fixture_execution_level import FixtureExecutionLevel
+from _balder.previous_executor_mark import PreviousExecutorMark
+from _balder.testresult import ResultState, TestcaseResult
+from _balder.utils import inspect_method
 
 if TYPE_CHECKING:
     from _balder.executor.variation_executor import VariationExecutor
@@ -38,6 +39,13 @@ class TestcaseExecutor(BasicExecutor):
 
         # holds the raw test execution time in seconds
         self.test_execution_time_sec = 0
+
+        # determine prev_mark IGNORE/SKIP for the testcase
+        if self.should_be_skipped():
+            self.prev_mark = PreviousExecutorMark.SKIP
+        # always overwrite if it should be ignored
+        if self.should_be_ignored():
+            self.prev_mark = PreviousExecutorMark.IGNORE
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 

@@ -190,13 +190,6 @@ class Solver:
                     cur_testcase_executor = TestcaseExecutor(cur_testcase, parent=variation_executor)
                     variation_executor.add_testcase_executor(cur_testcase_executor)
 
-                    # determine prev_mark IGNORE/SKIP for the testcase
-                    if cur_testcase_executor.should_be_skipped():
-                        cur_testcase_executor.prev_mark = PreviousExecutorMark.SKIP
-                    # always overwrite if it should be ignored
-                    if cur_testcase_executor.should_be_ignored():
-                        cur_testcase_executor.prev_mark = PreviousExecutorMark.IGNORE
-
         # now filter all elements that have no child elements
         #   -> these are items that have no valid matching, because no variation can be applied for it (there are no
         #      required :class:`Feature` matching or there exists no possible routing for the variation)
