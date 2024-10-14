@@ -122,7 +122,7 @@ class DeviceController(BaseDeviceController, ABC):
             if issubclass(cur_base, Device):
                 if next_base_class is not None:
                     raise MultiInheritanceError(
-                        f"found more than one Devuce parent classes for `{self.related_cls.__name__}` "
+                        f"found more than one Device parent classes for `{self.related_cls.__name__}` "
                         f"- multi inheritance is not allowed for Device classes")
                 next_base_class = cur_base
         if next_base_class == Device:
