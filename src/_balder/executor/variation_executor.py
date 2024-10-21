@@ -9,6 +9,7 @@ from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult, ResultSummary
 from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.executor.testcase_executor import TestcaseExecutor
+from _balder.executor.unresolved_parametrized_testcase_executor import UnresolvedParametrizedTestcaseExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.routing_path import RoutingPath
 from _balder.unmapped_vdevice import UnmappedVDevice
@@ -109,7 +110,7 @@ class VariationExecutor(BasicExecutableExecutor):
         return self._base_device_mapping
 
     @property
-    def all_child_executors(self) -> List[TestcaseExecutor]:
+    def all_child_executors(self) -> List[TestcaseExecutor | UnresolvedParametrizedTestcaseExecutor]:
         return self._testcase_executors
 
     @property
@@ -155,6 +156,7 @@ class VariationExecutor(BasicExecutableExecutor):
             self.exchange_unmapped_vdevice_references()
             self.update_vdevice_referenced_feature_instances()
             self.set_conn_dependent_methods()
+            self.resolve_possible_parametrization()
 
     def _body_execution(self, show_discarded):
         if show_discarded and not self.can_be_applied():
@@ -291,14 +293,22 @@ class VariationExecutor(BasicExecutableExecutor):
 
     def get_testcase_executors(self) -> List[TestcaseExecutor]:
         """returns all sub testcase executors that belongs to this variation-executor"""
-        return self._testcase_executors
+        result = []
+        for cur_executor in self._testcase_executors:
+            if (isinstance(cur_executor, UnresolvedParametrizedTestcaseExecutor) and
+                    cur_executor.parametrization_has_been_resolved):
+                result += cur_executor.get_testcase_executors()
+            else:
+                result.append(cur_executor)
+        return result
 
-    def add_testcase_executor(self, testcase_executor: TestcaseExecutor):
+    def add_testcase_executor(self, testcase_executor: TestcaseExecutor | UnresolvedParametrizedTestcaseExecutor):
         """
         This method adds a new TestcaseExecutor to the child element list of this object branch
         """
-        if not isinstance(testcase_executor, TestcaseExecutor):
-            raise TypeError("the given object `testcase_executor` must be of type type `TestcaseExecutor`")
+        if not isinstance(testcase_executor, (TestcaseExecutor, UnresolvedParametrizedTestcaseExecutor)):
+            raise TypeError("the given object `testcase_executor` must be of type type `TestcaseExecutor` or "
+                            "`UnresolvedParametrizedTestcaseExecutor`")
         if testcase_executor in self._testcase_executors:
             raise ValueError("the given object `testcase_executor` already exists in child list")
         self._testcase_executors.append(testcase_executor)
@@ -878,3 +888,9 @@ class VariationExecutor(BasicExecutableExecutor):
                         (mapped_vdevice, absolute_feature_method_var_cnn, cur_method_variation)
 
                 cur_setup_feature_controller.set_active_method_variation(method_selection=method_var_selection)
+
+    def resolve_possible_parametrization(self):
+        """resolves the parametrization if there are any :class:`UnresolvedParametrizedTestcaseExecutor` in the tree"""
+        for cur_child in self._testcase_executors:
+            if isinstance(cur_child, UnresolvedParametrizedTestcaseExecutor):
+                cur_child.resolve_dynamic_parametrization()
