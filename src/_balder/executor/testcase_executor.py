@@ -84,10 +84,17 @@ class TestcaseExecutor(BasicExecutableExecutor):
         """returns the current active fixture manager"""
         return self._fixture_manager
 
+    @property
+    def full_test_name_str(self) -> str:
+        """
+        returns the name of the test method, that should be used in output
+        """
+        return self._base_testcase_callable.__qualname__
+
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     def _prepare_execution(self, show_discarded):
-        print(f"      TEST {self.base_testcase_callable.__qualname__} ", end='')
+        print(f"      TEST {self.full_test_name_str} ", end='')
         if self.should_be_skipped():
             self.body_result.set_result(ResultState.SKIP)
             self.execution_time_sec = 0
