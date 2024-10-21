@@ -3,7 +3,7 @@ from typing import Type, Union, List, TYPE_CHECKING
 
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult
-from _balder.executor.basic_executor import BasicExecutor
+from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.controllers.setup_controller import SetupController
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from _balder.executor.executor_tree import ExecutorTree
 
 
-class SetupExecutor(BasicExecutor):
+class SetupExecutor(BasicExecutableExecutor):
     """
     A SetupExecutor is the highest branch object of an :class:`ExecutorTree`. It contains all scenarios and the
     underlying device mappings and their test cases that exist with this setup.

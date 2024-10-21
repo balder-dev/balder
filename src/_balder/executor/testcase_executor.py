@@ -5,7 +5,7 @@ import sys
 import time
 import traceback
 
-from _balder.executor.basic_executor import BasicExecutor
+from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import ResultState, TestcaseResult
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from _balder.scenario import Scenario
 
 
-class TestcaseExecutor(BasicExecutor):
+class TestcaseExecutor(BasicExecutableExecutor):
     """
     A TestcaseExecutor class represents an actual single test that can be executed. It therefore references exactly to a
     test method of a scenario that can be executed on the specific setup this executor belongs to.
