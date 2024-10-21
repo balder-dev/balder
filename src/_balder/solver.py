@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Tuple, Type, Union, TYPE_CHECKING
+from typing import List, Dict, Tuple, Type, Union, Callable, TYPE_CHECKING
 
 import itertools
 from _balder.fixture_manager import FixtureManager
@@ -8,6 +8,8 @@ from _balder.executor.setup_executor import SetupExecutor
 from _balder.executor.scenario_executor import ScenarioExecutor
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.executor.variation_executor import VariationExecutor
+from _balder.executor.parametrized_testcase_executor import ParametrizedTestcaseExecutor
+from _balder.executor.unresolved_parametrized_testcase_executor import UnresolvedParametrizedTestcaseExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.controllers import ScenarioController, SetupController
 
@@ -151,6 +153,38 @@ class Solver:
         self._mapping = initial_mapping
         self._resolving_was_executed = True
 
+    def get_static_parametrized_testcase_executor_for(
+            self,
+            variation_executor: VariationExecutor,
+            testcase: Callable
+    ) -> List[UnresolvedParametrizedTestcaseExecutor | ParametrizedTestcaseExecutor]:
+        """
+        returns a list of all testcase executors, with already resolved static parametrization -
+        :class:`UnresolvedParametrizedTest` will be returned for unresolved dynamic parametrization
+
+        :param variation_executor: the current variation executor
+        :param testcase: the current testcase
+        """
+
+        scenario_controller = variation_executor.parent_executor.base_scenario_controller
+        if scenario_controller.get_parametrization_for(testcase) is None:
+            raise ValueError(f'can not determine parametrization for test `{testcase.__qualname__}` because no '
+                             f'parametrization exist')
+        static_parametrization = scenario_controller.get_parametrization_for(testcase, static=True, dynamic=False)
+        executor_typ = UnresolvedParametrizedTestcaseExecutor \
+            if scenario_controller.get_parametrization_for(testcase, static=False, dynamic=True) \
+            else ParametrizedTestcaseExecutor
+
+        if not static_parametrization:
+            return [executor_typ(testcase, parent=variation_executor)]
+
+        # generate product
+        result = []
+        for cur_product in itertools.product(*static_parametrization.values()):
+            cur_product_parametrization = dict(zip(static_parametrization.keys(), cur_product))
+            result.append(executor_typ(testcase, variation_executor, cur_product_parametrization))
+        return result
+
     # pylint: disable-next=unused-argument
     def get_executor_tree(self, plugin_manager: PluginManager, add_discarded=False) -> ExecutorTree:
         """
@@ -185,10 +219,22 @@ class Solver:
                 variation_executor = VariationExecutor(device_mapping=cur_device_mapping, parent=scenario_executor)
                 variation_executor.verify_applicability()
 
+                if not variation_executor.can_be_applied():
+                    continue
+
                 scenario_executor.add_variation_executor(variation_executor)
-                for cur_testcase in ScenarioController.get_for(cur_scenario).get_all_test_methods():
-                    cur_testcase_executor = TestcaseExecutor(cur_testcase, parent=variation_executor)
-                    variation_executor.add_testcase_executor(cur_testcase_executor)
+
+                for cur_testcase in scenario_executor.base_scenario_controller.get_all_test_methods():
+                    # we have a parametrization for this test case
+                    if scenario_executor.base_scenario_controller.get_parametrization_for(cur_testcase):
+                        testcase_executors = self.get_static_parametrized_testcase_executor_for(
+                            variation_executor, cur_testcase
+                        )
+                        for cur_testcase_executor in testcase_executors:
+                            variation_executor.add_testcase_executor(cur_testcase_executor)
+                    else:
+                        testcase_executor = TestcaseExecutor(cur_testcase, parent=variation_executor)
+                        variation_executor.add_testcase_executor(testcase_executor)
 
         # now filter all elements that have no child elements
         #   -> these are items that have no valid matching, because no variation can be applied for it (there are no
