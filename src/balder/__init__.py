@@ -13,6 +13,8 @@ from _balder.decorator_connect import connect
 from _balder.decorator_covered_by import covered_by
 from _balder.decorator_for_vdevice import for_vdevice
 from _balder.decorator_insert_into_tree import insert_into_tree
+from _balder.decorator_parametrize import parametrize
+from _balder.decorator_parametrize_by_feature import parametrize_by_feature
 
 
 __all__ = [
@@ -29,6 +31,10 @@ __all__ = [
     'insert_into_tree',
 
     'covered_by',
+
+    'parametrize',
+
+    'parametrize_by_feature',
 
     'Setup',
 
