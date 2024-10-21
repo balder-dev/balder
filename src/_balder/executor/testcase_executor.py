@@ -104,8 +104,7 @@ class TestcaseExecutor(BasicExecutableExecutor):
         start_time = time.perf_counter()
         try:
             _, func_type = inspect_method(self.base_testcase_callable)
-            all_args = self.fixture_manager.get_all_attribute_values(
-                self, self.base_testcase_obj.__class__, self.base_testcase_callable, func_type)
+            all_args = self.get_all_test_method_args()
             if func_type == "staticmethod":
                 # testcase is a staticmethod - no special first attribute
                 self.base_testcase_callable(**all_args)
@@ -170,3 +169,15 @@ class TestcaseExecutor(BasicExecutableExecutor):
         if scenario_class in covered_by_dict_resolved.keys():
             all_covered_by_data += covered_by_dict_resolved[scenario_class]
         return all_covered_by_data
+
+    def get_all_test_method_args(self):
+        """
+        returns all kwargs values for the test method
+        """
+        _, func_type = inspect_method(self.base_testcase_callable)
+        return self.fixture_manager.get_all_attribute_values(
+            self,
+            self.base_testcase_obj.__class__,
+            self.base_testcase_callable,
+            func_type
+        )
