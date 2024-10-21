@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import Type, Dict, List, Tuple, Union
+from typing import Type, Dict, List, Tuple, Union, Callable, Iterable, Any
 
 import logging
 import inspect
+from collections import OrderedDict
 from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.connection import Connection
 from _balder.controllers.feature_controller import FeatureController
 from _balder.controllers.device_controller import DeviceController
 from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
+from _balder.parametrization import FeatureAccessSelector, Parameter
 from _balder.exceptions import UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, \
     MultiInheritanceError
 
@@ -25,6 +27,8 @@ class ScenarioController(NormalScenarioSetupController):
 
     #: contains all existing scenarios and its corresponding controller object
     _items: Dict[Type[Scenario], ScenarioController] = {}
+
+    _parametrization: Dict[Callable, Dict[str, Union[Iterable[Any], FeatureAccessSelector]]] = {}
 
     def __init__(self, related_cls, _priv_instantiate_key):
 
@@ -71,6 +75,92 @@ class ScenarioController(NormalScenarioSetupController):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def register_parametrization(
+            self,
+            test_method: Callable,
+            field_name: str,
+            values: Iterable[Any] | FeatureAccessSelector
+    ) -> None:
+        """
+        This method registers a custom parametrization for a test method of this Scenario
+        """
+        if test_method not in self.get_all_test_methods():
+            raise ValueError(f'got test method `{test_method.__qualname__}` which is no part of the '
+                             f'scenario `{self.related_cls}`')
+        if test_method not in self._parametrization.keys():
+            self._parametrization[test_method] = {}
+        if field_name in self._parametrization[test_method].keys():
+            raise ValueError(f'field name `{field_name}` for test method `{test_method.__qualname__}` already '
+                             f'registered')
+        self._parametrization[test_method][field_name] = values
+
+    def get_parametrization_for(
+            self,
+            test_method: Callable,
+            static: bool = True,
+            dynamic: bool = True,
+    ) -> OrderedDict[str, Iterable[Any] | FeatureAccessSelector] | None:
+        """
+        This method returns the parametrization for a test method of this Scenario. It returns the parameter
+        configuration for every parameter in an OrderedDict.
+
+        :param test_method: the test method of the Scenario
+        :param static: if False, all static parameters will not be included into the dict.
+        :param dynamic: if False, all dynamic parameters will not be included into the dict.
+        """
+        if test_method not in self._parametrization.keys():
+            return None
+        params = self._parametrization[test_method]
+
+        # get arguments in defined order
+        arguments = [name for name in inspect.getfullargspec(test_method).args if name in params.keys()]
+        ordered_dict = OrderedDict()
+        for cur_arg in arguments:
+            cur_value = params[cur_arg]
+            if isinstance(cur_value, FeatureAccessSelector) and dynamic is False:
+                continue
+            if not isinstance(cur_value, FeatureAccessSelector) and static is False:
+                continue
+            ordered_dict[cur_arg] = params[cur_arg]
+        return ordered_dict
+
+    def check_for_parameter_loop_in_dynamic_parametrization(self, cur_fn: Callable):
+        """
+        This method checks for a parameter loop in all dynamic parametrization for a specific test method. If it detects
+        a loop an AttributeError is thrown
+        """
+        # only dynamic parametrization can have Parameter
+        parametrization = self.get_parametrization_for(cur_fn, static=False, dynamic=True)
+
+        def get_dependent_parameters_of_attribute(attribute: str) -> List[str] | None:
+            cur_feature_access_selector = parametrization.get(attribute)
+            if cur_feature_access_selector is None:
+                return None
+            # relevant are parameters only if they are from :class:`Parameter` and contained in the dynamic
+            # parametrization
+            return [param.name for param in cur_feature_access_selector.parameters.values()
+                    if isinstance(param, Parameter) and param.name in parametrization.keys()]
+
+        def recursive_parameter_loop_check(for_attribute, with_attribute: str):
+            dependent_attr = get_dependent_parameters_of_attribute(with_attribute)
+            if dependent_attr is None:
+                # no problematic dependencies because attribute is no dynamic attribute
+                return
+            if len(dependent_attr) == 0:
+                # no problematic dependencies
+                return
+
+            if for_attribute in dependent_attr:
+                # loop detected
+                raise AttributeError('detect a loop in Parameter() object - can not apply parametrization')
+            # go deeper and resolve all dependent
+            for cur_dependent_attr in dependent_attr:
+                recursive_parameter_loop_check(for_attribute, cur_dependent_attr)
+            return
+
+        for cur_attr in parametrization.keys():
+            recursive_parameter_loop_check(cur_attr, cur_attr)
 
     def get_next_parent_class(self) -> Union[Type[Scenario], None]:
         """
