@@ -7,7 +7,7 @@ from _balder.device import Device
 from _balder.connection import Connection
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult, ResultSummary
-from _balder.executor.basic_executor import BasicExecutor
+from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.executor.testcase_executor import TestcaseExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.routing_path import RoutingPath
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__file__)
 
 
-class VariationExecutor(BasicExecutor):
+class VariationExecutor(BasicExecutableExecutor):
     """
     A VariationExecutor only contains :meth:`TestcaseExecutor` children.
     """
@@ -463,7 +463,7 @@ class VariationExecutor(BasicExecutor):
             raise KeyError("the requested setup device exists more than one time in `base_device_mapping`")
         return [cur_key for cur_key, cur_value in self.base_device_mapping.items() if cur_value == setup_device][0]
 
-    def get_executor_for_testcase(self, testcase: callable) -> Union[TestcaseExecutor, None]:
+    def get_executor_for_testcase(self, testcase: callable) -> TestcaseExecutor | None:
         """
         This method searches for a TestcaseExecutor in the internal list for which the given testcase method is
         contained in

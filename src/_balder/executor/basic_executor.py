@@ -1,21 +1,15 @@
 from __future__ import annotations
 
-import time
 from typing import List, Union, Type, TYPE_CHECKING
 
-import sys
 import types
-import traceback
 from abc import ABC, abstractmethod
-from _balder.testresult import FixturePartResult, ResultState, ResultSummary
 from _balder.previous_executor_mark import PreviousExecutorMark
-from _balder.testresult import TestcaseResult
+from _balder.testresult import FixturePartResult, ResultState, ResultSummary, TestcaseResult
 
 if TYPE_CHECKING:
     from _balder.setup import Setup
     from _balder.scenario import Scenario
-    from _balder.fixture_manager import FixtureManager
-    from _balder.fixture_execution_level import FixtureExecutionLevel
 
 
 class BasicExecutor(ABC):
@@ -24,7 +18,6 @@ class BasicExecutor(ABC):
     executor classes, an executor forms a tree structure in which individual tests, which later on are executed, are
     assigned to individual scenarios
     """
-    fixture_execution_level: FixtureExecutionLevel = None
     # this property describes the runnable state of the executor branch before the executor is really used
     #  with this you can declare a whole branch as inactive, while the collecting process is active
     prev_mark = PreviousExecutorMark.RUNNABLE
@@ -36,9 +29,6 @@ class BasicExecutor(ABC):
         self.body_result = None
         # contains the result object for the TEARDOWN FIXTURE part of this branch
         self.teardown_result = FixturePartResult(self)
-
-        # holds the execution time of this branch (with branch fixtures)
-        self.execution_time_sec = None
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
@@ -65,11 +55,6 @@ class BasicExecutor(ABC):
         ExecutorTree"""
 
     @property
-    @abstractmethod
-    def fixture_manager(self) -> FixtureManager:
-        """returns the active fixture manager instance"""
-
-    @property
     def executor_result(self) -> ResultState:
         """
         This property returns the combined state of this executor object. This is determined by its properties
@@ -87,26 +72,6 @@ class BasicExecutor(ABC):
         return relative_result
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
-
-    @abstractmethod
-    def _prepare_execution(self, show_discarded):
-        """
-        This method runs before the branch will be executed and before the fixture construction code of this branch
-        runs.
-        """
-
-    @abstractmethod
-    def _body_execution(self, show_discarded):
-        """
-        This method runs between the fixture construction and teardown code. It should trigger the execution of the
-        child branches.
-        """
-
-    @abstractmethod
-    def _cleanup_execution(self, show_discarded):
-        """
-        This method runs after the branch was executed (also after the fixture teardown code ran)
-        """
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
@@ -126,18 +91,6 @@ class BasicExecutor(ABC):
         if None in all_own:
             all_own.remove(None)
         return all_own
-
-    def set_result_for_whole_branch(self, value: ResultState):
-        """
-        This method sets the executor result for all sub executors.
-
-        :param value: the new value that should be set for this branch
-        """
-        if value not in (ResultState.SKIP, ResultState.COVERED_BY, ResultState.NOT_RUN):
-            raise ValueError("can not set a state that is not NOT_RUN, SKIP or COVERED_BY for a whole branch")
-        for cur_child_executor in self.all_child_executors:
-            if isinstance(cur_child_executor.body_result, TestcaseResult):
-                cur_child_executor.body_result.set_result(result=value, exception=None)
 
     def has_runnable_tests(self, consider_discarded_too=False) -> bool:
         """
@@ -223,35 +176,3 @@ class BasicExecutor(ABC):
             for cur_child_exec in self.all_child_executors:
                 summary += cur_child_exec.testsummary()
         return summary
-
-    def execute(self, show_discarded=False):
-        """
-        Executes the whole branch
-        """
-        start_time = time.perf_counter()
-        self._prepare_execution(show_discarded=show_discarded)
-
-        try:
-            try:
-                if self.has_runnable_tests():
-                    self.fixture_manager.enter(self)
-                    self.construct_result.set_result(ResultState.SUCCESS)
-
-                self._body_execution(show_discarded=show_discarded)
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                # this has to be a construction fixture error
-                traceback.print_exception(*sys.exc_info())
-                self.construct_result.set_result(ResultState.ERROR, exc)
-            finally:
-                if self.has_runnable_tests():
-                    if self.fixture_manager.is_allowed_to_leave(self):
-                        self.fixture_manager.leave(self)
-                        self.teardown_result.set_result(ResultState.SUCCESS)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            # this has to be a teardown fixture error
-            traceback.print_exception(*sys.exc_info())
-            self.teardown_result.set_result(ResultState.ERROR, exc)
-
-        self._cleanup_execution(show_discarded=show_discarded)
-
-        self.execution_time_sec = time.perf_counter() - start_time

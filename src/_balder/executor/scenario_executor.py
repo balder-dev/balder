@@ -4,7 +4,7 @@ from typing import Type, Union, List, Dict, TYPE_CHECKING
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult
 from _balder.utils import get_class_that_defines_method
-from _balder.executor.basic_executor import BasicExecutor
+from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.executor.variation_executor import VariationExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.controllers.scenario_controller import ScenarioController
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from _balder.fixture_manager import FixtureManager
 
 
-class ScenarioExecutor(BasicExecutor):
+class ScenarioExecutor(BasicExecutableExecutor):
     """
     A ScenarioExecutor can contain :meth:`VariationExecutor` as children.
     """
