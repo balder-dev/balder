@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Type, Union, Dict, Callable, Tuple, TYPE_CHECKING
+from typing import List, Type, Union, Dict, Callable, Tuple, Iterable, Any, TYPE_CHECKING
 
 import os
 import sys
@@ -17,6 +17,7 @@ from _balder.feature import Feature
 from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.connection import Connection
+from _balder.parametrization import FeatureAccessSelector, Parameter
 from _balder.fixture_manager import FixtureManager
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
@@ -45,6 +46,14 @@ class Collector:
     _possible_method_variations: Dict[
         Callable,
         List[Tuple[Union[Type[VDevice], str], Union[ConnectionType, List[ConnectionType]]]]
+    ] = {}
+
+    # this static attribute will be managed by the decorator `@parametrize(..)`. It holds all functions/methods that
+    # were decorated with `@parametrize(..)` (without checking their correctness). The collector will check it later
+    # with the method `rework_static_parametrization_decorators()`
+    _possible_parametrization: Dict[
+        Callable,
+        Dict[str, Union[Iterable[Any], FeatureAccessSelector]]
     ] = {}
 
     def __init__(self, working_dir: pathlib.Path):
@@ -87,6 +96,26 @@ class Collector:
         if meth not in Collector._possible_method_variations.keys():
             Collector._possible_method_variations[meth] = []
         Collector._possible_method_variations[meth].append((vdevice, with_connections))
+
+    @staticmethod
+    def register_possible_parametrization(
+            meth: Callable,
+            field_name: str,
+            values: Union[Iterable[Any], FeatureAccessSelector]
+    ):
+        """
+        allows to register a possible parametrization - used by decorator `@balder.parametrize()` or
+        `@balder.parametrize_by_feature()`
+
+        :param meth: the method that should be registered
+        :param field_name: the name of the method argument, the parametrized value should be added
+        :param values: an Iterable of all values that should be parametrized or the FeatureAccessSelector object
+        """
+        if meth not in Collector._possible_parametrization.keys():
+            Collector._possible_parametrization[meth] = {}
+        if field_name in Collector._possible_parametrization[meth].keys():
+            raise ValueError(f'field `{field_name}` already registered for method `{meth.__qualname__}`')
+        Collector._possible_parametrization[meth][field_name] = values
 
     @property
     def all_pyfiles(self) -> List[pathlib.Path]:
@@ -522,6 +551,38 @@ class Collector:
             setattr(owner, name, new_callback)
             owner_feature_controller.set_method_based_for_vdevice(owner_for_vdevice)
 
+    @staticmethod
+    def rework_parametrization_decorators():
+        """
+        This method iterates over the static attribute `Collector._possible_static_parametrization` and checks if these
+        decorated functions are valid (if they are test methods and part of a :meth:`Scenario` class).
+        """
+
+        for cur_fn, cur_decorator_data_dict in Collector._possible_parametrization.items():
+            owner = get_class_that_defines_method(cur_fn)
+            if not issubclass(owner, Scenario):
+                raise TypeError(f'the related class of `{cur_fn.__qualname__}` is not a `Scenario` class')
+            owner_scenario_controller = ScenarioController.get_for(owner)
+            if cur_fn not in owner_scenario_controller.get_all_test_methods():
+                raise TypeError(f'the method {cur_fn.__qualname__} is not a test method')
+            args_of_cur_fn = inspect.getfullargspec(cur_fn).args
+
+            for cur_field_name, cur_value_list in cur_decorator_data_dict.items():
+                if isinstance(cur_value_list, FeatureAccessSelector):
+                    # make sure that all parameters exist in test method parametrization
+                    for cur_value_parameter in cur_value_list.parameters.values():
+                        if isinstance(cur_value_parameter, Parameter):
+                            if cur_value_parameter.name not in cur_decorator_data_dict.keys():
+                                raise AttributeError(f'can not find attribute `{cur_value_parameter.name}` that is '
+                                                     f'used in parametrization for attribute `{cur_field_name}` in '
+                                                     f'test method `{cur_fn.__qualname__}`')
+                if cur_field_name not in args_of_cur_fn:
+                    raise ValueError(f'the argument `{cur_field_name}` does not exist in test method '
+                                     f'`{cur_fn.__qualname__}`')
+                owner_scenario_controller.register_parametrization(cur_fn, cur_field_name, cur_value_list)
+
+            owner_scenario_controller.check_for_parameter_loop_in_dynamic_parametrization(cur_fn)
+
     def get_all_scenario_feature_classes(self) -> List[Type[Feature]]:
         """
         This method returns a list with all :class:`Feature` classes that are being instantiated in one or more
@@ -744,7 +805,6 @@ class Collector:
                           if fnmatch.fnmatch(str(cur_abs_path.relative_to(self.working_dir)), cur_pattern)]
         return list(set(remaining))
 
-
     def collect(self, plugin_manager: PluginManager, scenario_filter_patterns: Union[List[str], None],
                 setup_filter_patterns: Union[List[str], None]):
         """
@@ -786,6 +846,7 @@ class Collector:
         self._all_setups = Collector.filter_parent_classes_of(items=self._all_setups)
 
         Collector.rework_method_variation_decorators()
+        Collector.rework_parametrization_decorators()
 
         # do some further stuff after everything was read
         self._set_original_vdevice_in_features()
