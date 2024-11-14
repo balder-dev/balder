@@ -32,3 +32,13 @@ Decorator `@balder.insert_into_tree(..)`
 ========================================
 
 .. autofunction:: balder.insert_into_tree
+
+Decorator `@balder.parametrize(..)`
+===================================
+
+.. autofunction:: balder.parametrize
+
+Decorator `@balder.parametrize_by_feature(..)`
+==============================================
+
+.. autofunction:: balder.parametrize_by_feature

@@ -16,3 +16,4 @@ Here you can find the full API documentation of the Balder Framework.
     scenarios.rst
     setups.rst
     controllers.rst
+    parametrization.rst
