@@ -17,7 +17,7 @@ class FeatureI(balder.Feature):
 
 # this allows `ChildAConnection` AND `ChildBConnection` connections (both setups could work on scenario level - setup
 # level limits this)
-@balder.for_vdevice("VDeviceFeatureI", with_connections=balder.Connection.based_on(ChildAConnection, ChildBConnection))
+@balder.for_vdevice("VDeviceFeatureI", with_connections=balder.Connection.based_on(ChildAConnection | ChildBConnection))
 class FeatureII(balder.Feature):
 
     class VDeviceFeatureI(balder.VDevice):

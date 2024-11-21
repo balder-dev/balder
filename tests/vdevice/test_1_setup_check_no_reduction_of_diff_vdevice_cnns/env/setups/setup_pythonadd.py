@@ -11,7 +11,7 @@ class SetupPythonAdd(balder.Setup):
         calc = PyAddCalculate()
 
     @balder.connect(Calculator, over_connection=balder.Connection.based_on(
-        (SimulatedChildConnection.based_on(SimulatedParentConnection), MySimplySharedMemoryConnection)))
+        (SimulatedChildConnection.based_on(SimulatedParentConnection) & MySimplySharedMemoryConnection)))
     class NumberProvider1(balder.Device):
         n = PyAddProvideANumber()
         special_1 = VDeviceHelperFeature1(CalculatorDevice="Calculator")

@@ -13,8 +13,6 @@ class ConnectionType(type):
     """
     Metaclass for :class:`Connection` objects
     """
-    def __init__(cls, name, bases, dct):
-        super().__init__(name, bases, dct)
 
     def __and__(cls, other) -> AndConnectionRelation:
         return cls().__and__(other)

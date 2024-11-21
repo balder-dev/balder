@@ -4,9 +4,9 @@ from ...lib.connections import AConnection, BConnection, CConnection
 from ...balderglob import RuntimeObserver
 
 
-@balder.for_vdevice("VDeviceI", with_connections=balder.Connection.based_on(AConnection, BConnection, CConnection))
-@balder.for_vdevice("VDeviceII", with_connections=balder.Connection.based_on(AConnection, BConnection))
-@balder.for_vdevice("VDeviceIII", with_connections=balder.Connection.based_on(BConnection, (AConnection, BConnection)))
+@balder.for_vdevice("VDeviceI", with_connections=balder.Connection.based_on(AConnection | BConnection | CConnection))
+@balder.for_vdevice("VDeviceII", with_connections=balder.Connection.based_on(AConnection | BConnection))
+@balder.for_vdevice("VDeviceIII", with_connections=balder.Connection.based_on(BConnection | (AConnection & BConnection)))
 class SetupMethVarFeature(BetweenMethVarFeature):
     """This is the feature class that is directly being used in the setup."""
     class VDeviceI(BetweenMethVarFeature.VDeviceI):
@@ -45,7 +45,7 @@ class SetupMethVarFeature(BetweenMethVarFeature):
             __file__, SetupMethVarFeature, SetupMethVarFeature.do_something_as_var,
             "MethodVariation<VDeviceI|CConnection><SetupMethVarFeature.do_something_as_var>", category="feature")
 
-    @balder.for_vdevice("VDeviceII", with_connections=balder.Connection.based_on(AConnection, BConnection))
+    @balder.for_vdevice("VDeviceII", with_connections=balder.Connection.based_on(AConnection | BConnection))
     def do_something_as_var(self):
         super().do_something_as_var()
         RuntimeObserver.add_entry(
@@ -61,7 +61,7 @@ class SetupMethVarFeature(BetweenMethVarFeature):
             "MethodVariation<VDeviceIII|BConnection><SetupMethVarFeature.do_something_as_var>",
             category="feature")
 
-    @balder.for_vdevice("VDeviceIII", with_connections=balder.Connection.based_on((AConnection, BConnection)))
+    @balder.for_vdevice("VDeviceIII", with_connections=balder.Connection.based_on(AConnection & BConnection))
     def do_something_as_var(self):
         super().do_something_as_var()
         RuntimeObserver.add_entry(

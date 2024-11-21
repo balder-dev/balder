@@ -14,7 +14,7 @@ class ScenarioA(balder.Scenario):
         i = FeatureI()
 
     @balder.connect(ScenarioDevice1, over_connection=balder.Connection.based_on(
-        ChildAConnection.based_on(ParentConnection), ChildBConnection.based_on(ParentConnection)))
+        ChildAConnection.based_on(ParentConnection) | ChildBConnection.based_on(ParentConnection)))
     class ScenarioDevice2(balder.Device):
         ii = FeatureII(VDeviceFeatureI="ScenarioDevice1")
 

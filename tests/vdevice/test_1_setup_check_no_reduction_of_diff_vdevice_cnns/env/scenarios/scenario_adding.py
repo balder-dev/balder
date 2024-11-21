@@ -11,7 +11,7 @@ class ScenarioAdding(balder.Scenario):
         adds = AddCalculateFeature()
 
     @balder.connect(Calculator, over_connection=balder.Connection.based_on(
-        (SimulatedChildConnection.based_on(SimulatedParentConnection), MySimplySharedMemoryConnection)))
+        (SimulatedChildConnection.based_on(SimulatedParentConnection) & MySimplySharedMemoryConnection)))
     class NumberOneDevice(balder.Device):
         number = ProvidesANumberFeature()
         special_1 = VDeviceHelperFeature1()

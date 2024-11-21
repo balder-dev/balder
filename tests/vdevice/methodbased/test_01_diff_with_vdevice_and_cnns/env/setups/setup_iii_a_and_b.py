@@ -16,7 +16,7 @@ class SetupIIIAAndB(balder.Setup):
         s_ii = FeatureVDeviceII()
         s_iii = FeatureVDeviceIII()
 
-    @balder.connect(SetupDevice1, over_connection=balder.Connection.based_on((AConnection, BConnection)))
+    @balder.connect(SetupDevice1, over_connection=balder.Connection.based_on(AConnection & BConnection))
     class SetupDevice2(balder.Device):
         s_ii = SetupMethVarFeature(VDeviceIII="SetupDevice1")
 
