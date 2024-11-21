@@ -52,7 +52,7 @@ def test_check_if_connection_container_is_resolved():
     already resolved but not single! The test secures that balder validates this correctly for all items of the
     container.
     """
-    subtree = Connection.based_on(IPv4Connection.based_on(EthernetConnection), UdpIPv4Connection)
+    subtree = Connection.based_on(IPv4Connection.based_on(EthernetConnection) | UdpIPv4Connection)
     logger.info("creation of a subtree with a container class and two nested other connections is working as expected")
     assert subtree.is_resolved(), "the single resolved created subtree returns False while calling method " \
                                   "`is_resolved()`"
@@ -84,7 +84,7 @@ def test_check_contained_in():
     assert not TcpIPv4Connection.based_on(OpticalFiberConnection).contained_in(subtree_outer), \
         "contained_in where bigger tree contained in smaller tree does not return False!"
 
-    container_inner = Connection.based_on(UdpIPv4Connection, TcpIPv4Connection)
+    container_inner = Connection.based_on(UdpIPv4Connection | TcpIPv4Connection)
 
     assert container_inner.contained_in(UdpIPv4Connection()), \
         'the connection sub-tree with a container connection is not contained_in the outer tree ' \
@@ -94,7 +94,7 @@ def test_check_contained_in():
         'the connection sub-tree with a container connection is not contained_in the outer tree ' \
         '`TcpIPv4Connection()` - that should return True'
 
-    double_parents_inner = IPv4Connection.based_on(EthernetConnection, WirelessLanConnection)
+    double_parents_inner = IPv4Connection.based_on(EthernetConnection | WirelessLanConnection)
 
     assert double_parents_inner.contained_in(IPv4Connection.based_on(EthernetConnection)), \
         'the connection sub-tree with double parents is not contained_in the outer tree ' \
@@ -104,11 +104,11 @@ def test_check_contained_in():
         'the connection sub-tree with double parents is not contained_in the outer tree ' \
         '`WirelessLanConnection()` - that should return True'
 
-    and_items = Connection.based_on((EthernetConnection, WirelessLanConnection, UsbConnection))
-    or_items = Connection.based_on(EthernetConnection, WirelessLanConnection, UsbConnection)
+    and_items = Connection.based_on((EthernetConnection & WirelessLanConnection & UsbConnection))
+    or_items = Connection.based_on(EthernetConnection | WirelessLanConnection | UsbConnection)
 
-    assert not Connection.based_on((EthernetConnection, WirelessLanConnection)).contained_in(or_items)
-    assert Connection.based_on((EthernetConnection, WirelessLanConnection)).contained_in(and_items)
+    assert not Connection.based_on((EthernetConnection & WirelessLanConnection)).contained_in(or_items)
+    assert Connection.based_on((EthernetConnection & WirelessLanConnection)).contained_in(and_items)
 
     assert Connection.based_on(EthernetConnection).contained_in(and_items)
     assert EthernetConnection().contained_in(and_items)
@@ -127,7 +127,7 @@ def test_check_intersection_with():
     assert Connection().intersection_with(EthernetConnection) == EthernetConnection()
     assert EthernetConnection().intersection_with(Connection()) == EthernetConnection()
 
-    double_parents = IPv4Connection.based_on(EthernetConnection, WirelessLanConnection)
+    double_parents = IPv4Connection.based_on(EthernetConnection | WirelessLanConnection)
 
     # simple first based on element (without container)
     assert double_parents.intersection_with(EthernetConnection()) == EthernetConnection()
@@ -183,15 +183,15 @@ def test_check_intersection_with():
     assert second_branch.intersection_with(Connection.based_on(double_parents)) == second_branch
 
     # multiple container elements with single one
-    assert Connection.based_on(EthernetConnection, WirelessLanConnection).intersection_with(EthernetConnection) == \
+    assert Connection.based_on(EthernetConnection | WirelessLanConnection).intersection_with(EthernetConnection) == \
            EthernetConnection()
 
     # basic AND connection tests
-    assert Connection.based_on((EthernetConnection, WirelessLanConnection)).intersection_with(
-        Connection.based_on((EthernetConnection, WirelessLanConnection))) == Connection.based_on(
-        (EthernetConnection(), WirelessLanConnection()))
-    assert Connection.based_on(EthernetConnection, (EthernetConnection, WirelessLanConnection)).intersection_with(
-        Connection.based_on((EthernetConnection, WirelessLanConnection))) == Connection.based_on(
-        (EthernetConnection(), WirelessLanConnection()))
-    assert Connection.based_on(EthernetConnection, (EthernetConnection, WirelessLanConnection)).intersection_with(
+    assert Connection.based_on(EthernetConnection & WirelessLanConnection).intersection_with(
+        Connection.based_on(EthernetConnection & WirelessLanConnection)) == Connection.based_on(
+        EthernetConnection() & WirelessLanConnection())
+    assert Connection.based_on(EthernetConnection | EthernetConnection & WirelessLanConnection).intersection_with(
+        Connection.based_on(EthernetConnection & WirelessLanConnection)) == Connection.based_on(
+        EthernetConnection() & WirelessLanConnection())
+    assert Connection.based_on(EthernetConnection | EthernetConnection & WirelessLanConnection).intersection_with(
         EthernetConnection) == EthernetConnection()
