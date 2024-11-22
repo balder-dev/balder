@@ -369,23 +369,38 @@ class Connection(metaclass=ConnectionType):
         return False
 
     @classmethod
-    def based_on(cls, *args: Union[Tuple[Union[Type[Connection], Connection], ...], Type[Connection], Connection]) \
-            -> Connection:
+    def based_on(
+            cls,
+            connection: Union[Connection, Type[Connection], AndConnectionRelation, OrConnectionRelation]
+    ) -> Connection:
         """
         With this method it is possible to define several sublayers of the connection. You can pass various other
         connections in this method as arguments.
 
-        Note that multiple parameters of this method (but also of all other methods that work with Connections) mean
-        an OR operation. So if you define a `BaseConnType.based_on(ConnType1, ConnType2)` it means that your connection
-        `BaseConnType` is based on a `ConnType1` or a `ConnType2`.
+        Note that you can define logical statements with the `|` and the `&` operator.
+        For example: ``Connection1() or Connection2() and Connection3()``.
 
-        In order to describe an AND operation, i.e. that the `BaseConnType` is based on a` ConnType1` and a `ConnType2`,
-        you have to pass them as a tuple. This would look like this: `BaseConnType.based_on((ConnType1, ConnType2))`
-
-        :param args: all connection items for which this connection is based on
+        :param connection: all connection items for which this connection is based on
 
         """
         this_instance = cls()
+
+        # TODO temp solution for conversion -> will be replaced shortly
+        args = []
+        if isinstance(connection, type) and issubclass(connection, Connection):
+            args.append(connection())
+        elif isinstance(connection, Connection):
+            args.append(connection)
+        elif isinstance(connection, OrConnectionRelation):
+            for cur_connection in connection.connections:
+                if isinstance(cur_connection, Connection):
+                    args.append(cur_connection)
+                elif isinstance(cur_connection, AndConnectionRelation):
+                    args.append(tuple(cur_connection.connections))
+        elif isinstance(connection, AndConnectionRelation):
+            args.append(tuple(connection.connections))
+        else:
+            raise TypeError(f'can not use object from type {connection}')
 
         new_items = []
         for cur_item in args:
@@ -615,7 +630,7 @@ class Connection(metaclass=ConnectionType):
                         f"the connection object given by tuple element at index {cur_idx} in `other_conn` is not "
                         f"single -> method only possible for single connections")
                 cur_idx += 1
-            other_conn = Connection.based_on(other_conn)
+            other_conn = Connection.based_on(AndConnectionRelation(*other_conn))
         else:
             raise TypeError("the object given by `other_conn` has to be from type `Connection` or has to be a tuple "
                             "of `Connection` objects")
@@ -643,10 +658,11 @@ class Connection(metaclass=ConnectionType):
         #: filter all duplicated (and contained in each other) connections
         intersection_without_duplicates = []
         for cur_conn in intersection:
-            checkable_cur_conn = Connection.based_on(cur_conn) if isinstance(cur_conn, tuple) else cur_conn
+            checkable_cur_conn = Connection.based_on(AndConnectionRelation(*cur_conn)) \
+                if isinstance(cur_conn, tuple) else cur_conn
             found_it = False
             for cur_existing_conn in intersection_without_duplicates:
-                checkable_cur_existing_conn = Connection.based_on(cur_existing_conn) \
+                checkable_cur_existing_conn = Connection.based_on(AndConnectionRelation(*cur_existing_conn)) \
                     if isinstance(cur_existing_conn, tuple) else cur_existing_conn
                 if checkable_cur_conn.equal_with(checkable_cur_existing_conn, ignore_metadata=True):
                     found_it = True
@@ -656,11 +672,16 @@ class Connection(metaclass=ConnectionType):
         intersection_filtered = []
         #: filter all *contained in each other* connections
         for cur_conn in intersection_without_duplicates:
-            usable_cur_conn = Connection.based_on(cur_conn) if isinstance(cur_conn, tuple) else cur_conn
+            usable_cur_conn = Connection.based_on(AndConnectionRelation(*cur_conn)) \
+                if isinstance(cur_conn, tuple) else cur_conn
             is_contained_in_another = False
             for cur_validate_cnn in intersection_without_duplicates:
-                cur_usable_validate_cnn = \
-                    Connection.based_on(cur_validate_cnn) if isinstance(cur_validate_cnn, tuple) else cur_validate_cnn
+
+                cur_usable_validate_cnn = (
+                    Connection.based_on(AndConnectionRelation(*cur_validate_cnn))) \
+                    if isinstance(cur_validate_cnn, tuple) \
+                    else cur_validate_cnn
+
                 if cur_validate_cnn == cur_conn:
                     # skip the same element
                     continue
@@ -788,7 +809,7 @@ class Connection(metaclass=ConnectionType):
             else:
                 based_on_strings.append(cur_elem.get_tree_str())
 
-        return f"{self.__class__.__name__}.based_on({', '.join(based_on_strings)})"
+        return f"{self.__class__.__name__}.based_on({'| '.join(based_on_strings)})"
 
     def is_bidirectional(self):
         """
@@ -905,7 +926,9 @@ class Connection(metaclass=ConnectionType):
                                 # add all possible direct parents to the possibilities list
                                 for cur_direct_parent in self.__class__.get_parents():
                                     if cur_direct_parent.is_parent_of(cur_tuple_elem.__class__):
-                                        all_pos_possibilities.append(cur_direct_parent.based_on(cur_tuple_elem))
+                                        all_pos_possibilities.append(
+                                            cur_direct_parent.based_on(AndConnectionRelation(*cur_tuple_elem))
+                                        )
                                 direct_ancestors_tuple += (all_pos_possibilities, )
                         # resolve the opportunities and create multiple possible tuples where all elements are direct
                         # parents
@@ -973,7 +996,7 @@ class Connection(metaclass=ConnectionType):
             if isinstance(cur_single, Connection):
                 new_cnn = cur_single
             else:
-                new_cnn = Connection.based_on(cur_single)
+                new_cnn = Connection.based_on(AndConnectionRelation(*cur_single))
 
             new_cnn.set_metadata_for_all_subitems(self.metadata)
             cleaned_singles.append(new_cnn)
@@ -1245,7 +1268,11 @@ class Connection(metaclass=ConnectionType):
                 other_conn = [other_conn]
 
         if self.__class__ == Connection and len(self.based_on_elements) == 0:
-            return Connection.based_on(*other_conn).clone()
+            return Connection.based_on(
+                OrConnectionRelation(*[
+                    AndConnectionRelation(*inner) if isinstance(inner, tuple) else inner
+                    for inner in other_conn])
+            ).clone()
 
         # determine all single connection of the two sides (could contain tuple, where every element is a single
         # connection too)
@@ -1281,7 +1308,7 @@ class Connection(metaclass=ConnectionType):
             for cur_other_conn in other_conn_singles:
                 for cur_intersection in cur_self_conn.get_intersection_with_other_single(cur_other_conn):
                     if isinstance(cur_intersection, tuple):
-                        cur_intersection = Connection.based_on(cur_intersection)
+                        cur_intersection = Connection.based_on(AndConnectionRelation(*cur_intersection))
                     if cur_intersection not in intersections:
                         intersections.append(cur_intersection)
 
@@ -1303,7 +1330,7 @@ class Connection(metaclass=ConnectionType):
             # there is no intersection
             return None
         if len(intersection_filtered) > 1 or isinstance(intersection_filtered[0], tuple):
-            return Connection.based_on(*intersection_filtered).clone()
+            return Connection.based_on(AndConnectionRelation(*intersection_filtered)).clone()
 
         return intersection_filtered[0].clone()
 

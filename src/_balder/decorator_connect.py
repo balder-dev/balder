@@ -5,10 +5,15 @@ import re
 from _balder.device import Device
 from _balder.connection import Connection
 from _balder.controllers import DeviceController
+from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
 
 
-def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[Connection], Connection],
-            self_node_name: str = None, dest_node_name: str = None):
+def connect(
+        with_device: Union[Type[Device], str],
+        over_connection: Union[Connection, Type[Connection], AndConnectionRelation, OrConnectionRelation],
+        self_node_name: str = None,
+        dest_node_name: str = None
+):
     """
     This decorator connects two devices with each other. It can be used for scenarios as well as setup devices.
 
@@ -27,11 +32,6 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
     if not isinstance(with_device, str) and not issubclass(with_device, Device):
         raise ValueError("the value of `with_device` must be a `Device` (or a subclass thereof) or the device name "
                          "as a string")
-    if isinstance(over_connection, tuple):
-        # doesn't make sense, because we can describe what's needed in one scenario with several `@connect` decorations
-        # anyway. We are describing a setup, therefore an AND link makes no sense here either
-        raise TypeError("an AND link (signaled via the tuple) of the connection is not possible here - for further "
-                        "separate connections use the `@connect` decorator again")
     if isinstance(over_connection, type):
         if not issubclass(over_connection, Connection):
             raise TypeError("the type of `over_connection` must be a `Connection` (or a subclass of it)")
@@ -91,9 +91,11 @@ def connect(with_device: Union[Type[Device], str], over_connection: Union[Type[C
                 #  in another `@connect()` decorator (and also remove possible metadata from the new clone)
                 cur_cnn_instance = over_connection.clone()
                 cur_cnn_instance.set_metadata_for_all_subitems(None)
-            elif issubclass(over_connection, Connection):
+            elif isinstance(over_connection, type) and issubclass(over_connection, Connection):
                 # not instantiated -> instantiate it
                 cur_cnn_instance = over_connection()
+            elif isinstance(over_connection, (AndConnectionRelation, OrConnectionRelation)):
+                over_connection = Connection.based_on(over_connection)
             cur_cnn_instance.set_devices(from_device=decorated_cls, to_device=with_device)
             cur_cnn_instance.update_node_names(from_device_node_name=self_node_name, to_device_node_name=dest_node_name)
 

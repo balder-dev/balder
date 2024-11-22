@@ -3,6 +3,7 @@ from typing import Type, Union, List, Dict, Tuple, TYPE_CHECKING
 
 import inspect
 import logging
+from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
 from _balder.device import Device
 from _balder.connection import Connection
 from _balder.fixture_execution_level import FixtureExecutionLevel
@@ -759,13 +760,13 @@ class VariationExecutor(BasicExecutableExecutor):
 
                 # now cleanup the scenario-device connection `relevant_device_cnn` according to the class-based feature
                 # connection
-                new_cleaned_singles = []
+                new_cleaned_singles = OrConnectionRelation()
                 for cur_old_cnn_single in relevant_device_cnn.get_singles():
                     for cur_feature_cnn in feature_cnns:
                         if cur_feature_cnn.contained_in(cur_old_cnn_single, ignore_metadata=True):
                             new_cleaned_singles.append(cur_old_cnn_single)
 
-                new_cnn_to_replace = Connection.based_on(*new_cleaned_singles)
+                new_cnn_to_replace = Connection.based_on(new_cleaned_singles)
                 new_cnn_to_replace.set_metadata_for_all_subitems(new_cleaned_singles[0].metadata)
 
                 abs_var_scenario_device_cnns[cur_scenario_device][cur_mapped_scenario_device].remove(
@@ -828,16 +829,18 @@ class VariationExecutor(BasicExecutableExecutor):
                 if virtual_routing_cnns[cur_cnn] is None:
                     virtual_routing_cnns[cur_cnn] = Connection.based_on(virtual_cnn)
                 else:
-                    virtual_routing_cnns[cur_cnn] = Connection.based_on(virtual_routing_cnns[cur_cnn], virtual_cnn)
+                    virtual_routing_cnns[cur_cnn] = Connection.based_on(
+                        OrConnectionRelation(virtual_routing_cnns[cur_cnn], virtual_cnn))
                 virtual_routing_cnns[cur_cnn].set_metadata_for_all_subitems(virtual_cnn.metadata)
 
         self._abs_variation_connections = []
         for cur_cnn in self._abs_variation_scenario_device_connections:
             cur_virtual_cnn = virtual_routing_cnns[cur_cnn]
             new_intersection = cur_cnn.intersection_with(cur_virtual_cnn)
-            new_intersection.set_metadata_for_all_subitems(None)
-            # always set the metadata for setup devices
-            new_intersection.set_metadata_for_all_subitems(cur_virtual_cnn.metadata)
+            if new_intersection:
+                new_intersection.set_metadata_for_all_subitems(None)
+                # always set the metadata for setup devices
+                new_intersection.set_metadata_for_all_subitems(cur_virtual_cnn.metadata)
             self._abs_variation_connections.append(new_intersection)
 
     def set_conn_dependent_methods(self):
@@ -873,11 +876,18 @@ class VariationExecutor(BasicExecutableExecutor):
                     relevant_abs_conn = []
                     for cur_cnn in self._abs_variation_connections:
                         if cur_cnn.has_connection_from_to(start_device=setup_device, end_device=mapped_setup_device):
-                            relevant_abs_conn.append(cur_cnn)
+                            if cur_cnn.__class__ == Connection:
+                                # add the children
+                                for cur_inner_cnn in cur_cnn.based_on_elements:
+                                    if isinstance(cur_inner_cnn, tuple):
+                                        cur_inner_cnn = AndConnectionRelation(*cur_inner_cnn)
+                                    relevant_abs_conn.append(cur_inner_cnn)
+                            else:
+                                relevant_abs_conn.append(cur_cnn)
                     if len(relevant_abs_conn) is None:
                         raise RuntimeError(f"detect empty absolute connection between device `{setup_device.__name__}` "
                                            f"and device `{mapped_setup_device.__name__}`")
-                    absolute_feature_method_var_cnn = Connection.based_on(*relevant_abs_conn)
+                    absolute_feature_method_var_cnn = Connection.based_on(OrConnectionRelation(*relevant_abs_conn))
                     cur_method_variation = cur_setup_feature_controller.get_method_variation(
                         of_method_name=cur_method_name, for_vdevice=mapped_vdevice,
                         with_connection=absolute_feature_method_var_cnn)
