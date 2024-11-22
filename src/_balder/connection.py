@@ -9,7 +9,21 @@ from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
 from _balder.utils import cnn_type_check_and_convert
 
 
-class Connection:
+class ConnectionType(type):
+    """
+    Metaclass for :class:`Connection` objects
+    """
+    def __init__(cls, name, bases, dct):
+        super().__init__(name, bases, dct)
+
+    def __and__(cls, other) -> AndConnectionRelation:
+        return cls().__and__(other)
+
+    def __or__(cls, other) -> OrConnectionRelation:
+        return cls().__or__(other)
+
+
+class Connection(metaclass=ConnectionType):
     """
     This is the basic connection class. On one side it is the common base class for all connection objects. On the other
     side it can also be used to describe a container connection, that contains a list of different connection items.
