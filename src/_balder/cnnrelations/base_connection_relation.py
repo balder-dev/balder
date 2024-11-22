@@ -1,9 +1,12 @@
 from __future__ import annotations
 from typing import List, Union, Type, TypeVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
+from ..utils import cnn_type_check_and_convert
 
 if TYPE_CHECKING:
     from ..connection import Connection
+    from .and_connection_relation import AndConnectionRelation
+    from .or_connection_relation import OrConnectionRelation
 
 BaseConnectionRelationT = TypeVar('BaseConnectionRelationT', bound='BaseConnectionRelation')
 
@@ -28,6 +31,30 @@ class BaseConnectionRelation(ABC):
     def __len__(self):
         return len(self._connections)
 
+    def __and__(
+            self,
+            other: Union[Connection, Type[Connection], AndConnectionRelation, OrConnectionRelation]
+    ) -> AndConnectionRelation:
+
+        from .and_connection_relation import AndConnectionRelation  # pylint: disable=import-outside-toplevel
+
+        new_list = AndConnectionRelation()
+        new_list.append(self)
+        new_list.append(cnn_type_check_and_convert(other))
+        return new_list
+
+    def __or__(
+            self,
+            other: Union[Connection, Type[Connection], AndConnectionRelation, OrConnectionRelation]
+    ) -> OrConnectionRelation:
+
+        from .or_connection_relation import OrConnectionRelation  # pylint: disable=import-outside-toplevel
+
+        new_list = OrConnectionRelation()
+        new_list.append(self)
+        new_list.append(cnn_type_check_and_convert(other))
+        return new_list
+
     @property
     def connections(self) -> List[Union[Connection, BaseConnectionRelationT]]:
         """
@@ -45,7 +72,7 @@ class BaseConnectionRelation(ABC):
         """
         appends a component to this connection relation
         """
-        from ..connection import Connection
+        from ..connection import Connection  # pylint: disable=import-outside-toplevel
 
         if isinstance(connection, type):
             if issubclass(connection, Connection):
@@ -55,7 +82,12 @@ class BaseConnectionRelation(ABC):
         if not isinstance(connection, Connection) and not isinstance(connection, BaseConnectionRelation):
             raise TypeError('the element that should be appended to the relation needs to be a Connection or another '
                             'relation')
-        self._connections.append(connection)
+        if isinstance(connection, self.__class__):
+            # directly add children (because it has the same type)
+            for cur_inner_connection in connection.connections:
+                self._connections.append(cur_inner_connection)
+        else:
+            self._connections.append(connection)
 
     def extend(self, relation: BaseConnectionRelationT):
         """

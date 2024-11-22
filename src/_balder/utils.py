@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Type, Tuple, Union, Literal
+from typing import List, Type, Tuple, Union, Literal, TYPE_CHECKING
 
 import sys
 import inspect
@@ -7,6 +7,10 @@ from _balder.scenario import Scenario
 from _balder.exceptions import InheritanceError
 
 MethodLiteralType = Literal["function", "classmethod", "staticmethod", "instancemethod"]
+
+if TYPE_CHECKING:
+    from _balder.connection import Connection
+    from _balder.cnnrelations.base_connection_relation import BaseConnectionRelationT
 
 
 def get_scenario_inheritance_list_of(scenario: Type[Scenario]) -> List[Type[Scenario]]:
@@ -43,6 +47,28 @@ def get_class_that_defines_method(meth):
         if isinstance(cls, type):
             return cls
     return None  # not required since None would have been implicitly returned anyway
+
+
+def cnn_type_check_and_convert(elem: Union[Connection, Type[Connection], BaseConnectionRelationT]) \
+        -> Union[Connection, BaseConnectionRelationT]:
+    """
+    converts possible type object to instance and checks if the element is a connection type
+
+    :param elem: the connection object to be converted/checked
+    """
+
+    from .connection import Connection  # pylint: disable=import-outside-toplevel
+    from .cnnrelations.and_connection_relation import AndConnectionRelation  # pylint: disable=import-outside-toplevel
+    from .cnnrelations.or_connection_relation import OrConnectionRelation  # pylint: disable=import-outside-toplevel
+
+    if isinstance(elem, type):
+        if issubclass(elem, Connection):
+            return elem()
+    elif isinstance(elem, (Connection, AndConnectionRelation, OrConnectionRelation)):
+        # okay
+        return elem
+    raise TypeError(f'object needs to be a `Connection`, a connection relation or a `Type[Connection]` - no '
+                    f'`{elem}`')
 
 
 def inspect_method(func) -> Tuple[Union[type, None], MethodLiteralType]:
