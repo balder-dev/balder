@@ -20,7 +20,7 @@ class IPv6Connection(Connection):
     """
 
 
-IPConnection = Connection.based_on(IPv4Connection, IPv6Connection)
+IPConnection = Connection.based_on(IPv4Connection | IPv6Connection)
 
 
 @insert_into_tree(parents=[IPv4Connection, IPv6Connection])
@@ -44,4 +44,4 @@ class ICMPv6Connection(Connection):
     """
 
 
-ICMPConnection = Connection.based_on(ICMPv4Connection, ICMPv6Connection)
+ICMPConnection = Connection.based_on(ICMPv4Connection | ICMPv6Connection)

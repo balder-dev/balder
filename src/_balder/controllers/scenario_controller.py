@@ -4,6 +4,7 @@ from typing import Type, Dict, List, Tuple, Union, Callable, Iterable, Any
 import logging
 import inspect
 from collections import OrderedDict
+from _balder.cnnrelations import OrConnectionRelation
 from _balder.device import Device
 from _balder.scenario import Scenario
 from _balder.connection import Connection
@@ -215,8 +216,8 @@ class ScenarioController(NormalScenarioSetupController):
 
                 # now check if one or more single of the classbased connection are CONTAINED IN the possible
                 # parallel connection (only if there exists more than one parallel)
-                feature_cnn = Connection.based_on(*FeatureController.get_for(
-                        cur_feature.__class__).get_abs_class_based_for_vdevice()[mapped_vdevice])
+                feature_cnn = Connection.based_on(OrConnectionRelation(*FeatureController.get_for(
+                        cur_feature.__class__).get_abs_class_based_for_vdevice()[mapped_vdevice]))
 
                 # search node names that is the relevant connection
                 relevant_cnns: List[Connection] = []
@@ -341,7 +342,7 @@ class ScenarioController(NormalScenarioSetupController):
                 cur_feature_class_based_for_vdevice = \
                     FeatureController.get_for(
                         cur_feature.__class__).get_abs_class_based_for_vdevice()[mapped_vdevice]
-                cur_feature_cnn = Connection.based_on(*cur_feature_class_based_for_vdevice)
+                cur_feature_cnn = Connection.based_on(OrConnectionRelation(*cur_feature_class_based_for_vdevice))
 
                 device_cnn_singles = get_single_cnns_between_device_for_feature(
                     from_device=cur_from_device, to_device=mapped_device, relevant_feature_cnn=cur_feature_cnn)
@@ -395,7 +396,7 @@ class ScenarioController(NormalScenarioSetupController):
                         cur_from_device_controller = DeviceController.get_for(cur_from_device)
                         cur_to_device_controller = DeviceController.get_for(cur_to_device)
 
-                        new_cnn = Connection.based_on(*cur_single_cnns)
+                        new_cnn = Connection.based_on(OrConnectionRelation(*cur_single_cnns))
                         new_cnn.set_metadata_for_all_subitems(cur_single_cnns[0].metadata)
                         if cur_from_device == cur_single_cnns[0].from_device:
                             cur_from_device_controller.add_new_absolute_connection(new_cnn)

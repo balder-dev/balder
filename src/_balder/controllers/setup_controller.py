@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Type, Dict, Union, TYPE_CHECKING
 
 import logging
+from _balder.cnnrelations import OrConnectionRelation
 from _balder.setup import Setup
 from _balder.connection import Connection
 from _balder.exceptions import IllegalVDeviceMappingError, MultiInheritanceError
@@ -113,7 +114,8 @@ class SetupController(NormalScenarioSetupController):
                     continue
 
                 # there exists a class based requirement for this vDevice
-                class_based_cnn = Connection.based_on(*feature_class_based_for_vdevice[mapped_vdevice])
+                class_based_cnn = Connection.based_on(
+                    OrConnectionRelation(*feature_class_based_for_vdevice[mapped_vdevice]))
                 # search relevant connection
                 cur_device_controller = DeviceController.get_for(cur_device)
                 for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():

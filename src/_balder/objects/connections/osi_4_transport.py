@@ -20,7 +20,7 @@ class TcpIPv6Connection(Connection):
     """
 
 
-TcpConnection = Connection.based_on(TcpIPv4Connection, TcpIPv6Connection)
+TcpConnection = Connection.based_on(TcpIPv4Connection | TcpIPv6Connection)
 
 
 @insert_into_tree(parents=[osi_3_network.IPv4Connection])
@@ -37,4 +37,4 @@ class UdpIPv6Connection(Connection):
     """
 
 
-UdpConnection = Connection.based_on(UdpIPv4Connection, UdpIPv6Connection)
+UdpConnection = Connection.based_on(UdpIPv4Connection | UdpIPv6Connection)

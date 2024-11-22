@@ -3,6 +3,7 @@ from typing import Type, Dict, Union, List, Callable, Tuple
 
 import logging
 import inspect
+from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
 from _balder.device import Device
 from _balder.vdevice import VDevice
 from _balder.feature import Feature
@@ -158,7 +159,8 @@ class FeatureController(Controller):
                         # COMBINE IT if it is already available
                         else:
                             all_possible_method_variations[cur_impl_method] = Connection.based_on(
-                                all_possible_method_variations[cur_impl_method], cur_single_impl_method_cnn)
+                                OrConnectionRelation(all_possible_method_variations[cur_impl_method],
+                                                     cur_single_impl_method_cnn))
         return all_possible_method_variations
 
 
@@ -346,7 +348,7 @@ class FeatureController(Controller):
         all_vdevice_method_variations = self.get_method_based_for_vdevice()
 
         if isinstance(with_connection, tuple):
-            with_connection = Connection.based_on(with_connection)
+            with_connection = Connection.based_on(AndConnectionRelation(*with_connection))
 
         if all_vdevice_method_variations is None:
             raise ValueError("the current feature has no method variations")
@@ -595,7 +597,7 @@ class FeatureController(Controller):
             for cur_element in cur_vdevice_cls_cnn:
                 if isinstance(cur_element, tuple):
                     if not Connection.check_if_tuple_contained_in_connection(
-                            cur_element, Connection.based_on(*parent_vdevice_cnn)):
+                            cur_element, Connection.based_on(OrConnectionRelation(*parent_vdevice_cnn))):
                         raise VDeviceResolvingError(
                             f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
                             f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
@@ -604,7 +606,7 @@ class FeatureController(Controller):
                             f" is not contained in the connection-tree of the parent VDevice")
                 else:
                     if not cur_element.contained_in(
-                            Connection.based_on(*parent_vdevice_cnn), ignore_metadata=True):
+                            Connection.based_on(OrConnectionRelation(*parent_vdevice_cnn)), ignore_metadata=True):
                         raise VDeviceResolvingError(
                             f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
                             f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
