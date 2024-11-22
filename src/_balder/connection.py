@@ -5,6 +5,8 @@ import copy
 import itertools
 from _balder.device import Device
 from _balder.exceptions import IllegalConnectionTypeError
+from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
+from _balder.utils import cnn_type_check_and_convert
 
 
 class Connection:
@@ -74,6 +76,22 @@ class Connection:
             raise ValueError(
                 "you have to provide all or none of the following items: `from_device`, `from_device_node_name`, "
                 "`to_device` or `to_device_node_name`")
+
+    def __and__(self, other: Union[Connection, AndConnectionRelation, OrConnectionRelation]) -> AndConnectionRelation:
+        new_list = AndConnectionRelation(self)
+
+        other = cnn_type_check_and_convert(other)
+        new_list.append(other)
+
+        return new_list
+
+    def __or__(self, other: Union[Connection, AndConnectionRelation, OrConnectionRelation]) -> OrConnectionRelation:
+        new_list = OrConnectionRelation(self)
+
+        other = cnn_type_check_and_convert(other)
+        new_list.append(other)
+
+        return new_list
 
     def __eq__(self, other):
         if isinstance(other, Connection):
