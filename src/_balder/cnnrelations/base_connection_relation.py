@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import List, Union, Type, TypeVar, TYPE_CHECKING
+from typing import List, Union, Type, Dict, TypeVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from ..utils import cnn_type_check_and_convert
 
 if TYPE_CHECKING:
     from ..connection import Connection
+    from ..device import Device
     from .and_connection_relation import AndConnectionRelation
     from .or_connection_relation import OrConnectionRelation
 
@@ -105,6 +106,16 @@ class BaseConnectionRelation(ABC):
                             f'`{relation.__class__}` | expected `{self.__class__}`)')
         for cur_elem in relation.connections:
             self.append(cur_elem)
+
+    def set_metadata_for_all_subitems(self, metadata: Union[Dict[str, Union[Device, str]], None]):
+        """
+        This method sets the metadata for all existing Connection items in this element.
+
+        :param metadata: the metadata that should be set (if the value is explicitly set to None, it removes the
+                         metadata from every item)
+        """
+        for cur_cnn in self._connections:
+            cur_cnn.set_metadata_for_all_subitems(metadata)
 
     @abstractmethod
     def get_tree_str(self) -> str:
