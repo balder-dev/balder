@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import List, Union, TYPE_CHECKING
 
 from .base_connection_relation import BaseConnectionRelation
 
@@ -30,4 +30,17 @@ class OrConnectionRelation(BaseConnectionRelation):
                 result.extend(cur_inner_elem.get_simplified_relation())
             else:
                 raise TypeError(f'detect unexpected element type `{cur_inner_elem.__class__}` in inner elements')
+        return result
+
+    def is_single(self) -> bool:
+        if len(self.connections) == 0:
+            return True
+        if len(self.connections) == 1:
+            return self.connections[0].is_single()
+        return False
+
+    def get_singles(self) -> List[Connection]:
+        result = []
+        for elem in self.connections:
+            result.extend(elem.get_singles())
         return result
