@@ -150,3 +150,10 @@ class BaseConnectionRelation(ABC):
         """
         returns the single connections of all components of this connection relation
         """
+
+    @abstractmethod
+    def cut_into_all_possible_subtree_branches(self):
+        """
+        This method returns a list of all possible connection tree branches. A branch is a single connection, while
+        this method returns a list of all possible singles where every single connection has this connection as head.
+        """

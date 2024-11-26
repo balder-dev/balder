@@ -82,3 +82,16 @@ class AndConnectionRelation(BaseConnectionRelation):
             Connection.based_on(AndConnectionRelation(*cur_tuple))
             for cur_tuple in itertools.product(*singles_and_relations)
         ]
+
+    def cut_into_all_possible_subtree_branches(self) -> List[AndConnectionRelation]:
+        if not self.is_single():
+            raise ValueError('can not execute method, because relation is not single')
+
+        tuple_with_all_possibilities = (
+            tuple(cur_tuple_item.cut_into_all_possible_subtree_branches() for cur_tuple_item in self._connections))
+
+        cloned_tuple_list = []
+        for cur_tuple in list(itertools.product(*tuple_with_all_possibilities)):
+            cloned_tuple = AndConnectionRelation(*[cur_tuple_item.clone() for cur_tuple_item in cur_tuple])
+            cloned_tuple_list.append(cloned_tuple)
+        return cloned_tuple_list

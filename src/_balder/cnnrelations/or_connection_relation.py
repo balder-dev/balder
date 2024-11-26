@@ -44,3 +44,12 @@ class OrConnectionRelation(BaseConnectionRelation):
         for elem in self.connections:
             result.extend(elem.get_singles())
         return result
+
+    def cut_into_all_possible_subtree_branches(self) -> List[OrConnectionRelation]:
+        if not self.is_single():
+            raise ValueError('can not execute method, because relation is not single')
+        result = [OrConnectionRelation()]
+        if len(self.connections) == 0:
+            return result
+        result.extend(self.connections[0].cut_into_all_possible_subtree_branches())
+        return result
