@@ -6,7 +6,7 @@ import itertools
 from .base_connection_relation import BaseConnectionRelation
 
 if TYPE_CHECKING:
-    from ..connection import Connection
+    from ..connection import List, Union, Connection
     from .or_connection_relation import OrConnectionRelation
 
 
@@ -62,3 +62,23 @@ class AndConnectionRelation(BaseConnectionRelation):
         if not self_simplified_or_relations:
             all_new_ands.append(and_template)
         return OrConnectionRelation(*all_new_ands)
+
+    def is_single(self) -> bool:
+
+        if len(self._connections) == 0:
+            return True
+
+        return min(cnn.is_single() for cnn in self._connections)
+
+    def get_singles(self) -> List[Connection]:
+        from ..connection import Connection  # pylint: disable=import-outside-toplevel
+
+        singles_and_relations = ()
+        for cur_elem in self._connections:
+            # get all singles of this AND relation element
+            singles_and_relations += (cur_elem.get_singles(),)
+        # now get the variations and add them to our results
+        return [
+            Connection.based_on(AndConnectionRelation(*cur_tuple))
+            for cur_tuple in itertools.product(*singles_and_relations)
+        ]

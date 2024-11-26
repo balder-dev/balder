@@ -122,3 +122,31 @@ class BaseConnectionRelation(ABC):
         """
         returns the tree string for this part of the connection tree
         """
+
+    def is_resolved(self) -> bool:
+        """
+        returns whether this connection relation is part of a single connection
+        """
+        if len(self._connections) == 0:
+            return True
+        return min(cnn.is_resolved() for cnn in self._connections)
+
+    def get_resolved(self) -> BaseConnectionRelationT:
+        """
+        This method returns a resolved Connection Tree. This means that it convert the based_on references so that
+        every based on connection is a direct parent of the current element. It secures that there are no undefined
+        connection layers between an object and the given parent.
+        """
+        return self.__class__(*[cnn.get_resolved() for cnn in self._connections])
+
+    @abstractmethod
+    def is_single(self) -> bool:
+        """
+        returns whether this connection relation is part of a single connection
+        """
+
+    @abstractmethod
+    def get_singles(self) -> List[Connection]:
+        """
+        returns the single connections of all components of this connection relation
+        """
