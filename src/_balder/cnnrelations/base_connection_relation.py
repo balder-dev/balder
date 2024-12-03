@@ -213,3 +213,21 @@ class BaseConnectionRelation(ABC):
         # check inner connection elements (if they match all in both directions)
         return (self.cnn_are_in_other(other_relation, ignore_metadata=ignore_metadata)
                 and other_relation.cnn_are_in_other(self, ignore_metadata=ignore_metadata))
+
+    @abstractmethod
+    def contained_in(self, other_conn: Union[Connection, BaseConnectionRelationT], ignore_metadata=False) -> bool:
+        """
+        This method helps to find out whether this connection relation fits within a given connection tree. A connection
+        object is a certain part of the large connection tree that Balder has at its disposal. This method checks
+        whether a possibility of this connection tree fits in one possibility of the given connection tree.
+
+        .. note::
+            The method returns true if one single connection of this object fits in another single connection that is
+            given by `other_conn`.
+
+        :param other_conn: the other connection
+
+        :param ignore_metadata: if this value is true the method ignores the metadata
+
+        :return: true if the self object is contained in the `other_conn`, otherwise false
+        """

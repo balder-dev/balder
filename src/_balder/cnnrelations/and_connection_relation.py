@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import itertools
 
-from .base_connection_relation import BaseConnectionRelation
+from .base_connection_relation import BaseConnectionRelation, BaseConnectionRelationT
 
 if TYPE_CHECKING:
     from ..connection import List, Union, Connection
@@ -95,3 +95,55 @@ class AndConnectionRelation(BaseConnectionRelation):
             cloned_tuple = AndConnectionRelation(*[cur_tuple_item.clone() for cur_tuple_item in cur_tuple])
             cloned_tuple_list.append(cloned_tuple)
         return cloned_tuple_list
+
+    def contained_in(self, other_conn: Union[Connection, BaseConnectionRelationT], ignore_metadata=False) -> bool:
+        # This method checks if the AND relation is contained in the `other_conn`. To ensure that an AND relation is
+        # contained in a connection tree, there has to be another AND relation into the `other_conn`, that has the same
+        # length or is bigger. In addition, there has to exist an order combination where every element of the this AND
+        # relation is contained in the found AND relation of the `other_cnn`. In this case it doesn't matter where the
+        # AND relation is in `other_elem` (will be converted to single, and AND relation will be searched in all
+        # BASED_ON elements). If the AND relation of `other_conn` has fewer items than this AND relation, it will be
+        # ignored. The method only search for a valid existing item in the `other_conn` AND relation for every item of
+        # this AND relation.
+        from ..connection import Connection  # pylint: disable=import-outside-toplevel
+
+        if not self.is_resolved():
+            raise ValueError('can not execute method, because connection relation is not resolved')
+        if not other_conn.is_resolved():
+            raise ValueError('can not execute method, because other connection relation is not resolved')
+
+        if isinstance(other_conn, BaseConnectionRelation):
+            other_conn = Connection.based_on(other_conn)
+
+        self_singles = self.get_singles()
+        other_singles = other_conn.get_singles()
+
+        for cur_self_single, cur_other_single in itertools.product(self_singles, other_singles):
+            # check if we can find an AND relation in the other object -> go the single connection upwards and
+            # search for a `AndConnectionRelation`
+
+            # self is a container connection -> use raw inner AND list
+            cur_self_single_and_relation = cur_self_single.based_on_elements.connections[0]
+
+            cur_sub_other_single = cur_other_single
+            while cur_sub_other_single is not None:
+                if isinstance(cur_sub_other_single, AndConnectionRelation):
+                    # found an AND relation -> check if length does match
+                    if len(cur_sub_other_single) < len(cur_self_single_and_relation):
+                        # this complete element is not possible - skip this single!
+                        break
+                    # length is okay, no check if every single element is contained in one of this tuple
+                    for cur_inner_self_elem in cur_self_single_and_relation.connections:
+
+                        if not cur_inner_self_elem.contained_in(cur_sub_other_single,
+                                                                    ignore_metadata=ignore_metadata):
+                            # at least one element is not contained in other AND relation - this complete element
+                            # is not possible - skip this single!
+                            break
+                    # all items are contained in the current other AND relation -> match
+                    return True
+                # go further up, if this element is no AND relation
+                cur_sub_other_single = cur_sub_other_single.based_on_elements[0] \
+                    if cur_sub_other_single.based_on_elements else None
+
+        return False
