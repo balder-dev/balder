@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Union, TYPE_CHECKING
 
-from .base_connection_relation import BaseConnectionRelation
+from .base_connection_relation import BaseConnectionRelation, BaseConnectionRelationT
 
 if TYPE_CHECKING:
     from ..connection import Connection
@@ -53,3 +53,13 @@ class OrConnectionRelation(BaseConnectionRelation):
             return result
         result.extend(self.connections[0].cut_into_all_possible_subtree_branches())
         return result
+
+    def contained_in(self, other_conn: Union[Connection, BaseConnectionRelationT], ignore_metadata=False) -> bool:
+        if not self.is_resolved():
+            raise ValueError('can not execute method, because connection relation is not resolved')
+        if not other_conn.is_resolved():
+            raise ValueError('can not execute method, because other connection relation is not resolved')
+        for cur_inner_cnn in self._connections:
+            if cur_inner_cnn.contained_in(other_conn):
+                return True
+        return False
