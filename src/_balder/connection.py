@@ -92,37 +92,6 @@ class Connection(metaclass=ConnectionType):
             all_hashes += hash(cur_child)
         return hash(all_hashes)
 
-    def clone_without_based_on_elements(self) -> Connection:
-        """
-        This method returns a copied version of this element, while all `_based_on_connections` are removed (the copied
-        element has an empty list here).
-
-        :return: a python copied object of this item
-        """
-        self_copy = copy.copy(self)
-        self_copy._based_on_connections = []  # pylint: disable=protected-access
-        return self_copy
-
-    def clone(self) -> Connection:
-        """
-        This method returns an exact clone of this connection. For this clone every inner connection object will be
-        newly instantiated, but all internal references (like the devices and so on) will not be copied (objects are the
-        same for this object and the clone). The method will make a normal copy for every connection object in the
-        `_based_on_elements` list.
-        """
-        self_copy = self.clone_without_based_on_elements()
-
-        for cur_based_on in self._based_on_connections:
-            if isinstance(cur_based_on, tuple):
-                cloned_tuple = tuple([cur_tuple_element.clone() for cur_tuple_element in cur_based_on])
-                self_copy.append_to_based_on(cloned_tuple)
-            elif isinstance(cur_based_on, Connection):
-                cloned_cur_based_on = cur_based_on.clone()
-                self_copy.append_to_based_on(cloned_cur_based_on)
-            else:
-                raise TypeError('based on element is not from valid type')
-        return self_copy
-
     @staticmethod
     def __cut_conn_from_only_parent_to_child(elem: Connection) -> List[Connection]:
         """
@@ -588,6 +557,37 @@ class Connection(metaclass=ConnectionType):
         return intersection_filtered
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
+
+    def clone_without_based_on_elements(self) -> Connection:
+        """
+        This method returns a copied version of this element, while all `_based_on_connections` are removed (the copied
+        element has an empty list here).
+
+        :return: a python copied object of this item
+        """
+        self_copy = copy.copy(self)
+        self_copy._based_on_connections = []  # pylint: disable=protected-access
+        return self_copy
+
+    def clone(self) -> Connection:
+        """
+        This method returns an exact clone of this connection. For this clone every inner connection object will be
+        newly instantiated, but all internal references (like the devices and so on) will not be copied (objects are the
+        same for this object and the clone). The method will make a normal copy for every connection object in the
+        `_based_on_elements` list.
+        """
+        self_copy = self.clone_without_based_on_elements()
+
+        for cur_based_on in self._based_on_connections:
+            if isinstance(cur_based_on, tuple):
+                cloned_tuple = tuple([cur_tuple_element.clone() for cur_tuple_element in cur_based_on])
+                self_copy.append_to_based_on(cloned_tuple)
+            elif isinstance(cur_based_on, Connection):
+                cloned_cur_based_on = cur_based_on.clone()
+                self_copy.append_to_based_on(cloned_cur_based_on)
+            else:
+                raise TypeError('based on element is not from valid type')
+        return self_copy
 
     def cut_into_all_possible_subtrees(self) -> List[Union[Connection, Tuple[Connection]]]:
         """
