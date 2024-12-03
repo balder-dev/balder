@@ -151,9 +151,65 @@ class BaseConnectionRelation(ABC):
         returns the single connections of all components of this connection relation
         """
 
+    def cnn_are_in_other(self, other: BaseConnectionRelationT, ignore_metadata: bool=False) -> bool:
+        """
+        This method validates that the elements from this relation are contained in the other relation. Elements matches
+        with each other, as soon as they are equal.
+
+        .. note::
+            This method only checks that every single connections from the first element is contained in the second too.
+            It does not check the other direction. If you want to validate this, you need to call this method with both
+            possibilities.
+
+        :param other: the first list of connections
+        :param other: the other relation object
+        :param ignore_metadata: True, if the metadata of the single connections should be ignored
+        :return: True in case that every connection of the first list is equal with one in the second list, otherwise
+                 False
+        """
+        for cur_cnn in self._connections:
+            found_equal = False
+            for cur_other_cnn in other.connections:
+                if cur_cnn.equal_with(cur_other_cnn, ignore_metadata=ignore_metadata):
+                    found_equal = True
+                    break
+            if not found_equal:
+                return False
+        return True
+
     @abstractmethod
     def cut_into_all_possible_subtree_branches(self):
         """
         This method returns a list of all possible connection tree branches. A branch is a single connection, while
         this method returns a list of all possible singles where every single connection has this connection as head.
         """
+
+    def equal_with(self, other_relation: BaseConnectionRelationT, ignore_metadata=False) -> bool:
+        """
+        This method returns True if the current relation matches with the other relation object. It always converts the
+        elements to a resolved version and checks if both of them are exactly the same.
+
+        .. note::
+            Note that both connection relations need to be resolved.
+
+        .. note::
+            Note that both Connection objects have to have the same ending parent elements. Only the order of the inner
+            connection elements are irrelevant.
+
+        :param other_relation: the other connection relation (needs to be the same type)
+
+        :param ignore_metadata: if this value is true the method ignores the metadata
+
+        :return: returns True if both elements are same
+        """
+        if self.__class__ != other_relation.__class__:
+            return False
+
+        if not self.is_resolved():
+            raise ValueError('can not execute method, because connection relation is not resolved')
+        if not other_relation.is_resolved():
+            raise ValueError('can not execute method, because other connection relation is not resolved')
+
+        # check inner connection elements (if they match all in both directions)
+        return (self.cnn_are_in_other(other_relation, ignore_metadata=ignore_metadata)
+                and other_relation.cnn_are_in_other(self, ignore_metadata=ignore_metadata))
