@@ -464,6 +464,8 @@ class Connection(metaclass=ConnectionType):
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
+    # ---------------------------------- METHODS -----------------------------------------------------------------------
+
     def get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
             -> List[Connection, Tuple[Connection]]:
         """
@@ -555,8 +557,6 @@ class Connection(metaclass=ConnectionType):
 
         # only return unique objects
         return intersection_filtered
-
-    # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def clone_without_based_on_elements(self) -> Connection:
         """
