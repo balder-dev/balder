@@ -92,6 +92,8 @@ class Connection(metaclass=ConnectionType):
             all_hashes += hash(cur_child)
         return hash(all_hashes)
 
+    # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
+
     @staticmethod
     def __cut_conn_from_only_parent_to_child(elem: Connection) -> List[Connection]:
         """
@@ -247,8 +249,6 @@ class Connection(metaclass=ConnectionType):
                             next_loop = True
                             break
         return result
-
-    # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     # ---------------------------------- CLASS METHODS ----------------------------------------------------------------
 
