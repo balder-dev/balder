@@ -324,8 +324,7 @@ class RoutingPath:
                 # todo
                 pass
         # set metadata based on this routing
-        virtual_connection.set_devices(from_device=self.start_device, to_device=self.end_device)
-        virtual_connection.update_node_names(from_device_node_name=self.start_node_name,
-                                             to_device_node_name=self.end_node_name)
+        virtual_connection.metadata.set_from(from_device=self.start_device, from_device_node_name=self.start_node_name)
+        virtual_connection.metadata.set_to(to_device=self.end_device, to_device_node_name=self.end_node_name)
 
         return virtual_connection

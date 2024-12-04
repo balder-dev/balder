@@ -342,16 +342,16 @@ class DeviceController(BaseDeviceController, ABC):
                 if cur_conn.to_device in all_inner_classes_of_outer.keys():
                     meta = cur_conn.metadata
 
-                    meta["to_device"] = all_inner_classes_of_outer[cur_conn.to_device]
-                    if meta["to_device_node_name"] is None:
-                        # no unique node was given -> create one
-                        meta["to_device_node_name"] = \
-                            DeviceController.get_for(meta["to_device"]).get_new_empty_auto_node()
+                    to_device = all_inner_classes_of_outer[cur_conn.to_device]
+                    # if there was given no unique node -> create one
+                    to_device_node_name = DeviceController.get_for(to_device).get_new_empty_auto_node() \
+                        if meta.to_node_name is None else meta.to_node_name
 
-                    # first reset whole metadata
-                    cur_conn.metadata = {}
-                    # now set metadata
-                    cur_conn.metadata = meta
+                    meta.set_to(
+                        to_device=to_device,
+                        to_device_node_name=to_device_node_name)
+
+                    cur_conn.set_metadata_for_all_subitems(meta)
                 else:
                     raise DeviceResolvingException(
                         f"cannot resolve the str for the given device class `{cur_conn.to_device}` for "
