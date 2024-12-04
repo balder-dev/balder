@@ -96,8 +96,8 @@ def connect(
                 cur_cnn_instance = over_connection()
             elif isinstance(over_connection, (AndConnectionRelation, OrConnectionRelation)):
                 over_connection = Connection.based_on(over_connection)
-            cur_cnn_instance.set_devices(from_device=decorated_cls, to_device=with_device)
-            cur_cnn_instance.update_node_names(from_device_node_name=self_node_name, to_device_node_name=dest_node_name)
+            cur_cnn_instance.metadata.set_from(from_device=decorated_cls, from_device_node_name=self_node_name)
+            cur_cnn_instance.metadata.set_to(to_device=with_device, to_device_node_name=dest_node_name)
 
             decorated_cls_device_controller.add_new_raw_connection(cur_cnn_instance)
             return decorated_cls

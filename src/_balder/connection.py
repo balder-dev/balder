@@ -3,6 +3,8 @@ from typing import List, Tuple, Union, Type, Dict
 
 import copy
 import itertools
+
+from _balder.connection_metadata import ConnectionMetadata
 from _balder.device import Device
 from _balder.exceptions import IllegalConnectionTypeError
 from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
@@ -47,47 +49,19 @@ class Connection(metaclass=ConnectionType):
 
         :param to_device_node_name: the node name of the device the connection ends
         """
+        # note: currently every connection is bidirectional (we want to add support for this later)
 
         # contains all metadata of this connection object
-        self._metadata = {
-            "from_device": None, "from_device_node_name": None, "to_device": None, "to_device_node_name": None
-        }
+        self._metadata = ConnectionMetadata(
+            from_device=from_device,
+            to_device=to_device,
+            from_device_node_name=from_device_node_name,
+            to_device_node_name=to_device_node_name,
+            bidirectional=True
+        )
 
-        self._bidirectional = None
         # contains all sub connection objects, this connection tree is based on
         self._based_on_connections = []
-
-        if from_device is not None and not issubclass(from_device, Device):
-            raise TypeError(f"detect illegal argument element {str(from_device)} for given attribute "
-                            f"`from_device` - should be a subclasses of `balder.Device`")
-        self._metadata["from_device"] = from_device
-
-        if from_device_node_name is not None and not isinstance(from_device_node_name, str):
-            raise TypeError(f"detect illegal argument type {type(from_device_node_name)} for given attribute "
-                            f"`from_device_node_name` - should be a string value")
-        self._metadata["from_device_node_name"] = from_device_node_name
-
-        if to_device is not None and not issubclass(to_device, Device):
-            raise TypeError(f"detect illegal argument element {str(to_device)} for given attribute "
-                            f"`to_device` - should be a subclasses of `balder.Device`")
-        self._metadata["to_device"] = to_device
-
-        if to_device_node_name is not None and not isinstance(to_device_node_name, str):
-            raise TypeError(f"detect illegal argument type {type(to_device_node_name)} for given attribute "
-                            f"`to_device_node_name` - should be a string value")
-        self._metadata["to_device_node_name"] = to_device_node_name
-
-        # describes if the connection is uni or bidirectional
-        # note: currently every connection is bidirectional (we want to add support for this later)
-        self._bidirectional = True
-
-        if not ((from_device is None and to_device is None and from_device_node_name is None
-                 and to_device_node_name is None) or (
-                from_device is not None and to_device is not None and from_device_node_name is not None and
-                to_device_node_name is not None)):
-            raise ValueError(
-                "you have to provide all or none of the following items: `from_device`, `from_device_node_name`, "
-                "`to_device` or `to_device_node_name`")
 
     def __and__(self, other: Union[Connection, AndConnectionRelation, OrConnectionRelation]) -> AndConnectionRelation:
         new_list = AndConnectionRelation(self)
@@ -490,56 +464,29 @@ class Connection(metaclass=ConnectionType):
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
-    def metadata(self) -> dict:
+    def metadata(self) -> ConnectionMetadata:
         """returns the connection metadata dictionary"""
         return self._metadata
-
-    @metadata.setter
-    def metadata(self, data):
-        empty_metadata = {
-            "from_device": None, "to_device": None, "from_device_node_name": None, "to_device_node_name": None}
-
-        if not isinstance(data, dict):
-            raise ValueError("the given metadata value has to be a dictionary")
-        if data != {}:
-            if sorted(["from_device", "to_device", "from_device_node_name", "to_device_node_name"]) != \
-                    sorted(list(data.keys())):
-                raise ValueError("if you provide a metadata dictionary you have to provide all elements of it")
-        else:
-            data = empty_metadata.copy()
-
-        # only allow to set the metadata dictionary if the old one has the same values or was empty before (no values)
-        if data != empty_metadata:
-            if self._metadata == empty_metadata:
-                # it is ok, because the dictionary was empty before
-                pass
-            elif self._metadata == data:
-                # it is ok too, because the new set data is the same as the data was before
-                pass
-            else:
-                raise ValueError("you can not set another metadata than the data set before - please reset it first")
-
-        self._metadata = data
 
     @property
     def from_device(self):
         """device from which the connection starts"""
-        return self._metadata["from_device"]
+        return self._metadata.from_device if self._metadata else None
 
     @property
     def to_device(self):
         """device at which the connection ends"""
-        return self._metadata["to_device"]
+        return self._metadata.to_device if self._metadata else None
 
     @property
     def from_node_name(self):
         """the name of the node in the `Device` from which the connection starts"""
-        return self._metadata["from_device_node_name"]
+        return self._metadata.from_node_name if self._metadata else None
 
     @property
     def to_node_name(self):
         """the name of the node in the `Device` at which the connection ends"""
-        return self._metadata["to_device_node_name"]
+        return self._metadata.to_node_name if self._metadata else None
 
     @property
     def based_on_elements(self) -> List[Union[Connection, Tuple[Connection]]]:
@@ -547,58 +494,6 @@ class Connection(metaclass=ConnectionType):
         return self._based_on_connections.copy()
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
-
-    def _metadata_contained_in(self, of_connection: Connection) -> bool:
-        """
-        This method returns true if the metadata of the current connection is contained in the given one.
-
-        The method returns true in the following situations:
-        * both connections are bidirectional and the from and to elements (device and node name) are the same
-        * both connections are unidirectional and have the same from and to elements
-        * both connections are bidirectional and the from is the to and the to is the from
-        * one connection is unidirectional and the other is bidirectional and the from and to elements are the same
-        * one connection is unidirectional and the other is bidirectional and the from is the to and the to is the from
-
-        :return: true if the metadata of the current connection is contained in the metadata of the given one
-        """
-        check_same = \
-            self.from_device == of_connection.from_device and self.from_node_name == of_connection.from_node_name and \
-            self.to_device == of_connection.to_device and self.to_node_name == of_connection.to_node_name
-        check_opposite = \
-            self.from_device == of_connection.to_device and self.from_node_name == of_connection.to_node_name and \
-            self.to_device == of_connection.from_device and self.to_node_name == of_connection.from_node_name
-        if self.is_bidirectional() and of_connection.is_bidirectional():
-            return check_same or check_opposite
-
-        if self.is_bidirectional() and not of_connection.is_bidirectional() or \
-                not self.is_bidirectional() and of_connection.is_bidirectional():
-            return check_same or check_opposite
-
-        return check_same
-
-    def _metadata_equal_with(self, of_connection: Connection) -> bool:
-        """
-        This method returns true if the metadata of the current connection is equal with the metadata of the given
-        connection.
-
-        The method returns true in the following situations:
-        * both connections are bidirectional and the from and to elements (device and node name) are the same
-        * both connections are unidirectional and have the same from and to elements
-        * both connections are bidirectional and the from is the to and the to is the from
-
-        :return: true if the metadata of the current connection is contained in the metadata of the given one
-        """
-        check_same = \
-            self.from_device == of_connection.from_device and self.from_node_name == of_connection.from_node_name and \
-            self.to_device == of_connection.to_device and self.to_node_name == of_connection.to_node_name
-        check_opposite = \
-            self.from_device == of_connection.to_device and self.from_node_name == of_connection.to_node_name and \
-            self.to_device == of_connection.from_device and self.to_node_name == of_connection.from_node_name
-        if self.is_bidirectional() and of_connection.is_bidirectional() or \
-                not self.is_bidirectional() and not of_connection.is_bidirectional():
-            return check_same or check_opposite
-
-        return False
 
     def get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
             -> List[Connection, Tuple[Connection]]:
@@ -694,35 +589,6 @@ class Connection(metaclass=ConnectionType):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def set_devices(self, from_device: Type[Device], to_device: Type[Device]):
-        """
-        Method for setting the devices of the connection if this has not yet been done during instantiation
-
-        .. note::
-            Note that you can not change the devices after they were set (only possible internally)
-
-        :param from_device: device from which the connection starts
-
-        :param to_device: device at which the connection ends
-        """
-        if self.from_device is not None or self.to_device is not None:
-            raise ValueError("devices already set")
-        self._metadata["from_device"] = from_device
-        self._metadata["to_device"] = to_device
-
-    def update_node_names(self, from_device_node_name: str, to_device_node_name: str) -> None:
-        """
-        This method dates the names of the nodes from which the connection in the `from_device` originates and finally
-        arrives in the` to_device`. Please provide the node name of your ``from_device`` in ``from_device_node_name``
-        and the node name of your ``to_device`` in ``to_device_node_name``.
-
-        :param from_device_node_name: specifies the node in the ``from_device``
-
-        :param to_device_node_name: specifies the node in the ``to_device``
-        """
-        self._metadata["from_device_node_name"] = from_device_node_name
-        self._metadata["to_device_node_name"] = to_device_node_name
-
     def cut_into_all_possible_subtrees(self) -> List[Union[Connection, Tuple[Connection]]]:
         """
         This method cuts the resolved connection tree in all possible pieces by removing elements that change
@@ -768,7 +634,7 @@ class Connection(metaclass=ConnectionType):
         # filter all duplicates
         return list(set(all_pieces))
 
-    def set_metadata_for_all_subitems(self, metadata: Union[Dict[str, Union[Device, str]], None]):
+    def set_metadata_for_all_subitems(self, metadata: Union[ConnectionMetadata, None]):
         """
         This method sets the metadata for all existing Connection items in this element.
 
@@ -776,19 +642,14 @@ class Connection(metaclass=ConnectionType):
                          metadata from every item)
         """
         if metadata is None:
-            metadata = {
-                "from_device": None, "to_device": None, "from_device_node_name": None, "to_device_node_name": None}
+            metadata = ConnectionMetadata()
+
+        if not isinstance(metadata, ConnectionMetadata):
+            raise TypeError('metadata must be an instance of `ConnectionMetadata`')
 
         for cur_base_elem in self._based_on_connections:
-            if isinstance(cur_base_elem, Connection):
-                cur_base_elem.set_metadata_for_all_subitems(metadata=metadata)
-            elif isinstance(cur_base_elem, tuple):
-                for cur_tuple_elem in cur_base_elem:
-                    cur_tuple_elem.set_metadata_for_all_subitems(metadata=metadata)
-            else:
-                raise TypeError(
-                    f"found illegal type {cur_base_elem.__class__} for based_on item at index {cur_base_elem}")
-        self.metadata = metadata
+            cur_base_elem.set_metadata_for_all_subitems(metadata=metadata)
+        self._metadata = metadata
 
     def get_tree_str(self) -> str:
         """
@@ -809,13 +670,13 @@ class Connection(metaclass=ConnectionType):
 
         return f"{self.__class__.__name__}.based_on({'| '.join(based_on_strings)})"
 
-    def is_bidirectional(self):
+    def is_bidirectional(self) -> Union[bool, None]:
         """
         Provides the information in which direction the connection is supported (if the property returns true, the
         connection must work in both directions, otherwise it is a unidirectional connection from the `from_device` to
         the` to_device`
         """
-        return self._bidirectional
+        return self._metadata.bidirectional if self._metadata else None
 
     def is_universal(self):
         """
@@ -1089,7 +950,7 @@ class Connection(metaclass=ConnectionType):
             return False
 
         if not ignore_metadata:
-            metadata_check_result = self._metadata_equal_with(of_connection=other_conn)
+            metadata_check_result = self.metadata.equal_with(other_conn.metadata)
             if metadata_check_result is False:
                 return False
 
@@ -1143,7 +1004,7 @@ class Connection(metaclass=ConnectionType):
         :return: true if the self object is contained in the `other_conn`, otherwise false
         """
         if not ignore_metadata:
-            metadata_check_result = self._metadata_contained_in(of_connection=other_conn)
+            metadata_check_result = self.metadata.contained_in(other_conn.metadata)
             if metadata_check_result is False:
                 return False
 

@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.scenario import Scenario
+from _balder.connection_metadata import ConnectionMetadata
 from _balder.controllers.controller import Controller
 from _balder.controllers.device_controller import DeviceController
 from _balder.controllers.vdevice_controller import VDeviceController
@@ -374,11 +375,10 @@ class NormalScenarioSetupController(Controller, ABC):
                         all_devices[all_devices_as_strings.index(cur_parent_cnn.from_device.__name__)]
                     related_to_device = all_devices[all_devices_as_strings.index(cur_parent_cnn.to_device.__name__)]
                     new_cnn = cur_parent_cnn.clone()
-                    new_cnn.set_metadata_for_all_subitems(None)
-                    new_cnn.set_metadata_for_all_subitems(
-                        {"from_device": related_from_device, "to_device": related_to_device,
-                         "from_device_node_name": cur_parent_cnn.from_node_name,
-                         "to_device_node_name": cur_parent_cnn.to_node_name})
+                    new_cnn.set_metadata_for_all_subitems(ConnectionMetadata(
+                        from_device=related_from_device, from_device_node_name=cur_parent_cnn.from_node_name,
+                        to_device=related_to_device, to_device_node_name=cur_parent_cnn.to_node_name)
+                    )
                     all_relevant_cnns.append(new_cnn)
 
                 # throw warning (but only if this scenario/setup has minimum one of the parent classes has inner
