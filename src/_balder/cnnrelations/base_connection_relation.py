@@ -62,6 +62,13 @@ class BaseConnectionRelation(ABC):
         """
         return self._connections.copy()
 
+    @abstractmethod
+    def get_simplified_relation(self) -> OrConnectionRelation:
+        """
+        This method simplifies the connection relation. It will convert every possible relation into an
+        OrConnectionRelation[Connection, AndConnectionRelation].
+        """
+
     def clone(self):
         """
         clones this connection relation
