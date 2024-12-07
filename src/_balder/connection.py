@@ -223,33 +223,6 @@ class Connection(metaclass=ConnectionType):
         # now get the variations and add them to our results
         return list(itertools.product(*singles_tuple))
 
-    @staticmethod
-    def cleanup_connection_list(full_list: List[Union[Connection, Tuple[Connection]]]) \
-            -> List[Union[Connection, Tuple[Connection]]]:
-        """
-        This method cleanup a connection list while removing items that are direct duplicates and by removing duplicates
-        that are fully contained_in other items.
-
-        :param full_list: the full list of connections and tuples of connections that should be cleaned-up
-
-        :returns: returns the cleaned up list
-        """
-        result = full_list.copy()
-        next_loop = True
-        while not next_loop:
-            next_loop = False
-            for cur_elem in result:
-                all_other_elems = [cur_item for cur_item in result if cur_item != cur_elem]
-                if isinstance(cur_elem, Connection):
-                    for cur_other_elem in all_other_elems:
-                        # check if it contained in or the same
-                        if cur_elem.contained_in(cur_other_elem, ignore_metadata=True):
-                            # we can remove it from result list
-                            result.remove(cur_elem)
-                            next_loop = True
-                            break
-        return result
-
     # ---------------------------------- CLASS METHODS ----------------------------------------------------------------
 
     @classmethod
