@@ -410,6 +410,45 @@ class Connection(metaclass=ConnectionType):
                 return False
         return True
 
+    @classmethod
+    def filter_connections_that_are_contained_in(
+            cls,
+            cnns_from: List[Connection],
+            are_contained_in: Connection
+    ) -> List[Connection]:
+        """
+        This method filters the connection elements from the first list to include only those connections that are
+        contained within the provided connection ``are_contained_in``.
+
+        :param cnns_from: a list of connections
+        :param are_contained_in: the connection, the connection elements should be contained in
+        :return: a list with the filtered connections
+        """
+        # todo add parameter ``:param ignore_metadata: True, if the metadata should be ignored``
+        return [
+            cnn for cnn in cnns_from
+            if cnn.contained_in(other_conn=are_contained_in, ignore_metadata=True)
+        ]
+
+    @classmethod
+    def filter_tuples_that_are_contained_in(
+            cls,
+            tuples_from: List[Tuple[Connection]],
+            are_contained_in: Connection
+    ) -> List[Tuple[Connection]]:
+        """
+        This method filters the tuple elements from the first list to include only those tuples that are
+        contained within the provided connection ``are_contained_in``.
+
+        :param tuples_from: a list of tuples
+        :param are_contained_in: the connection, the tuple elements should be contained in
+        :return: a list with the filtered tuples
+        """
+        return [
+            cur_tuple for cur_tuple in tuples_from
+            if Connection.check_if_tuple_contained_in_connection(cur_tuple, are_contained_in)
+        ]
+
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
@@ -481,23 +520,27 @@ class Connection(metaclass=ConnectionType):
 
         intersection = []
 
-        def determine_for(pieces: List[Union[Connection, Tuple[Connection]]], in_other_cnn: Connection):
-            for cur_piece in pieces:
-                if isinstance(cur_piece, Connection):
-                    if cur_piece.contained_in(in_other_cnn, ignore_metadata=True):
-                        intersection.append(cur_piece)
-                else:
-                    # isinstance of tuple
-                    if Connection.check_if_tuple_contained_in_connection(cur_piece, in_other_cnn):
-                        intersection.append(cur_piece)
-
         #: check if some sub elements of self connection are contained in `other_conn`
         self_pieces = self.cut_into_all_possible_subtrees()
-        determine_for(pieces=self_pieces, in_other_cnn=other_conn)
+        intersection.extend(self.__class__.filter_connections_that_are_contained_in(
+            cnns_from=[piece for piece in self_pieces if isinstance(piece, Connection)],
+            are_contained_in=other_conn
+        ))
+        intersection.extend(self.__class__.filter_tuples_that_are_contained_in(
+            tuples_from=[piece for piece in self_pieces if not isinstance(piece, Connection)],
+            are_contained_in=other_conn
+        ))
 
         #: check if some sub elements of `other_conn` are contained in self connection
         other_pieces = other_conn.cut_into_all_possible_subtrees()
-        determine_for(pieces=other_pieces, in_other_cnn=self)
+        intersection.extend(self.__class__.filter_connections_that_are_contained_in(
+            cnns_from=[piece for piece in other_pieces if isinstance(piece, Connection)],
+            are_contained_in=self
+        ))
+        intersection.extend(self.__class__.filter_tuples_that_are_contained_in(
+            tuples_from=[piece for piece in other_pieces if not isinstance(piece, Connection)],
+            are_contained_in=self
+        ))
 
         #: filter all duplicated (and contained in each other) connections
         intersection_without_duplicates = []
