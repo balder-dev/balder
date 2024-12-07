@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union, Type
+from typing import Union, Type, Tuple
 from .device import Device
 
 
@@ -109,6 +109,38 @@ class ConnectionMetadata:
             raise TypeError(f"detect illegal argument type {type(to_device_node_name)} for given attribute "
                             f"`to_device_node_name` - should be a string value")
         self._to_device_node_name = to_device_node_name
+
+    def get_conn_partner_of(self, device: Type[Device], node: Union[str, None] = None) -> Tuple[Type[Device], str]:
+        """
+        This method returns the connection partner of this connection - it always returns the other not given side
+
+        :param device: the device itself - the other will be returned
+
+        :param node: the node name of the device itself (only required if the connection starts and ends with the same
+                     device)
+        """
+        if device not in (self.from_device, self.to_device):
+            raise ValueError(f"the given device `{device.__qualname__}` is no component of this connection")
+        if node is None:
+            # check that the from_device and to_device are not the same
+            if self.from_device == self.to_device:
+                raise ValueError("the connection is a inner-device connection (start and end is the same device) - you "
+                                 "have to provide the `node` string too")
+            if device == self.from_device:
+                return self.to_device, self.to_node_name
+
+            return self.from_device, self.from_node_name
+
+        if node not in (self.from_node_name, self.to_node_name):
+            raise ValueError(f"the given node `{node}` is no component of this connection")
+
+        if device == self.from_device and node == self.from_node_name:
+            return self.to_device, self.to_node_name
+
+        if device == self.to_device and node == self.to_node_name:
+            return self.from_device, self.from_node_name
+
+        raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
 
     def has_connection_from_to(self, start_device, end_device=None) -> bool:
         """

@@ -843,28 +843,7 @@ class Connection(metaclass=ConnectionType):
         :param node: the node name of the device itself (only required if the connection starts and ends with the same
                      device)
         """
-        if device not in (self.from_device, self.to_device):
-            raise ValueError(f"the given device `{device.__qualname__}` is no component of this connection")
-        if node is None:
-            # check that the from_device and to_device are not the same
-            if self.from_device == self.to_device:
-                raise ValueError("the connection is a inner-device connection (start and end is the same device) - you "
-                                 "have to provide the `node` string too")
-            if device == self.from_device:
-                return self.to_device, self.to_node_name
-
-            return self.from_device, self.from_node_name
-
-        if node not in (self.from_node_name, self.to_node_name):
-            raise ValueError(f"the given node `{node}` is no component of this connection")
-
-        if device == self.from_device and node == self.from_node_name:
-            return self.to_device, self.to_node_name
-
-        if device == self.to_device and node == self.to_node_name:
-            return self.from_device, self.from_node_name
-
-        raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
+        return self.metadata.get_conn_partner_of(device, node)
 
     def has_connection_from_to(self, start_device, end_device=None) -> bool:
         """
