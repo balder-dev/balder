@@ -335,26 +335,30 @@ class Connection(metaclass=ConnectionType):
         return this_instance
 
     @classmethod
-    def check_equal_connections_are_in(
-            cls, cnns_from: List[Connection], are_in_cnns_from: List[Connection], ignore_metadata: bool=False) -> bool:
+    def check_that_connections_are_equal_with(
+            cls,
+            cnns_from: List[Connection],
+            are_equal_with_cnns_of: List[Connection],
+            ignore_metadata: bool = False
+    ) -> bool:
         """
-        This method validates that the elements from the first list are contained (are equal) with one of the elements
+        This method validates that the elements from the first list are equal with one (or more) of the connection(s)
         in the second list.
 
         .. note::
-            This method only checks that every single connections from the first element is contained in the second too.
-            It does not check the other direction. If you want to validate this, you need to call this method with both
-            possibilities.
+            This method only checks that every single connections from the first element is equal with one (or more)
+            connection(s) of the other list. It does not check the other direction. If you want to validate this, you need
+            to call this method in both directions.
 
         :param cnns_from: the first list of connections
-        :param are_in_cnns_from: the second list of connection
+        :param are_equal_with_cnns_of: the second list of connection
         :param ignore_metadata: True, if the metadata of the single connections should be ignored
-        :return: True in case that every connection of the first list is equal with one in the second list, otherwise
-                 False
+        :return: True in case that every connection of the first list is equal with one (or more) connection(s) in the
+                 second list, otherwise False
         """
         for cur_cnn in cnns_from:
             found_equal = False
-            for cur_other_cnn in are_in_cnns_from:
+            for cur_other_cnn in are_equal_with_cnns_of:
                 if cur_cnn.equal_with(cur_other_cnn, ignore_metadata=ignore_metadata):
                     found_equal = True
                     break
@@ -363,28 +367,31 @@ class Connection(metaclass=ConnectionType):
         return True
 
     @classmethod
-    def check_equal_connection_tuples_are_in(
-            cls, tuples_from: List[Tuple[Connection]], are_in_tuples_from: List[Tuple[Connection]],
-            ignore_metadata: bool=False) -> bool:
+    def check_that_tuples_are_equal_with(
+            cls,
+            tuples_from: List[Tuple[Connection]],
+            are_equal_with_tuples_of: List[Tuple[Connection]],
+            ignore_metadata: bool = False
+    ) -> bool:
         """
-        This method validates that the connection tuples from the first list are contained (are equal) within the tuple
-        elements of the second list.
+        This method validates that the elements from the first list are equal with one (or more) of the elements
+        in the second list.
 
         .. note::
-            This method only checks that every single tuple from the first element is contained in the second list.
-            It does not check the other direction. If you want to validate this, you need to call this method with both
-            possibilities.
+            This method only checks that every single tuple from the first element is equal with one (or more)
+            tuple(s) of the other list. It does not check the other direction. If you want to validate this, you need
+            to call this method in both directions.
 
         :param tuples_from: the first list of connection-tuples
-        :param are_in_tuples_from: the second list of connection-tuples
+        :param are_equal_with_tuples_of: the second list of connection-tuples
         :param ignore_metadata: True, if the metadata of the single connections should be ignored
-        :return: True in case that every tuple connections of the first list is equal with one tuple in the second,
+        :return: True in case that every tuple of the first list is equal with one (or more) tuple(s) in the second,
                  otherwise False
         """
         for cur_search_tuple in tuples_from:
             found_match_for_cur_search_tuple = False
             # go through each unmatched other tuple
-            for cur_other_tuple in are_in_tuples_from:
+            for cur_other_tuple in are_equal_with_tuples_of:
                 cur_search_tuple_is_completely_in_other_tuple = True
                 for cur_search_tuple_elem in cur_search_tuple:
                     fount_it = False
@@ -910,19 +917,20 @@ class Connection(metaclass=ConnectionType):
             cur_elem for cur_elem in resolved_other.based_on_elements if isinstance(cur_elem, tuple)]
 
         # check single connection elements (if they match all in both directions)
-        if (not self.__class__.check_equal_connections_are_in(
-                cnns_from=self_based_on_elems, are_in_cnns_from=other_based_on_elems, ignore_metadata=ignore_metadata)
-                or not self.__class__.check_equal_connections_are_in(
-                    cnns_from=other_based_on_elems, are_in_cnns_from=self_based_on_elems,
+        if (not self.__class__.check_that_connections_are_equal_with(
+                cnns_from=self_based_on_elems, are_equal_with_cnns_of=other_based_on_elems,
+                ignore_metadata=ignore_metadata)
+                or not self.__class__.check_that_connections_are_equal_with(
+                    cnns_from=other_based_on_elems, are_equal_with_cnns_of=self_based_on_elems,
                     ignore_metadata=ignore_metadata)):
             return False
 
         # check tuple connection elements (if they match all in both directions)
-        if (not self.__class__.check_equal_connection_tuples_are_in(
-                tuples_from=self_based_on_tuples, are_in_tuples_from=other_based_on_tuples,
+        if (not self.__class__.check_that_tuples_are_equal_with(
+                tuples_from=self_based_on_tuples, are_equal_with_tuples_of=other_based_on_tuples,
                 ignore_metadata=ignore_metadata)
-                or not self.__class__.check_equal_connection_tuples_are_in(
-                    tuples_from=other_based_on_tuples, are_in_tuples_from=self_based_on_tuples,
+                or not self.__class__.check_that_tuples_are_equal_with(
+                    tuples_from=other_based_on_tuples, are_equal_with_tuples_of=self_based_on_tuples,
                     ignore_metadata=ignore_metadata)):
             return False
 
