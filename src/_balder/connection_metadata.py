@@ -110,6 +110,36 @@ class ConnectionMetadata:
                             f"`to_device_node_name` - should be a string value")
         self._to_device_node_name = to_device_node_name
 
+    def has_connection_from_to(self, start_device, end_device=None) -> bool:
+        """
+        This method checks if there is a connection from ``start_device`` to ``end_device``. This will return
+        true if the ``start_device`` and ``end_device`` given in this method are also the ``start_device`` and
+        ``end_device`` mentioned in this connection object. If this is a bidirectional connection, ``start_device`` and
+        ``end_device`` can switch places.
+
+
+        :param start_device: the device for which the method should check whether it is a communication partner (for
+                             non-bidirectional connection, this has to be the start device)
+
+        :param end_device: the other device for which the method should check whether it is a communication partner (for
+                           non-bidirectional connection, this has to be the end device - this is optional if only the
+                           start device should be checked)
+
+        :return: returns true if the given direction is possible
+        """
+        if end_device is None:
+
+            if self.bidirectional:
+                return start_device in (self.from_device, self.to_device)
+
+            return start_device == self.from_device
+
+        if self.bidirectional:
+            return start_device == self.from_device and end_device == self.to_device or \
+                   start_device == self.to_device and end_device == self.from_device
+
+        return start_device == self.from_device and end_device == self.to_device
+
     def equal_with(self, other: ConnectionMetadata) -> bool:
         """
         This method returns true if the metadata of the current connection is equal with the metadata of the given
