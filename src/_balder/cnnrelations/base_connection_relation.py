@@ -117,6 +117,22 @@ class BaseConnectionRelation(ABC):
         for cur_cnn in self._connections:
             cur_cnn.set_metadata_for_all_subitems(metadata)
 
+    def get_all_used_connection_types(self) -> List[Type[Connection]]:
+        """
+        This method returns all available connection types, that are used within this connection relation.
+        """
+        from ..connection import Connection  # pylint: disable=import-outside-toplevel
+
+        result = []
+        for cur_inner_elem in self._connections:
+            if isinstance(cur_inner_elem, Connection):
+                result.append(cur_inner_elem.__class__)
+            elif isinstance(cur_inner_elem, BaseConnectionRelation):
+                result.extend(cur_inner_elem.get_all_used_connection_types())
+            else:
+                raise TypeError(f'unexpected type for inner item `{cur_inner_elem.__class__.__name__}`')
+        return list(set(result))
+
     @abstractmethod
     def get_tree_str(self) -> str:
         """
