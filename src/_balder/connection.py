@@ -866,7 +866,7 @@ class Connection(metaclass=ConnectionType):
 
         raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
 
-    def has_connection_from_to(self, start_device, end_device=None):
+    def has_connection_from_to(self, start_device, end_device=None) -> bool:
         """
         This method checks if there is a connection from ``start_device`` to ``end_device``. This will return
         true if the ``start_device`` and ``end_device`` given in this method are also the ``start_device`` and
@@ -883,18 +883,7 @@ class Connection(metaclass=ConnectionType):
 
         :return: returns true if the given direction is possible
         """
-        if end_device is None:
-
-            if self.is_bidirectional():
-                return start_device in (self.from_device, self.to_device)
-
-            return start_device == self.from_device
-
-        if self.is_bidirectional():
-            return start_device == self.from_device and end_device == self.to_device or \
-                   start_device == self.to_device and end_device == self.from_device
-
-        return start_device == self.from_device and end_device == self.to_device
+        return self.metadata.has_connection_from_to(start_device, end_device)
 
     def equal_with(self, other_conn: Connection, ignore_metadata=False) -> bool:
         """
