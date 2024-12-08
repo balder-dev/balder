@@ -167,7 +167,7 @@ class RoutingPath:
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
-    def elements(self) -> List[Connection, NodeGateway]:
+    def elements(self) -> List[Union[Connection, NodeGateway]]:
         """returns all elements that belongs to this routing path"""
         return self._routing_elems
 
