@@ -117,7 +117,7 @@ class Solver:
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_initial_mapping(self) -> List[Tuple[Type[Setup], Type[Scenario], Dict[Device, Device]]]:
+    def get_initial_mapping(self) -> List[Tuple[Type[Setup], Type[Scenario], Dict[Type[Device], Type[Device]]]]:
         """
         This method creates the initial amount of data for `self._mapping`. Only those elements are returned where the
         :meth:`Setup` class has more or the same amount of :meth:`Device`'s than the :meth:`Scenario` class.
