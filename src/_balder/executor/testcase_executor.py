@@ -12,7 +12,6 @@ from _balder.testresult import ResultState, TestcaseResult
 from _balder.utils import inspect_method
 
 if TYPE_CHECKING:
-    from _balder.executor.unresolved_parametrized_testcase_executor import UnresolvedParametrizedTestcaseExecutor
     from _balder.executor.variation_executor import VariationExecutor
     from _balder.fixture_manager import FixtureManager
     from _balder.scenario import Scenario
