@@ -3,7 +3,7 @@ from typing import Type, Union, List, Dict, Tuple, TYPE_CHECKING
 
 import inspect
 import logging
-from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
+from _balder.cnnrelations import OrConnectionRelation
 from _balder.device import Device
 from _balder.connection import Connection
 from _balder.fixture_execution_level import FixtureExecutionLevel
@@ -878,10 +878,7 @@ class VariationExecutor(BasicExecutableExecutor):
                         if cur_cnn.has_connection_from_to(start_device=setup_device, end_device=mapped_setup_device):
                             if cur_cnn.__class__ == Connection:
                                 # add the children
-                                for cur_inner_cnn in cur_cnn.based_on_elements:
-                                    if isinstance(cur_inner_cnn, tuple):
-                                        cur_inner_cnn = AndConnectionRelation(*cur_inner_cnn)
-                                    relevant_abs_conn.append(cur_inner_cnn)
+                                relevant_abs_conn.extend(cur_cnn.based_on_elements.connections)
                             else:
                                 relevant_abs_conn.append(cur_cnn)
                     if len(relevant_abs_conn) is None:

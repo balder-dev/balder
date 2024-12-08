@@ -39,7 +39,7 @@ class Connection(metaclass=ConnectionType):
         .. note::
             With a direct instance of a :class:`Connection` object you can create an own Connection-Tree. You can use
             this container object, if you need a container for a list of :class:`Connection`-Trees that are combined
-            with an AND (tuple) or/and an OR (list).
+            with an AND (``&``) or/and an OR (``|``).
 
         :param from_device: the device this connection starts from (default: None)
 
@@ -61,7 +61,7 @@ class Connection(metaclass=ConnectionType):
         )
 
         # contains all sub connection objects, this connection tree is based on
-        self._based_on_connections = []
+        self._based_on_connections = OrConnectionRelation()
 
     def __and__(self, other: Union[Connection, AndConnectionRelation, OrConnectionRelation]) -> AndConnectionRelation:
         new_list = AndConnectionRelation(self)
@@ -94,136 +94,7 @@ class Connection(metaclass=ConnectionType):
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
-    @staticmethod
-    def __cut_conn_from_only_parent_to_child(elem: Connection) -> List[Connection]:
-        """
-        This helper method returns all possible pieces while the base element will remain intact - so every returned
-        element is from the same type as `elem` (only the related `based_on_elements` are changed).
-
-        .. note::
-            The given element itself will also be added here!
-
-        .. note::
-            The given element has to be single!
-        """
-        all_pieces = [elem.clone()]
-        if len(elem.based_on_elements) == 0:
-            return all_pieces
-        # if the next element is a tuple -> call procedure for tuples and add a copy of this object as child
-        if isinstance(elem.based_on_elements[0], tuple):
-            # return all possibilities of the tuple while adding the current object as child of the tuple
-            for cur_tuple in Connection.__cut_tuple_from_only_parent_to_child(elem.based_on_elements[0]):
-                # for this we do not have to use `clone`, because we copy the base object with `copy.copy` and
-                # completely replace the `_based_on_connections` by our own
-                copied_conn = elem.clone_without_based_on_elements()
-                copied_conn.append_to_based_on(cur_tuple)
-                all_pieces.append(copied_conn)
-            return all_pieces
-        # if this element is the last element with a parent -> copy it and remove the parent, return it
-        if len(elem.based_on_elements[0].based_on_elements) == 0:
-            new_elem = elem.clone_without_based_on_elements()
-            all_pieces.append(new_elem)
-            return all_pieces
-        # otherwise, the current item has grandparents, so call the method recursively for parents and add a copy of
-        # this object as child
-        all_possible_parents = Connection.__cut_conn_from_only_parent_to_child(elem.based_on_elements[0])
-        for cur_parent in all_possible_parents:
-            copied_conn = elem.clone_without_based_on_elements()
-            copied_conn.append_to_based_on(cur_parent)
-            all_pieces.append(copied_conn)
-        return all_pieces
-
-    @staticmethod
-    def __cut_tuple_from_only_parent_to_child(elem: Tuple[Connection]) -> List[Tuple[Connection]]:
-        """
-        This helper method returns all possible pieces while the base elements of the tuple will remain intact - so
-        every returned tuple element is from same type like the related elements in the tuple `elem` (only the related
-        `based_on_elements` are changed).
-
-        .. note::
-            The given element has to be single!
-
-        .. note::
-            Note that this method also returns every possible ordering
-        """
-
-        tuple_with_all_possibilities = (
-            tuple([Connection.__cut_conn_from_only_parent_to_child(cur_tuple_item) for cur_tuple_item in elem]))
-
-        cloned_tuple_list = []
-        for cur_tuple in list(itertools.product(*tuple_with_all_possibilities)):
-            cloned_tuple = tuple([cur_tuple_item.clone() for cur_tuple_item in cur_tuple])
-            cloned_tuple_list.append(cloned_tuple)
-        return cloned_tuple_list
-
-    @staticmethod
-    def check_if_tuple_contained_in_connection(tuple_elem: Tuple[Connection], other_elem: Connection) -> bool:
-        """
-        This method checks if the tuple given by `tuple_elem` is contained in the `other_elem`. To ensure that a tuple
-        element is contained in a connection tree, there has to be another tuple into the `other_elem`, that has the
-        same length or is bigger. In addition, there has to exist an order combination where every element of the
-        `tuple_elem` is contained in the found tuple in `other_elem`. In this case it doesn't matter where the tuple is
-        in `other_elem` (will be converted to single, and tuple will be searched in all BASED_ON elements). If the tuple
-        element of `other_elem` has fewer items than our `tuple_elem`, it will be ignored. The method only search for
-        a valid existing item in the `other_elem` tuple for every item of the `tuple_elem`.
-
-        :param tuple_elem: the tuple element that should be contained in the `other_elem`
-
-        :param other_elem: the connection object, the given tuple should be contained in
-        """
-        def tuple_is_contained_in_other(inner_tuple, contained_in_tuple):
-            # check if every tuple elem fits in one of `contained_in_tuple` (allow to use a position in
-            # `contained_in_tuple` multiple times)
-            for cur_tuple_element in inner_tuple:
-                found_match_for_this_elem = False
-                for cur_contained_in_elem in contained_in_tuple:
-                    if cur_tuple_element.contained_in(cur_contained_in_elem, ignore_metadata=True):
-                        found_match_for_this_elem = True
-                        break
-                if not found_match_for_this_elem:
-                    return False
-            return True
-
-        other_singles = other_elem.get_singles()
-        tuple_singles = Connection.convert_tuple_to_singles(tuple_elem)
-        for cur_tuple_single in tuple_singles:
-            for cur_other_single in other_singles:
-                # check if we found a tuple element in the other object -> go the single connection upwards and search
-                # for a tuple
-                cur_sub_other_single: List[Union[Connection, Tuple[Connection]]] = [cur_other_single]
-                while len(cur_sub_other_single) > 0:
-                    if isinstance(cur_sub_other_single[0], tuple):
-                        # found a tuple -> check if length does match
-                        if len(cur_sub_other_single[0]) >= len(cur_tuple_single) and tuple_is_contained_in_other(
-                                cur_tuple_single, contained_in_tuple=cur_sub_other_single[0]):
-                            return True
-                        # otherwise, this complete element is not possible - skip this single!
-                        break
-                    cur_sub_other_single = cur_sub_other_single[0].based_on_elements
-        return False
-
-    @staticmethod
-    def convert_tuple_to_singles(tuple_elem: Tuple[Connection]) -> List[Union[Connection, Tuple[Connection]]]:
-        """
-        This method converts the given `tuple_elem` to single items and return these.
-
-        :param tuple_elem: the tuple element out of which the single items are being created
-
-        :returns: a list of new connection objects that are single items
-        """
-        singles_tuple = ()
-        tuple_idx = 0
-        for cur_tuple_elem in tuple_elem:
-            if not isinstance(cur_tuple_elem, Connection):
-                raise TypeError(f"the tuple element at index {tuple_idx} of element from `other_conn` is not "
-                                "from type `Connection`")
-            # get all singles of this tuple element
-            singles_tuple += (cur_tuple_elem.get_singles(),)
-            tuple_idx += 1
-        # now get the variations and add them to our results
-        return list(itertools.product(*singles_tuple))
-
-    # ---------------------------------- CLASS METHODS ----------------------------------------------------------------
+    # ---------------------------------- CLASS METHODS -----------------------------------------------------------------
 
     @classmethod
     def get_parents(cls, tree_name: Union[str, None] = None) -> List[Type[Connection]]:
@@ -299,122 +170,31 @@ class Connection(metaclass=ConnectionType):
         """
         this_instance = cls()
 
-        # TODO temp solution for conversion -> will be replaced shortly
-        args = []
         if isinstance(connection, type) and issubclass(connection, Connection):
-            args.append(connection())
-        elif isinstance(connection, Connection):
-            args.append(connection)
-        elif isinstance(connection, OrConnectionRelation):
-            for cur_connection in connection.connections:
-                if isinstance(cur_connection, Connection):
-                    args.append(cur_connection)
-                elif isinstance(cur_connection, AndConnectionRelation):
-                    args.append(tuple(cur_connection.connections))
+            connection = connection()
+        new_items = []
+        if isinstance(connection, Connection):
+            new_items.append(connection)
         elif isinstance(connection, AndConnectionRelation):
-            args.append(tuple(connection.connections))
+            new_items.append(connection)
+        elif isinstance(connection, OrConnectionRelation):
+            for cur_inner_elem in connection.connections:
+                new_items.append(cur_inner_elem)
         else:
             raise TypeError(f'can not use object from type {connection}')
 
-        new_items = []
-        for cur_item in args:
-            if isinstance(cur_item, Connection):
-                if cur_item.__class__ == Connection:
-                    # it is a container -> add elements
-                    new_items += cur_item.based_on_elements
-                else:
-                    new_items.append(cur_item)
-            elif isinstance(cur_item, type) and issubclass(cur_item, Connection):
-                new_items.append(cur_item())
-            else:
-                new_items.append(cur_item)
         # do not create a container connection if no container is required here
-        if cls == Connection and len(new_items) == 1 and not isinstance(new_items[0], tuple):
+        if cls == Connection and len(new_items) == 1 and isinstance(new_items[0], Connection):
             return new_items[0]
         this_instance.append_to_based_on(*new_items)
         return this_instance
 
     @classmethod
-    def check_that_connections_are_equal_with(
-            cls,
-            cnns_from: List[Connection],
-            are_equal_with_cnns_of: List[Connection],
-            ignore_metadata: bool = False
-    ) -> bool:
-        """
-        This method validates that the elements from the first list are equal with one (or more) of the connection(s)
-        in the second list.
-
-        .. note::
-            This method only checks that every single connections from the first element is equal with one (or more)
-            connection(s) of the other list. It does not check the other direction. If you want to validate this, you need
-            to call this method in both directions.
-
-        :param cnns_from: the first list of connections
-        :param are_equal_with_cnns_of: the second list of connection
-        :param ignore_metadata: True, if the metadata of the single connections should be ignored
-        :return: True in case that every connection of the first list is equal with one (or more) connection(s) in the
-                 second list, otherwise False
-        """
-        for cur_cnn in cnns_from:
-            found_equal = False
-            for cur_other_cnn in are_equal_with_cnns_of:
-                if cur_cnn.equal_with(cur_other_cnn, ignore_metadata=ignore_metadata):
-                    found_equal = True
-                    break
-            if not found_equal:
-                return False
-        return True
-
-    @classmethod
-    def check_that_tuples_are_equal_with(
-            cls,
-            tuples_from: List[Tuple[Connection]],
-            are_equal_with_tuples_of: List[Tuple[Connection]],
-            ignore_metadata: bool = False
-    ) -> bool:
-        """
-        This method validates that the elements from the first list are equal with one (or more) of the elements
-        in the second list.
-
-        .. note::
-            This method only checks that every single tuple from the first element is equal with one (or more)
-            tuple(s) of the other list. It does not check the other direction. If you want to validate this, you need
-            to call this method in both directions.
-
-        :param tuples_from: the first list of connection-tuples
-        :param are_equal_with_tuples_of: the second list of connection-tuples
-        :param ignore_metadata: True, if the metadata of the single connections should be ignored
-        :return: True in case that every tuple of the first list is equal with one (or more) tuple(s) in the second,
-                 otherwise False
-        """
-        for cur_search_tuple in tuples_from:
-            found_match_for_cur_search_tuple = False
-            # go through each unmatched other tuple
-            for cur_other_tuple in are_equal_with_tuples_of:
-                cur_search_tuple_is_completely_in_other_tuple = True
-                for cur_search_tuple_elem in cur_search_tuple:
-                    fount_it = False
-                    for cur_other_tuple_elem in cur_other_tuple:
-                        if cur_search_tuple_elem.equal_with(cur_other_tuple_elem, ignore_metadata=ignore_metadata):
-                            fount_it = True
-                            break
-                    if not fount_it:
-                        cur_search_tuple_is_completely_in_other_tuple = False
-                        break
-                if cur_search_tuple_is_completely_in_other_tuple:
-                    # here we have no match
-                    found_match_for_cur_search_tuple = True
-                    break
-            if not found_match_for_cur_search_tuple:
-                return False
-        return True
-
-    @classmethod
     def filter_connections_that_are_contained_in(
             cls,
-            cnns_from: List[Connection],
-            are_contained_in: Connection
+            cnns_from: List[Union[Connection, AndConnectionRelation, OrConnectionRelation]],
+            are_contained_in: Connection,
+            ignore_metadata: bool = False
     ) -> List[Connection]:
         """
         This method filters the connection elements from the first list to include only those connections that are
@@ -422,31 +202,12 @@ class Connection(metaclass=ConnectionType):
 
         :param cnns_from: a list of connections
         :param are_contained_in: the connection, the connection elements should be contained in
+        :param ignore_metadata: True, if the metadata should be ignored
         :return: a list with the filtered connections
         """
-        # todo add parameter ``:param ignore_metadata: True, if the metadata should be ignored``
         return [
             cnn for cnn in cnns_from
-            if cnn.contained_in(other_conn=are_contained_in, ignore_metadata=True)
-        ]
-
-    @classmethod
-    def filter_tuples_that_are_contained_in(
-            cls,
-            tuples_from: List[Tuple[Connection]],
-            are_contained_in: Connection
-    ) -> List[Tuple[Connection]]:
-        """
-        This method filters the tuple elements from the first list to include only those tuples that are
-        contained within the provided connection ``are_contained_in``.
-
-        :param tuples_from: a list of tuples
-        :param are_contained_in: the connection, the tuple elements should be contained in
-        :return: a list with the filtered tuples
-        """
-        return [
-            cur_tuple for cur_tuple in tuples_from
-            if Connection.check_if_tuple_contained_in_connection(cur_tuple, are_contained_in)
+            if cnn.contained_in(other_conn=are_contained_in, ignore_metadata=ignore_metadata)
         ]
 
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
@@ -477,105 +238,74 @@ class Connection(metaclass=ConnectionType):
         return self._metadata.to_node_name if self._metadata else None
 
     @property
-    def based_on_elements(self) -> List[Union[Connection, Tuple[Connection]]]:
+    def based_on_elements(self) -> OrConnectionRelation:
         """returns a copy of the internal based_on_connection"""
-        return self._based_on_connections.copy()
+        return self._based_on_connections.clone()
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_intersection_with_other_single(self, other_conn: Union[Connection, Tuple[Connection]]) \
-            -> List[Connection, Tuple[Connection]]:
+    def get_intersection_with_other_single(
+            self,
+            other_conn: Union[Connection, AndConnectionRelation, OrConnectionRelation]
+    ) -> List[Connection]:
         """
         A helper method that returns an intersection between the two connections (self and the given one).
 
-        :param other_conn: the other **single** connection object (could be a tuple too, but note that this has to have
-                           only **single** elements!)
+        :param other_conn: the other **single** connection object (could be a relation too, but note that them needs to
+                           be **single** elements!)
         """
         if not self.is_single():
             raise ValueError(
                 "the current connection object is not single -> method only possible for single connections")
-        if isinstance(other_conn, Connection):
-            if other_conn.__class__ == Connection:
-                raise ValueError("a container object from direct class `Connection` is not allowed here - please "
-                                 "provide a single connection or a single tuple")
-            if not other_conn.is_single():
-                raise ValueError(
-                    "the connection object given by `other_conn` is not single -> method only possible for single "
-                    "connections")
-        elif isinstance(other_conn, tuple):
-            # has to be a tuple
-            cur_idx = 0
-            for cur_tuple_element in other_conn:
-                if not cur_tuple_element.is_single():
-                    raise ValueError(
-                        f"the connection object given by tuple element at index {cur_idx} in `other_conn` is not "
-                        f"single -> method only possible for single connections")
-                cur_idx += 1
-            other_conn = Connection.based_on(AndConnectionRelation(*other_conn))
-        else:
-            raise TypeError("the object given by `other_conn` has to be from type `Connection` or has to be a tuple "
-                            "of `Connection` objects")
+        if not other_conn.is_single():
+            raise ValueError(
+                "the other connection object is not single -> method only possible for single connections")
 
         intersection = []
 
         #: check if some sub elements of self connection are contained in `other_conn`
-        self_pieces = self.cut_into_all_possible_subtrees()
+        self_pieces = self.cut_into_all_possible_pieces()
         intersection.extend(self.__class__.filter_connections_that_are_contained_in(
-            cnns_from=[piece for piece in self_pieces if isinstance(piece, Connection)],
-            are_contained_in=other_conn
-        ))
-        intersection.extend(self.__class__.filter_tuples_that_are_contained_in(
-            tuples_from=[piece for piece in self_pieces if not isinstance(piece, Connection)],
-            are_contained_in=other_conn
+            cnns_from=self_pieces,
+            are_contained_in=other_conn,
+            ignore_metadata=True
         ))
 
         #: check if some sub elements of `other_conn` are contained in self connection
-        other_pieces = other_conn.cut_into_all_possible_subtrees()
+        other_pieces = other_conn.cut_into_all_possible_pieces()
         intersection.extend(self.__class__.filter_connections_that_are_contained_in(
-            cnns_from=[piece for piece in other_pieces if isinstance(piece, Connection)],
-            are_contained_in=self
-        ))
-        intersection.extend(self.__class__.filter_tuples_that_are_contained_in(
-            tuples_from=[piece for piece in other_pieces if not isinstance(piece, Connection)],
-            are_contained_in=self
+            cnns_from=other_pieces,
+            are_contained_in=self,
+            ignore_metadata=True
         ))
 
         #: filter all duplicated (and contained in each other) connections
         intersection_without_duplicates = []
         for cur_conn in intersection:
-            checkable_cur_conn = Connection.based_on(AndConnectionRelation(*cur_conn)) \
-                if isinstance(cur_conn, tuple) else cur_conn
             found_it = False
             for cur_existing_conn in intersection_without_duplicates:
-                checkable_cur_existing_conn = Connection.based_on(AndConnectionRelation(*cur_existing_conn)) \
-                    if isinstance(cur_existing_conn, tuple) else cur_existing_conn
-                if checkable_cur_conn.equal_with(checkable_cur_existing_conn, ignore_metadata=True):
+                if cur_conn.equal_with(cur_existing_conn, ignore_metadata=True):
                     found_it = True
                     break
             if not found_it:
                 intersection_without_duplicates.append(cur_conn)
+
         intersection_filtered = []
         #: filter all *contained in each other* connections
         for cur_conn in intersection_without_duplicates:
-            usable_cur_conn = Connection.based_on(AndConnectionRelation(*cur_conn)) \
-                if isinstance(cur_conn, tuple) else cur_conn
             is_contained_in_another = False
             for cur_validate_cnn in intersection_without_duplicates:
-
-                cur_usable_validate_cnn = (
-                    Connection.based_on(AndConnectionRelation(*cur_validate_cnn))) \
-                    if isinstance(cur_validate_cnn, tuple) \
-                    else cur_validate_cnn
-
                 if cur_validate_cnn == cur_conn:
                     # skip the same element
                     continue
-                if usable_cur_conn.contained_in(cur_usable_validate_cnn, ignore_metadata=True):
+                if cur_conn.contained_in(cur_validate_cnn, ignore_metadata=True):
                     is_contained_in_another = True
                     break
             if not is_contained_in_another:
+                if isinstance(cur_conn, (AndConnectionRelation,OrConnectionRelation)):
+                    cur_conn = Connection.based_on(cur_conn)
                 intersection_filtered.append(cur_conn)
 
         # only return unique objects
@@ -589,7 +319,7 @@ class Connection(metaclass=ConnectionType):
         :return: a python copied object of this item
         """
         self_copy = copy.copy(self)
-        self_copy._based_on_connections = []  # pylint: disable=protected-access
+        self_copy._based_on_connections = OrConnectionRelation()  # pylint: disable=protected-access
         return self_copy
 
     def clone(self) -> Connection:
@@ -600,19 +330,30 @@ class Connection(metaclass=ConnectionType):
         `_based_on_elements` list.
         """
         self_copy = self.clone_without_based_on_elements()
-
-        for cur_based_on in self._based_on_connections:
-            if isinstance(cur_based_on, tuple):
-                cloned_tuple = tuple([cur_tuple_element.clone() for cur_tuple_element in cur_based_on])
-                self_copy.append_to_based_on(cloned_tuple)
-            elif isinstance(cur_based_on, Connection):
-                cloned_cur_based_on = cur_based_on.clone()
-                self_copy.append_to_based_on(cloned_cur_based_on)
-            else:
-                raise TypeError('based on element is not from valid type')
+        self_copy.append_to_based_on(self._based_on_connections.clone())  # pylint: disable=protected-access
         return self_copy
 
-    def cut_into_all_possible_subtrees(self) -> List[Union[Connection, Tuple[Connection]]]:
+    def cut_into_all_possible_subtree_branches(self) -> List[Connection]:
+        """
+        This method returns a list of all possible connection tree branches. A branch is a single connection, while
+        this method returns a list of all possible singles where every single connection has this connection as head.
+        """
+        all_pieces = [self.clone()]
+        if len(self.based_on_elements) == 0:
+            return all_pieces
+
+        if not self.is_single():
+            raise ValueError("the current connection object is not single -> method only possible for single "
+                             "connections")
+
+        # return all possibilities of the relation while remain the current object as head
+        for sub_branch in self.based_on_elements.cut_into_all_possible_subtree_branches():
+            copied_conn = self.clone_without_based_on_elements()
+            copied_conn.append_to_based_on(sub_branch)
+            all_pieces.append(copied_conn)
+        return all_pieces
+
+    def cut_into_all_possible_pieces(self) -> List[Connection]:
         """
         This method cuts the resolved connection tree in all possible pieces by removing elements that change
         the existing tree - thereby the method returns a list with all possibilities (a copy of this object with all
@@ -624,7 +365,7 @@ class Connection(metaclass=ConnectionType):
         """
         if self.__class__ == Connection:
             # this is only a container, execute process for every item of this one
-            child_elems = self.based_on_elements
+            child_elems = self.based_on_elements.connections
         else:
             child_elems = [self]
 
@@ -632,27 +373,26 @@ class Connection(metaclass=ConnectionType):
 
         for cur_item in child_elems:
 
-            if isinstance(cur_item, Connection):
-                if not cur_item.is_single():
-                    raise ValueError("one of the given element is not single -> method only works with single items")
-            elif isinstance(cur_item, tuple):
-                tuple_idx = 0
-                for cur_tuple_elem in cur_item:
-                    if not cur_tuple_elem.is_single():
-                        raise ValueError(
-                            f"one of the given tuple element has a item at index {tuple_idx}, that is not single -> "
-                            f"method only works with single items or tuple of single items")
-                    tuple_idx += 1
+            if not cur_item.is_single():
+                raise ValueError("one of the given element is not single -> method only works with single items")
 
-            cur_element = [cur_item]
-            while len(cur_element) > 0:
-                if isinstance(cur_element[0], Connection):
-                    all_pieces += Connection.__cut_conn_from_only_parent_to_child(cur_element[0])
-                elif isinstance(cur_element[0], tuple):
-                    all_pieces += Connection.__cut_tuple_from_only_parent_to_child(cur_element[0])
+            cur_element = cur_item
+            while cur_element:
+
+                if isinstance(cur_element, AndConnectionRelation):
                     # now we can not go deeper, because we need this current AND connection
+                    all_pieces += [Connection.based_on(and_relation)
+                                   for and_relation in cur_element.cut_into_all_possible_subtree_branches()]
                     break
-                cur_element = cur_element[0].based_on_elements
+
+                all_pieces += cur_element.cut_into_all_possible_subtree_branches()
+
+                if len(cur_element.based_on_elements.connections) > 1:
+                    # should never be fulfilled because we have a single connection
+                    raise ValueError('unexpected size of inner connections')
+
+                cur_element = cur_element.based_on_elements.connections[0] \
+                    if cur_element.based_on_elements.connections else None
 
         # filter all duplicates
         return list(set(all_pieces))
@@ -714,36 +454,27 @@ class Connection(metaclass=ConnectionType):
         Connection object of the tree - there are no undefined connection layers between an object and the given
         parent).
         """
-        for cur_based_on in self.based_on_elements:
-            if isinstance(cur_based_on, tuple):
-                for cur_tuple_elem in cur_based_on:
-                    # check the next parent class type only if the main self type is not a container
-                    # (base `balder.Connection` object)
-                    if self.__class__ != Connection:
-                        if cur_tuple_elem not in self.__class__.get_parents():
-                            # only one element is not directly parent -> return false
-                            return False
-                    if not cur_tuple_elem.is_resolved():
-                        # only one subelement is not resolved -> return false
-                        return False
-            else:
-                # no tuple, single element
+        if self.__class__ == Connection:
+            return self.based_on_elements.is_resolved()
 
-                # check the next parent class type only if the main self type is not a container
-                # (base `balder.Connection` object)
-                if self.__class__ != Connection:
-                    if cur_based_on.__class__ not in self.__class__.get_parents():
-                        # only one element is not directly parent -> return false
-                        return False
-                if not cur_based_on.is_resolved():
-                    # only one subelement is not resolved -> return false
+        self_parents = self.__class__.get_parents()
+
+        for cur_based_on in self.based_on_elements.connections:
+            if isinstance(cur_based_on, Connection):
+                if cur_based_on.__class__ not in self_parents:
                     return False
+            elif isinstance(cur_based_on, (AndConnectionRelation, OrConnectionRelation)):
+                for cur_type in cur_based_on.get_all_used_connection_types():
+                    if cur_type not in self_parents:
+                        return False
+            if not cur_based_on.is_resolved():
+                return False
         return True
 
     def is_single(self):
         """
-        This method returns true if there exists no logical **OR** in the based on connection(s). One **AND** tuple is
-        allowed.
+        This method returns true if there exists no logical **OR** in the based on connection(s). One **AND** relation
+        is allowed.
 
         .. note::
             Note that this method also returns False, if the connection is not completely resolved!
@@ -759,14 +490,6 @@ class Connection(metaclass=ConnectionType):
         if not self.is_resolved():
             return False
 
-        if isinstance(self.based_on_elements[0], tuple):
-            for cur_tuple_elem in self.based_on_elements[0]:
-                # if only one element of tuple is not single -> return False
-                if not cur_tuple_elem.is_single():
-                    return False
-            # all elements are single
-            return True
-
         return self.based_on_elements[0].is_single()
 
     def get_resolved(self) -> Connection:
@@ -777,48 +500,49 @@ class Connection(metaclass=ConnectionType):
 
         .. note::
             This method returns the connection without a container :class:`Connection`, if the container
-            :class:`Connection` would only consist of one single connection (which is no tuple!). In this case the
-            method returns this child connection directly without any :class:`Connection` container otherwise the
+            :class:`Connection` would only consist of one single connection (which is no AND relation!). In that case
+            the method returns this child connection directly without any :class:`Connection` container otherwise the
             :class:`Connection` container class with all resolved child classes will be returned.
         """
         if self.is_resolved():
-            copied_base = self.clone()
+            copied_base = self.clone_without_based_on_elements()
+            copied_base.append_to_based_on(self.based_on_elements.get_simplified_relation())
         else:
             copied_base = self.clone_without_based_on_elements()
 
             if self.__class__ == Connection:
                 # the base object is a container Connection - iterate over the items and determine the values for them
-                for cur_item in self.based_on_elements.copy():
-                    if isinstance(cur_item, tuple):
-                        new_tuple = tuple([cur_tuple_item.get_resolved() for cur_tuple_item in cur_item])
-                        copied_base.append_to_based_on(new_tuple)
-                    else:
-                        copied_base.append_to_based_on(cur_item.get_resolved())
+                copied_base.append_to_based_on(self.based_on_elements.get_simplified_relation().get_resolved())
             else:
-                for next_higher_parent in self.based_on_elements:
-                    if isinstance(next_higher_parent, tuple):
+                # independent which based-on elements we have, we need to determine all elements between this connection
+                # and the elements of the relation
+                simplified_based_on = self.based_on_elements.get_simplified_relation()
+
+                for next_higher_parent in simplified_based_on:
+                    if isinstance(next_higher_parent, AndConnectionRelation):
                         # determine all possibilities
-                        direct_ancestors_tuple = ()
-                        for cur_tuple_elem in next_higher_parent:
-                            if cur_tuple_elem.__class__ in self.__class__.get_parents():
+                        direct_ancestors_relations = ()
+                        for cur_and_elem in next_higher_parent:
+                            # `cur_and_elem` needs to be a connection, because we are using simplified which has only
+                            # `OR[AND[Cnn, ...], Cnn, ..]`
+                            if cur_and_elem.__class__ in self.__class__.get_parents():
                                 # element already is a direct ancestor
-                                direct_ancestors_tuple += (cur_tuple_elem, )
+                                direct_ancestors_relations += (cur_and_elem, )
                             else:
                                 all_pos_possibilities = []
                                 # add all possible direct parents to the possibilities list
                                 for cur_direct_parent in self.__class__.get_parents():
-                                    if cur_direct_parent.is_parent_of(cur_tuple_elem.__class__):
-                                        all_pos_possibilities.append(
-                                            cur_direct_parent.based_on(AndConnectionRelation(*cur_tuple_elem))
-                                        )
-                                direct_ancestors_tuple += (all_pos_possibilities, )
-                        # resolve the opportunities and create multiple possible tuples where all elements are direct
-                        # parents
-                        for cur_possibility in itertools.product(*direct_ancestors_tuple):
-                            new_child_tuple = (
-                                tuple([cur_tuple_element.get_resolved() for cur_tuple_element in cur_possibility]))
-                            copied_base.append_to_based_on(new_child_tuple)
+                                    if cur_direct_parent.is_parent_of(cur_and_elem.__class__):
+                                        all_pos_possibilities.append(cur_direct_parent.based_on(cur_and_elem))
+                                direct_ancestors_relations += (all_pos_possibilities, )
+                        # resolve the opportunities and create multiple possible AND relations where all elements are
+                        # direct parents
+                        for cur_possibility in itertools.product(*direct_ancestors_relations):
+                            new_child_relation = AndConnectionRelation(*cur_possibility).get_resolved()
+                            copied_base.append_to_based_on(new_child_relation)
                     else:
+                        # `next_higher_parent` needs to be a connection, because we are using simplified which has only
+                        # `OR[AND[Cnn, ...], Cnn, ..]`
                         if next_higher_parent.__class__ in self.__class__.get_parents():
                             # is already a direct parent
                             copied_base.append_to_based_on(next_higher_parent.get_resolved())
@@ -829,10 +553,11 @@ class Connection(metaclass=ConnectionType):
                                 if next_higher_parent.__class__.is_parent_of(cur_self_direct_parent):
                                     new_child = cur_self_direct_parent.based_on(next_higher_parent)
                                     copied_base.append_to_based_on(new_child.get_resolved())
-        # if it is a connection container, where only one element exists that is no tuple -> return this directly
+
+        # if it is a connection container, where only one element exists that is no AND relation -> return this directly
         # instead of the container
         if copied_base.__class__ == Connection and len(copied_base.based_on_elements) == 1 and not \
-                isinstance(copied_base.based_on_elements[0], tuple):
+                isinstance(copied_base.based_on_elements[0], AndConnectionRelation):
             return copied_base.based_on_elements[0]
 
         return copied_base
@@ -847,42 +572,29 @@ class Connection(metaclass=ConnectionType):
             If the current object is a container :class:`Connection` object (direct instance of :class:`Connection`),
             this method returns the single elements without a container class!
         """
+        # note: This method always work with the resolved and simplified version of the object because it is using
+        # `get_resolved()`.
+        if self.is_universal():
+            return [self]
+
+        if self.is_single():
+            return [self]
+
         all_singles = []
 
-        all_self_items = [self]
-        if self.__class__ == Connection and len(self.based_on_elements) == 0:
-            return [self]
-        if self.__class__ == Connection:
-            all_self_items = self.based_on_elements
-        for cur_item in all_self_items:
-            if isinstance(cur_item, tuple):
-                all_singles += Connection.convert_tuple_to_singles(cur_item)
-            elif cur_item.is_single():
-                all_singles.append(copy.copy(cur_item))
-            else:
-                # do this for resolved version of this object
-                resolved_obj = cur_item.get_resolved()
+        resolved_self = self.get_resolved()
 
-                if len(resolved_obj.based_on_elements) == 0:
-                    # element has no children -> return only this
-                    return [resolved_obj]
-                for cur_child in resolved_obj.based_on_elements:
-                    for cur_single_child in cur_child.get_singles():
-                        copied_base = resolved_obj.clone_without_based_on_elements()
-                        copied_base.append_to_based_on(cur_single_child)
-                        all_singles.append(copied_base)
-        # convert all tuple objects in a connection object and set metadata of self object
-        cleaned_singles = []
+        for cur_child in resolved_self.based_on_elements:
+            for cur_single_child in cur_child.get_singles():
+                cur_single_child = cur_single_child.clone()
+                if self.__class__ == Connection and isinstance(cur_single_child, Connection):
+                    all_singles.append(cur_single_child)
+                else:
+                    copied_base = resolved_self.clone_without_based_on_elements()
+                    copied_base.append_to_based_on(cur_single_child)
+                    all_singles.append(copied_base)
 
-        for cur_single in all_singles:
-            if isinstance(cur_single, Connection):
-                new_cnn = cur_single
-            else:
-                new_cnn = Connection.based_on(AndConnectionRelation(*cur_single))
-
-            new_cnn.set_metadata_for_all_subitems(self.metadata)
-            cleaned_singles.append(new_cnn)
-        return cleaned_singles
+        return all_singles
 
     def get_conn_partner_of(self, device: Type[Device], node: Union[str, None] = None) -> Tuple[Type[Device], str]:
         """
@@ -925,11 +637,7 @@ class Connection(metaclass=ConnectionType):
 
         .. note::
             Note that it doesn't matter if the connection is embedded in a container-Connection element (direct
-            instance of :class`Connection`) or not. It only checks, that the logical data of them are the same. If both
-            elements are a container for a list of child connections, the method secures that both has the same
-            children. If only one (same for both) has one child connection which is embedded in a container
-            :class:`Connection` class, it returns also true if the other connection is like the one child element of
-            the other container :class:`Connection`.
+            instance of :class`Connection`) or not. It only checks, that the logical data of them are the same.
 
         :param other_conn: the other connection, this connection will be compared with
 
@@ -937,9 +645,6 @@ class Connection(metaclass=ConnectionType):
 
         :return: returns True if both elements are same
         """
-        if self.__class__ not in (Connection, other_conn.__class__):
-            return False
-
         if not ignore_metadata:
             metadata_check_result = self.metadata.equal_with(other_conn.metadata)
             if metadata_check_result is False:
@@ -950,38 +655,18 @@ class Connection(metaclass=ConnectionType):
         resolved_self = self.get_resolved()
         resolved_other = other_conn.get_resolved()
 
-        self_based_on_elems = [
-            cur_elem for cur_elem in resolved_self.based_on_elements if isinstance(cur_elem, Connection)]
-        self_based_on_tuples = [
-            cur_elem for cur_elem in resolved_self.based_on_elements if isinstance(cur_elem, tuple)]
-        other_based_on_elems = [
-            cur_elem for cur_elem in resolved_other.based_on_elements if isinstance(cur_elem, Connection)]
-        other_based_on_tuples = [
-            cur_elem for cur_elem in resolved_other.based_on_elements if isinstance(cur_elem, tuple)]
-
-        # check single connection elements (if they match all in both directions)
-        if (not self.__class__.check_that_connections_are_equal_with(
-                cnns_from=self_based_on_elems, are_equal_with_cnns_of=other_based_on_elems,
-                ignore_metadata=ignore_metadata)
-                or not self.__class__.check_that_connections_are_equal_with(
-                    cnns_from=other_based_on_elems, are_equal_with_cnns_of=self_based_on_elems,
-                    ignore_metadata=ignore_metadata)):
+        if self.__class__ != other_conn.__class__:
             return False
 
-        # check tuple connection elements (if they match all in both directions)
-        if (not self.__class__.check_that_tuples_are_equal_with(
-                tuples_from=self_based_on_tuples, are_equal_with_tuples_of=other_based_on_tuples,
-                ignore_metadata=ignore_metadata)
-                or not self.__class__.check_that_tuples_are_equal_with(
-                    tuples_from=other_based_on_tuples, are_equal_with_tuples_of=self_based_on_tuples,
-                    ignore_metadata=ignore_metadata)):
-            return False
+        return resolved_self.based_on_elements.equal_with(resolved_other.based_on_elements)
 
-        return True
-
-    def contained_in(self, other_conn: Connection, ignore_metadata=False) -> bool:
+    def contained_in(
+            self,
+            other_conn: Connection | AndConnectionRelation | OrConnectionRelation,
+            ignore_metadata=False
+    ) -> bool:
         """
-        This method helps to find out whether this connection-tree fits within a given connection tree. A connection
+        This method helps to find out whether this connection-tree fits within another connection tree. A connection
         object is a certain part of the large connection tree that Balder has at its disposal. This method checks
         whether a possibility of this connection tree fits in one possibility of the given connection tree.
 
@@ -995,6 +680,9 @@ class Connection(metaclass=ConnectionType):
 
         :return: true if the self object is contained in the `other_conn`, otherwise false
         """
+        # note: This method always work with the resolved and simplified version of the object because it is using
+        # `get_resolved()`.
+
         if not ignore_metadata:
             metadata_check_result = self.metadata.contained_in(other_conn.metadata)
             if metadata_check_result is False:
@@ -1010,158 +698,111 @@ class Connection(metaclass=ConnectionType):
 
         self_possibilities = [resolved_self]
         if resolved_self.__class__ == Connection:
-            self_possibilities = resolved_self.based_on_elements
+            self_possibilities = resolved_self.based_on_elements.connections
+
+        # if one of the self_possibilities is contained_in the other, the method should return true
         for cur_self in self_possibilities:
-            if isinstance(cur_self, tuple):
-                if Connection.check_if_tuple_contained_in_connection(cur_self, resolved_other):
-                    return True
-            elif not cur_self.__class__ == resolved_other.__class__:
-                for cur_based_on_elem in resolved_other.based_on_elements:
-                    if isinstance(cur_based_on_elem, tuple):
-                        # check if the current connection fits in one of the tuple items -> allowed too (like a smaller
-                        # AND contained in a bigger AND)
-                        for cur_other_tuple_element in cur_based_on_elem:
-                            if cur_self.contained_in(cur_other_tuple_element, ignore_metadata=ignore_metadata):
-                                return True
-                    else:
-                        if cur_self.contained_in(cur_based_on_elem, ignore_metadata=ignore_metadata):
-                            # element was found in this branch
-                            return True
-            else:
-                # The element itself has already matched, now we still have to check whether at least one tuple or a
-                # connection (i.e. one element of the list) is matched with one of the other
+            if isinstance(cur_self, OrConnectionRelation):
+                # should not happen, because we are using resolved elements (using simplified version)
+                raise ValueError(f'unexpected type `{OrConnectionRelation.__name__}`')
+
+            if cur_self.__class__ == resolved_other.__class__:
+                # The element itself has already matched, now we still have to check whether at least one inner element
+                # of this type is contained in the minimum one element of the other
                 singles_self = cur_self.get_singles()
                 singles_other = resolved_other.get_singles()
 
                 # check that for one single_self element all hierarchical based_on elements are in one of the single
                 # other element
-                for cur_single_self in singles_self:
-                    for cur_single_other in singles_other:
-                        # check if both consists of only one element
-                        if len(cur_single_self.based_on_elements) == 0:
-                            # the cur self single is only one element -> this is contained in the other
+                for cur_single_self, cur_single_other in itertools.product(singles_self, singles_other):
+                    # check if both consists of only one element
+                    if len(cur_single_self.based_on_elements) == 0:
+                        # the cur self single is only one element -> this is contained in the other
+                        return True
+
+                    if len(cur_single_other.based_on_elements) == 0:
+                        # the other element is only one element, but the self element not -> contained_in
+                        # for this single definitely false
+                        continue
+
+                    # note: for both only one `based_on_elements` is possible, because they are singles
+                    self_first_based_on = cur_single_self.based_on_elements[0]
+                    other_first_based_on = cur_single_other.based_on_elements[0]
+
+                    self_is_and = isinstance(self_first_based_on, AndConnectionRelation)
+                    self_is_cnn = isinstance(self_first_based_on, Connection)
+                    other_is_and = isinstance(other_first_based_on, AndConnectionRelation)
+                    other_is_cnn = isinstance(other_first_based_on, Connection)
+
+                    if self_is_and and (other_is_and or other_is_cnn) or self_is_cnn and other_is_cnn:
+                        # find a complete valid match
+                        if self_first_based_on.contained_in(other_first_based_on, ignore_metadata=ignore_metadata):
+                            return True
+                    # skip all others possibilities
+            elif isinstance(cur_self, AndConnectionRelation):
+                if cur_self.contained_in(resolved_other):
+                    return True
+            else:
+                # the elements itself do not match -> go deeper within the other connection
+                if isinstance(resolved_other, AndConnectionRelation):
+                    # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
+                    # smaller AND contained in a bigger AND)
+                    for cur_other_and_element in resolved_other.connections:
+                        if cur_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
                             return True
 
-                        if len(cur_single_other.based_on_elements) == 0:
-                            # the other element is only one element, but the self element not -> contained_in
-                            # for this single definitely false
-                            continue
+                resolved_other_relation = resolved_other.based_on_elements \
+                    if isinstance(resolved_other, Connection) else resolved_other
 
-                        # note: for both only one `based_on_elements` is possible, because they are singles
-                        if isinstance(cur_single_self.based_on_elements[0], tuple) and \
-                                isinstance(cur_single_other.based_on_elements[0], tuple):
-                            # both are tuples -> check that there exist a matching where all are contained_in
-                            tuple_is_complete_contained_in = True
-                            # check that every tuple element of self is contained in minimum one tuple elements of each
-                            # other
-                            for cur_self_tuple_element in cur_single_self.based_on_elements[0]:
-                                find_some_match_for_cur_self_tuple_element = False
-                                for cur_other_tuple_element in cur_single_other.based_on_elements[0]:
-                                    if cur_self_tuple_element.contained_in(
-                                            cur_other_tuple_element, ignore_metadata=ignore_metadata):
-                                        # find a match, where the current tuple element is contained in one tuple
-                                        # element of the other
-                                        find_some_match_for_cur_self_tuple_element = True
-                                        break
-                                if not find_some_match_for_cur_self_tuple_element:
-                                    tuple_is_complete_contained_in = False
-                                    break
-                            if tuple_is_complete_contained_in:
-                                # find a complete valid match
+                for cur_other_based_on in resolved_other_relation.connections:
+                    if isinstance(cur_other_based_on, AndConnectionRelation):
+                        # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
+                        # smaller AND contained in a bigger AND)
+                        for cur_other_and_element in cur_other_based_on.connections:
+                            if cur_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
                                 return True
-                        elif isinstance(cur_single_self.based_on_elements[0], Connection) and \
-                                isinstance(cur_single_other.based_on_elements[0], Connection):
-                            # both are connection trees -> check if the subtrees are contained in
-                            if cur_single_self.based_on_elements[0].contained_in(
-                                    cur_single_other.based_on_elements[0], ignore_metadata=ignore_metadata):
-                                # find a complete valid match
-                                return True
-                        elif isinstance(cur_single_self.based_on_elements[0], tuple) and \
-                                isinstance(cur_single_other.based_on_elements[0], Connection):
-                            # this is allowed too, if every tuple item is contained_in the relevant connection
-                            # check that every tuple element of self is contained in the other connection
-                            for cur_self_tuple_element in cur_single_self.based_on_elements[0]:
-                                if not cur_self_tuple_element.contained_in(
-                                        cur_single_other, ignore_metadata=ignore_metadata):
-                                    # find a match, where the current tuple element is not contained in the other
-                                    # connection -> tuple can not be contained in
-                                    return False
+                    else:
+                        if cur_self.contained_in(cur_other_based_on, ignore_metadata=ignore_metadata):
+                            # element was found in this branch
                             return True
-                        # skip all others possibilities
         return False
 
     def intersection_with(
-            self, other_conn: Union[Connection, Type[Connection],
-                                    List[Connection, Type[Connection], Tuple[Connection]]]) \
+            self, other_conn: Union[Connection, Type[Connection], AndConnectionRelation, OrConnectionRelation]) \
             -> Union[Connection, None]:
         """
         This method returns a list of subtrees that describe the intersection of this connection subtree and the
         given ones. Note that this method converts all connections in **single** **resolved** connections first.
-        For these connections the method checks if there are common intersections between the elements of this object
-        and the given connection elements.
+        The method checks if there are common intersections between the elements of this object and the given connection
+        elements within the single connections.
         The method cleans up this list and only return unique sub-connection trees!
 
         :param other_conn: the other sub connection tree list
 
         :return: the intersection connection or none, if the method has no intersection
         """
-        if isinstance(other_conn, type):
-            if not issubclass(other_conn, Connection):
-                raise TypeError("the given `other_conn` has to be from type `Connection`")
-            other_conn = other_conn()
+        other_conn = cnn_type_check_and_convert(other_conn)
 
-        if isinstance(other_conn, Connection):
-            if other_conn.__class__ == Connection:
-                if len(other_conn.based_on_elements) == 0:
-                    return self.clone()
-                other_conn = other_conn.based_on_elements
-            else:
-                other_conn = [other_conn]
+        if isinstance(other_conn, Connection) and other_conn.__class__ == Connection:
+            if len(other_conn.based_on_elements) == 0:
+                return self.clone()
+            other_conn = other_conn.based_on_elements
 
-        if self.__class__ == Connection and len(self.based_on_elements) == 0:
-            return Connection.based_on(
-                OrConnectionRelation(*[
-                    AndConnectionRelation(*inner) if isinstance(inner, tuple) else inner
-                    for inner in other_conn])
-            ).clone()
+        if self.is_universal():
+            return other_conn.clone() if isinstance(other_conn, Connection) else Connection.based_on(other_conn.clone())
 
-        # determine all single connection of the two sides (could contain tuple, where every element is a single
+        # determine all single connection of the two sides (could contain AND relations, where every element is a single
         # connection too)
-        self_conn_singles = []
-        other_conn_singles = []
-
-        idx = 0
-        for cur_self_elem in self.get_singles():
-            if isinstance(cur_self_elem, Connection):
-                self_conn_singles.append(cur_self_elem)
-            elif isinstance(cur_self_elem, type) and issubclass(cur_self_elem, Connection):
-                self_conn_singles.append(cur_self_elem())
-            else:
-                raise TypeError(f"the element at index {idx} of `self_conn` is not from type `Connection` or is a "
-                                f"tuple of that")
-
-        idx = 0
-        for cur_other_elem in other_conn:
-            if isinstance(cur_other_elem, tuple):
-                other_conn_singles += Connection.convert_tuple_to_singles(cur_other_elem)
-            elif isinstance(cur_other_elem, Connection):
-                other_conn_singles += cur_other_elem.get_singles()
-            elif isinstance(cur_other_elem, type) and issubclass(cur_other_elem, Connection):
-                other_conn_singles.append(cur_other_elem())
-            else:
-                raise TypeError(f"the element at index {idx} of `other_conn` is not from type `Connection` or is a "
-                                f"tuple of that")
-            idx += 1
+        self_conn_singles = self.get_singles()
+        other_conn_singles = other_conn.get_singles()
 
         intersections = []
         # determine intersections between all of these single components
-        for cur_self_conn in self_conn_singles:
-            for cur_other_conn in other_conn_singles:
-                for cur_intersection in cur_self_conn.get_intersection_with_other_single(cur_other_conn):
-                    if isinstance(cur_intersection, tuple):
-                        cur_intersection = Connection.based_on(AndConnectionRelation(*cur_intersection))
-                    if cur_intersection not in intersections:
-                        intersections.append(cur_intersection)
+        for cur_self_conn, cur_other_conn in itertools.product(self_conn_singles, other_conn_singles):
+            for cur_intersection in cur_self_conn.get_intersection_with_other_single(cur_other_conn):
+                intersections.append(cur_intersection)
+
+        intersections = set(intersections)
 
         #: filter all *contained in each other* connections
         intersection_filtered = []
@@ -1180,79 +821,50 @@ class Connection(metaclass=ConnectionType):
         if len(intersection_filtered) == 0:
             # there is no intersection
             return None
-        if len(intersection_filtered) > 1 or isinstance(intersection_filtered[0], tuple):
-            return Connection.based_on(AndConnectionRelation(*intersection_filtered)).clone()
 
-        return intersection_filtered[0].clone()
+        return Connection.based_on(OrConnectionRelation(*[cnn.clone() for cnn in intersection_filtered]))
 
     def append_to_based_on(
-            self, *args: Union[Connection, Type[Connection], Tuple[Union[Type[Connection], Connection]]]) -> None:
+            self, *args: Union[Type[Connection], Connection, OrConnectionRelation, AndConnectionRelation]) -> None:
         """
         with this method you can extend the internal based_on list with the transferred elements. Any number of
-        :meth:`Connection` objects or tuples with :meth:`Connection` objects can be given to this method
+        :meth:`Connection` objects or relations with :meth:`Connection` objects can be given to this method. They will
+        all be added to the internal OR relation.
 
         :param args: all connection items that should be added here
         """
 
-        for cur_idx, cur_connection in enumerate(args):
-            if isinstance(cur_connection, type):
-                if not issubclass(cur_connection, Connection):
-                    raise TypeError(f"illegal type `{cur_connection.__name__}` for parameter number {cur_idx}")
-                if self.__class__ != Connection:
-                    if not cur_connection.is_parent_of(self.__class__):
-                        raise IllegalConnectionTypeError(
-                            f"the given connection `{cur_connection.__name__}` (parameter pos {cur_idx}) is no parent "
-                            f"class of the `{self.__class__.__name__}`")
-                # this is a simple Connection type object -> simply add an instance of it to the full list
-                new_conn = cur_connection()
-                self._based_on_connections.append(new_conn)
+        def validate_that_subconnection_is_parent(idx, connection_type: Type[Connection]):
+            if connection_type == Connection:
+                raise ValueError(f"it is not allowed to provide a container Connection object in based_on items - "
+                                 f"found at index {idx}")
+            # `based_on` call for this sub-connection because we get an `Connection` object
+            if self.__class__ != Connection:
+                if not connection_type.is_parent_of(self.__class__):
+                    raise IllegalConnectionTypeError(
+                        f"the connection `{cur_elem.__class__.__name__}` (at parameter pos {idx}) is "
+                        f"no parent class of the `{self.__class__.__name__}`")
 
-            elif isinstance(cur_connection, Connection):
-                if cur_connection.__class__ == Connection:
-                    raise ValueError(f"it is not allowed to provide a container Connection object in based_on items - "
-                                     f"found at index {cur_idx}")
-                # `based_on` call for this sub-connection because we get an `Connection` object
-                if self.__class__ != Connection:
-                    if not cur_connection.__class__.is_parent_of(self.__class__):
-                        raise IllegalConnectionTypeError(
-                            f"the given connection `{cur_connection.__class__.__name__}` (parameter pos {cur_idx}) is "
-                            f"no parent class of the `{self.__class__.__name__}`")
-                self._based_on_connections.append(cur_connection)
+        for cur_idx, cur_elem in enumerate(args):
+            if isinstance(cur_elem, type) and issubclass(cur_elem, Connection):
+                cur_elem = cur_elem()
 
-            elif isinstance(cur_connection, tuple):
-                result_tuple = ()
-                for cur_tuple_idx, cur_tuple_elem in enumerate(cur_connection):
-                    if isinstance(cur_tuple_elem, type):
-                        if not issubclass(cur_tuple_elem, Connection):
-                            raise TypeError(f"illegal type `{cur_tuple_elem.__name__}` for tuple element "
-                                            f"{cur_tuple_idx} for parameter number {cur_idx}")
-                        if self.__class__ != Connection:
-                            if not cur_tuple_elem.is_parent_of(self.__class__):
-                                raise IllegalConnectionTypeError(
-                                    f"the given connection `{cur_tuple_elem.__name__}` (tuple element {cur_tuple_idx} "
-                                    f"for parameter at pos {cur_idx}) is no parent class of the "
-                                    f"`{self.__class__.__name__}`")
-                        # this is a simple Connection type object -> simply add the instance of connection to result
-                        # tuple
-                        result_tuple += (cur_tuple_elem(), )
-                    elif isinstance(cur_tuple_elem, Connection):
-                        # `based_on` call for this sub-connection because we get an `Connection` object
-                        if self.__class__ != Connection:
-                            if not cur_tuple_elem.__class__.is_parent_of(self.__class__):
-                                raise IllegalConnectionTypeError(
-                                    f"the given connection `{cur_tuple_elem.__class__.__name__}` (tuple element "
-                                    f"{cur_tuple_idx} for parameter at pos {cur_idx}) is no parent class of the "
-                                    f"`{self.__class__.__name__}`")
-                        result_tuple += (cur_tuple_elem, )
-                    elif isinstance(cur_tuple_elem, tuple):
-                        raise TypeError(f"nested tuples (tuple element {cur_tuple_idx} for parameter at pos {cur_idx}) "
-                                        f"and thus nested AND operations are not possible")
-                    elif isinstance(cur_tuple_elem, list):
-                        raise TypeError(f"nested lists (tuple element {cur_tuple_idx} for parameter at pos {cur_idx}) "
-                                        f"and thus nested OR/AND operations are not possible")
-                    else:
-                        raise TypeError(f"illegal type `{cur_tuple_elem.__name__}` for tuple element {cur_tuple_idx} "
-                                        f"for parameter at pos {cur_idx}")
-                self._based_on_connections.append(result_tuple)
+            if isinstance(cur_elem, Connection):
+                if cur_elem.is_universal():
+                    # ignore it, because it is irrelevant for this connection
+                    continue
+                validate_that_subconnection_is_parent(cur_idx, cur_elem.__class__)
+                self._based_on_connections.append(cur_elem)
+            elif isinstance(cur_elem, OrConnectionRelation):
+                for cur_inner_elem in cur_elem.connections:
+                    if isinstance(cur_inner_elem, Connection) and cur_inner_elem.is_universal():
+                        # ignore it, because it is irrelevant for this connection
+                        continue
+                    validate_that_subconnection_is_parent(cur_idx, cur_inner_elem.__class__)
+                    self._based_on_connections.append(cur_inner_elem)
+            elif isinstance(cur_elem, AndConnectionRelation):
+                for cur_inner_type in cur_elem.get_all_used_connection_types():
+                    validate_that_subconnection_is_parent(cur_idx, cur_inner_type)
+                self._based_on_connections.append(cur_elem)
             else:
-                raise TypeError(f"illegal type `{cur_connection.__name__}` for parameter at pos {cur_idx}")
+                raise TypeError(f"illegal type `{cur_elem.__name__}` for parameter at pos {cur_idx}")
