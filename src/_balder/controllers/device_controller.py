@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Type, Tuple, Union, TYPE_CHECKING
+from typing import Dict, List, Type, Union, TYPE_CHECKING
 
 import sys
 import logging
@@ -257,7 +257,7 @@ class DeviceController(BaseDeviceController, ABC):
     #     for cur_gateway in self._gateways:
     #         cur_gateway.validate_given_node_names()
 
-    def get_node_types(self) -> Dict[str, List[Connection, Tuple[Connection]]]:
+    def get_node_types(self) -> Dict[str, List[Connection | None]]:
         """
         This method returns a dictionary with the node name as key and a connection class as value. This class
         describes the common connection sub-tree, that all incoming and outgoing connections of the related device have
