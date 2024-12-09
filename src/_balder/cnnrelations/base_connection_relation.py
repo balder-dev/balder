@@ -5,6 +5,7 @@ from ..utils import cnn_type_check_and_convert
 
 if TYPE_CHECKING:
     from ..connection import Connection
+    from ..connection import ConnectionMetadata
     from ..device import Device
     from .and_connection_relation import AndConnectionRelation
     from .or_connection_relation import OrConnectionRelation
@@ -68,6 +69,20 @@ class BaseConnectionRelation(ABC):
         returns the components of this connection relation
         """
         return self._connections.copy()
+
+    @property
+    def metadata(self) -> ConnectionMetadata | None:
+        """
+        returns the metadata of this connection relation
+        """
+        if not self.connections:
+            return None
+
+        # get all unique metadata objects
+        existing_metadata = list({elem.metadata for elem in self.connections if elem})
+        if len(existing_metadata) > 1:
+            raise ValueError(f'different metadata detected: `{existing_metadata}`')
+        return existing_metadata[0]
 
     @abstractmethod
     def get_simplified_relation(self) -> OrConnectionRelation:
