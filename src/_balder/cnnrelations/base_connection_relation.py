@@ -32,6 +32,12 @@ class BaseConnectionRelation(ABC):
     def __len__(self):
         return len(self._connections)
 
+    def __hash__(self):
+        all_hashes = 0
+        for cur_elem in self.connections:
+            all_hashes += hash(cur_elem) + hash(self.__class__.__name__)
+        return all_hashes
+
     def __and__(
             self,
             other: Union[Connection, Type[Connection], AndConnectionRelation, OrConnectionRelation]

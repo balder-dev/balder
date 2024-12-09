@@ -39,6 +39,11 @@ class ConnectionMetadata:
     def __eq__(self, other: ConnectionMetadata):
         return self.equal_with(other)
 
+    def __hash__(self):
+        all_hashes = hash(self._from_device) + hash(self._to_device) + hash(self._from_device_node_name) + \
+                     hash(self._to_device_node_name) + hash(self._bidirectional)
+        return hash(all_hashes)
+
     def __compare_with(self, other: ConnectionMetadata, allow_single_unidirectional_for_both_directions: bool) -> bool:
         """
         This method checks, if the metadata of this object is the metadata of the other object.
