@@ -86,10 +86,7 @@ class Connection(metaclass=ConnectionType):
         return False
 
     def __hash__(self):
-        all_hashes = hash(self.from_device) + hash(self.to_device) + hash(self.from_node_name) + \
-                     hash(self.to_node_name) + hash(str(self))
-        for cur_child in self.based_on_elements:
-            all_hashes += hash(cur_child)
+        all_hashes = hash(self.metadata) + hash(self.based_on_elements)
         return hash(all_hashes)
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
