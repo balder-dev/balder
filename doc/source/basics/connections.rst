@@ -83,34 +83,11 @@ It is also possible that a connection requires multiple other connections (**AND
 :class:`.DnsConnection` requires a :class:`UdpConnection` **AND** a :class:`TcpConnection`, because DNS uses UDP per
 default, but it uses TCP for requests that sends data that is to much for UDP.
 
-So we can define an AND connection simply by using tuples:
+So we can define an AND connection simply with:
 
 .. code-block::
 
-    conn = DnsConnection.based_on((UdpConnection, TcpConnection))
-
-Limits of connection-relations
-------------------------------
-
-You can define **AND**/**OR** definitions in almost any possible variation, but there is one limit.
-It is not allowed to define **AND** connections inside other **AND** connections, so for example:
-
-.. code-block:: python
-
-    # ALLOWED
-    conn = SpecialConnection.based_on((AConnection, BConnection), CConnection)
-    # NOT ALLOWED
-    conn = SpecialConnection.based_on((AConnection, BConnection, (CConnection, DConnection)))
-
-The last definition is not allowed because we use an inner **AND** connection there. We can write the same logic more
-easier by refactoring the both **AND** relations:
-
-.. code-block:: python
-
-    # same like the NOT ALLOWED tree from above - BUT NOW IT IS ALLOWED
-    conn = SpecialConnection.based_on((AConnection, BConnection, CConnection, DConnection)))
-
-This limitation makes it easier to read the logic.
+    conn = DnsConnection.based_on(UdpConnection & TcpConnection)
 
 Using the base connection object
 ================================
@@ -139,7 +116,7 @@ connection:
 
 .. code-block:: python
 
-    conn = Connection.based_on(AConnection, BConnection)
+    conn = Connection.based_on(AConnection | BConnection)
 
 **A container connection always has based-on elements**.
 
