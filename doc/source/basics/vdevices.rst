@@ -316,7 +316,7 @@ Let's go back to an easy scenario which only has one single vDevice:
         class Receiver(balder.Device):
             recv = RecvFeature()
 
-        @balder.connect(with_device=Receiver, over_connection=balder.Connection.based_on(SmsConnection, EMailConnection))
+        @balder.connect(with_device=Receiver, over_connection=SmsConnection | EMailConnection)
         class Sender(balder.Device):
             send = SendFeature(receiver=ScenarioSendMessage.Receiver)
 
@@ -405,11 +405,11 @@ all of that with our two features ``SendFeature`` and ``RecvFeature``:
             send_to_recv1 = SendFeature(receiver='Receiver1')
             send_to_recv2 = SendFeature(receiver='Receiver2')
 
-        @balder.connect(with_device=Sender, over_connection=balder.Connection.based_on(SmsConnection, EMailConnection))
+        @balder.connect(with_device=Sender, over_connection=SmsConnection | EMailConnection)
         class Receiver1(balder.Device):
             recv = RecvFeature()
 
-        @balder.connect(with_device=Sender, over_connection=balder.Connection.based_on(SmsConnection, EMailConnection))
+        @balder.connect(with_device=Sender, over_connection=SmsConnection | EMailConnection)
         class Receiver2(balder.Device):
             recv = RecvFeature()
 

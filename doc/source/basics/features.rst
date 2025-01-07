@@ -325,7 +325,7 @@ Basically our scenario level implementation looks like:
     from balder.connections import TcpConnection
     from .connections import SerialConnection
 
-    @balder.for_vdevice(with_vdevice='OtherVDevice', [TcpConnection, SerialConnection])
+    @balder.for_vdevice('OtherVDevice', with_connections=TcpConnection | SerialConnection)
     class SendMessengerFeature(balder.Feature):
 
         class OtherVDevice(balder.VDevice):
@@ -394,12 +394,12 @@ use the **Method-Based-Binding** decorator:
 
     class SetupSendMessengerFeature(MessengerFeature):
 
-        @balder.for_vdevice(MessengerFeature.OtherVDevice, with_connection=SerialConnection)
+        @balder.for_vdevice(MessengerFeature.OtherVDevice, with_connections=SerialConnection)
         def send(msg) -> None:
             serial = MySerial(com=..)
             ...
 
-        @balder.for_vdevice(MessengerFeature.OtherVDevice, with_connection=TcpConnection)
+        @balder.for_vdevice(MessengerFeature.OtherVDevice, with_connections=TcpConnection)
         def send(msg) -> None:
             sock = socket.socket(...)
             ...
@@ -419,7 +419,7 @@ So take a look at the following :class:`Setup`, that matches our :class:`Scenari
 
     class MySetup(balder.Setup):
 
-        @balder.connect(SlaveDevice, over_connection=balder.Connection.based_on(SerialConnection, TcpConnection))
+        @balder.connect(SlaveDevice, over_connection=SerialConnection | TcpConnection)
         class MainDevice(balder.Device):
             msg = SetupSendMessengerFeature()
 
@@ -429,7 +429,7 @@ So take a look at the following :class:`Setup`, that matches our :class:`Scenari
 This example connects the two relevant devices over a :class:`TcpConnection` with each other, because the scenario
 defines, that the devices should be connected over an TcpConnection. If the test
 now uses on of our methods ``MyMessengerFeature.send(..)``, the variation with the decorator
-``@balder.for_vdevice(..., over_connection=[TcpConnection])`` will be used.
+``@balder.for_vdevice(..., over_connection=TcpConnection)`` will be used.
 
 If one would exchange the connection with the ``SerialConnection``, Balder would select the method variation with the
 decorator ``@balder.for_vdevice(MessengerFeature.OtherVDevice, with_connection=SerialConnection)``.

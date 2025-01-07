@@ -79,9 +79,9 @@ You can also define some by your own.
 In addition to define single connections, you can also select a part of the global connection tree or combine some
 connections with an OR or an AND relationship. So for example you could connect our devices and allow an Ethernet as
 well as a Serial connection, by defining
-``@balder.connect(SendDevice, over_connection=Connection.based_on(MyEthernet, MySerial))``. Of course you could also
-define, that you need both, the Serial and the Ethernet connection. This can be done by using tuples:
-``@balder.connect(SendDevice, over_connection=Connection.based_on((MyEthernet, MySerial)))``
+``@balder.connect(SendDevice, over_connection=MyEthernet | MySerial)``. Of course you could also
+define, that you need both, the Serial and the Ethernet connection. This can be done with:
+``@balder.connect(SendDevice, over_connection=MyEthernet & MySerial``
 
 In our example we only define that we want a universal :class:`Connection` between our devices ``SendDevice`` and
 ``RecvDevice``. With this the connection type doesn't matter and every connection works here.
