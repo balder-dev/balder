@@ -27,7 +27,6 @@ from _balder.utils import get_scenario_inheritance_list_of
 
 if TYPE_CHECKING:
     from _balder.plugin_manager import PluginManager
-    ConnectionType = Union[Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]]]
 
 logger = logging.getLogger(__file__)
 
@@ -45,7 +44,7 @@ class Collector:
     # with the method `rework_method_variation_decorators()`
     _possible_method_variations: Dict[
         Callable,
-        List[Tuple[Union[Type[VDevice], str], Union[ConnectionType, List[ConnectionType]]]]
+        List[Tuple[Union[Type[VDevice], str], Connection]]
     ] = {}
 
     # this static attribute will be managed by the decorator `@parametrize(..)`. It holds all functions/methods that
@@ -85,7 +84,7 @@ class Collector:
     def register_possible_method_variation(
             meth: Callable,
             vdevice: Union[Type[VDevice], str],
-            with_connections: Union[ConnectionType, List[ConnectionType]]):
+            with_connections: Connection):
         """
         allows to register a new method variation - used by decorator `@balder.for_vdevice()`
 
@@ -509,11 +508,6 @@ class Collector:
                 if name not in owner_for_vdevice.keys():
                     owner_for_vdevice[name] = {}
 
-                cur_decorator_cleaned_cnns = []
-                for cur_cnn in cur_decorator_with_connections:
-                    cur_cnn = cur_cnn() if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection) else cur_cnn
-                    cur_decorator_cleaned_cnns.append(cur_cnn)
-
                 if cur_fn in owner_for_vdevice[name].keys():
                     old_dict = owner_for_vdevice[name][cur_fn]
                     if cur_decorator_vdevice in old_dict.keys():
@@ -521,10 +515,10 @@ class Collector:
                                                        f'`{cur_decorator_vdevice}` at method `{name}` of class '
                                                        f'`{owner.__name__}` ')
 
-                    old_dict[cur_decorator_vdevice] = cur_decorator_cleaned_cnns
+                    old_dict[cur_decorator_vdevice] = cur_decorator_with_connections
                     owner_for_vdevice[name][cur_fn] = old_dict
                 else:
-                    new_dict = {cur_decorator_vdevice: cur_decorator_cleaned_cnns}
+                    new_dict = {cur_decorator_vdevice: cur_decorator_with_connections}
                     owner_for_vdevice[name][cur_fn] = new_dict
 
             def owner_wrapper(the_owner_of_this_method, the_name, wrap_fn):

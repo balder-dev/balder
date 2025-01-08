@@ -1,9 +1,11 @@
 from __future__ import annotations
+
+import copy
 from typing import Type, Dict, Union, List, Callable, Tuple
 
 import logging
 import inspect
-from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
+from _balder.cnnrelations import OrConnectionRelation
 from _balder.device import Device
 from _balder.vdevice import VDevice
 from _balder.feature import Feature
@@ -44,16 +46,16 @@ class FeatureController(Controller):
         self._related_cls = related_cls
 
         #: holds the defined **Class-Based-Binding** for the related feature class sorted by VDevice types
-        self._cls_for_vdevice: Dict[Type[VDevice], List[Connection, Type[Connection]]] = {}
+        self._cls_for_vdevice: Dict[Type[VDevice], Connection] = {}
 
         #: holds the absolute calculated **Class-Based-Binding** for the related feature class sorted by VDevice types
         #: (will be calculated by :meth:`FeatureController.determine_absolute_class_based_for_vdevice`, which will be
         #: called during collecting)
-        self._abs_cls_for_vdevice: Union[Dict[Type[VDevice], List[Connection]], None] = None
+        self._abs_cls_for_vdevice: Union[Dict[Type[VDevice], Connection], None] = None
 
         #: contains the **Method-Based-Binding** information for the current feature type (will be automatically set by
         #: executor)
-        self._for_vdevice: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None] = None
+        self._for_vdevice: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], Connection]]], None] = None
 
         #: contains the original defined :class:`VDevice` objects for this feature (will be automatically set by
         #:  :class:`Collector`)
@@ -91,14 +93,13 @@ class FeatureController(Controller):
         # now check if a definition for this class exists
         all_vdevices = self.get_abs_inner_vdevice_classes()
         # check the class based @for_vdevice and check the used vDevice classes here
-        if self.get_class_based_for_vdevice() is not None:
-            for cur_decorated_vdevice in self.get_class_based_for_vdevice().keys():
-                if cur_decorated_vdevice not in all_vdevices:
-                    raise VDeviceResolvingError(
-                        f"you assign a vDevice to the class based decorator `@for_vdevice()` of the feature class "
-                        f"`{self.related_cls.__name__}` which is no direct member of this feature - note that you have "
-                        f"to define the vDevice in your feature before using it in the decorator - if necessary "
-                        f"overwrite it")
+        for cur_decorated_vdevice in self.get_class_based_for_vdevice().keys():
+            if cur_decorated_vdevice not in all_vdevices:
+                raise VDeviceResolvingError(
+                    f"you assign a vDevice to the class based decorator `@for_vdevice()` of the feature class "
+                    f"`{self.related_cls.__name__}` which is no direct member of this feature - note that you have "
+                    f"to define the vDevice in your feature before using it in the decorator - if necessary "
+                    f"overwrite it")
         # check the method based @for_vdevice and check the used vDevice classes here
         if self.get_method_based_for_vdevice() is not None:
             for cur_method_name, cur_method_data in self.get_method_based_for_vdevice().items():
@@ -147,9 +148,7 @@ class FeatureController(Controller):
         all_possible_method_variations = {}
         for cur_impl_method, cur_method_impl_dict in self.get_method_based_for_vdevice()[of_method_name].items():
             if for_vdevice in cur_method_impl_dict.keys():
-                cur_impl_method_cnns = []
-                for cur_cnn in cur_method_impl_dict[for_vdevice]:
-                    cur_impl_method_cnns += cur_cnn.get_singles()
+                cur_impl_method_cnns = cur_method_impl_dict[for_vdevice].get_singles()
                 for cur_single_impl_method_cnn in cur_impl_method_cnns:
                     if cur_single_impl_method_cnn.contained_in(with_connection, ignore_metadata=True):
                         # this variation is possible
@@ -163,26 +162,15 @@ class FeatureController(Controller):
                                                      cur_single_impl_method_cnn))
         return all_possible_method_variations
 
-
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_class_based_for_vdevice(self) -> Union[Dict[Type[VDevice], List[Connection]], None]:
+    def get_class_based_for_vdevice(self) -> Dict[Type[VDevice], Connection]:
         """
-        This method returns the class based data for the `@for_vdevice` decorator or None, if there is no decorator
-        given
+        This method returns the class based data for the `@for_vdevice` decorator.
         """
-        result = {}
+        return copy.copy(self._cls_for_vdevice)
 
-        for cur_device, cnn_list in self._cls_for_vdevice.items():
-            result[cur_device] = []
-            for cur_cnn in cnn_list:
-                if isinstance(cur_cnn, type) and issubclass(cur_cnn, Connection):
-                    result[cur_device].append(cur_cnn())
-                else:
-                    result[cur_device].append(cur_cnn)
-        return result
-
-    def get_abs_class_based_for_vdevice(self) -> Dict[Type[VDevice], List[Union[Connection]]]:
+    def get_abs_class_based_for_vdevice(self) -> Dict[Type[VDevice], Connection]:
         """
         This method returns the absolute calculated class-based-for-vdevice data for this feature.
         """
@@ -190,8 +178,7 @@ class FeatureController(Controller):
             raise RuntimeError('can not access the absolute class based for-vdevices because they are not set yet')
         return self._abs_cls_for_vdevice
 
-    def set_class_based_for_vdevice(
-            self, data: Union[Dict[Type[VDevice], List[Union[Connection, Type[Connection]]]], None]):
+    def set_class_based_for_vdevice(self, data: Dict[Type[VDevice], Connection]):
         """
         This method allows to set the data of the class based `@for_vdevice` decorator.
         """
@@ -235,10 +222,9 @@ class FeatureController(Controller):
         all_vdevices = self.get_abs_inner_vdevice_classes()
 
         cls_based_for_vdevice = self.get_class_based_for_vdevice()
-        cls_based_for_vdevice = {} if cls_based_for_vdevice is None else cls_based_for_vdevice
         for cur_vdevice in all_vdevices:
             # determine the class based for_vdevice value only if there is no one defined for this vDevice
-            if cur_vdevice in cls_based_for_vdevice.keys() and len(cls_based_for_vdevice[cur_vdevice]) > 0:
+            if cur_vdevice in cls_based_for_vdevice.keys():
                 # there already exists a definition for this vDevice -> IGNORE
                 continue
 
@@ -265,13 +251,11 @@ class FeatureController(Controller):
             if vdevice_of_interest is not None and next_parent_feat is not None:
                 next_parent_feat_cls_based_for_vdevice = \
                     FeatureController.get_for(next_parent_feat).get_abs_class_based_for_vdevice()
-                next_parent_feat_cls_based_for_vdevice = {} if next_parent_feat_cls_based_for_vdevice is None else \
-                    next_parent_feat_cls_based_for_vdevice
                 if vdevice_of_interest in next_parent_feat_cls_based_for_vdevice.keys():
-                    for cur_cnn in next_parent_feat_cls_based_for_vdevice[vdevice_of_interest]:
-                        # clean metadata here because this is no connection between real devices
-                        cur_cnn.set_metadata_for_all_subitems(None)
-                        parent_values.append(cur_cnn)
+                    cnn = next_parent_feat_cls_based_for_vdevice[vdevice_of_interest]
+                    # clean metadata here because this is no connection between real devices
+                    cnn.set_metadata_for_all_subitems(None)
+                    parent_values.append(cnn)
 
             this_vdevice_intersection = parent_values
 
@@ -291,12 +275,12 @@ class FeatureController(Controller):
                         f'{", ".join([cur_cnn.get_tree_str() for cur_cnn in this_vdevice_intersection])})\n\n')
 
             # set the determined data into the class based `@for_vdevice` class property
-            cls_based_for_vdevice[cur_vdevice] = this_vdevice_intersection
+            cls_based_for_vdevice[cur_vdevice] = Connection.based_on(OrConnectionRelation(*this_vdevice_intersection))
 
         self._abs_cls_for_vdevice = cls_based_for_vdevice
 
     def get_method_based_for_vdevice(self) -> \
-            Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None]:
+            Union[Dict[str, Dict[Callable, Dict[Type[VDevice], Connection]]], None]:
         """
         This method returns the method based data for the `@for_vdevice` decorator or None, if there is no decorator
         given
@@ -304,16 +288,19 @@ class FeatureController(Controller):
         return self._for_vdevice
 
     def set_method_based_for_vdevice(
-            self, data: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], List[Connection]]]], None]):
+            self, data: Union[Dict[str, Dict[Callable, Dict[Type[VDevice], Connection]]], None]):
         """
         This method allows to set the data for the method based `@for_vdevice` decorator.
         """
         self._for_vdevice = data
 
     def get_method_variation(
-            self, of_method_name: str, for_vdevice: Type[VDevice],
-            with_connection: Union[Connection, Tuple[Connection]], ignore_no_findings: bool = False) \
-            -> Union[Callable, None]:
+            self,
+            of_method_name: str,
+            for_vdevice: Type[VDevice],
+            with_connection: Connection,
+            ignore_no_findings: bool = False
+    ) -> Union[Callable, None]:
         """
         This method searches for the unique possible method variation and returns it. In its search, the method also
         includes the parent classes of the related feature element of this controller.
@@ -346,9 +333,6 @@ class FeatureController(Controller):
         """
 
         all_vdevice_method_variations = self.get_method_based_for_vdevice()
-
-        if isinstance(with_connection, tuple):
-            with_connection = Connection.based_on(AndConnectionRelation(*with_connection))
 
         if all_vdevice_method_variations is None:
             raise ValueError("the current feature has no method variations")
@@ -590,18 +574,16 @@ class FeatureController(Controller):
             parent_vdevice_feature = relevant_parent_class_controller.get_outer_class()
             if parent_vdevice_feature not in to_checking_parent_features:
                 to_checking_parent_features.append(parent_vdevice_feature)
-            parent_vdevice_cnns = \
+            parent_vdevice_cnn = \
                 FeatureController.get_for(
                     parent_vdevice_feature).get_abs_class_based_for_vdevice()[relevant_parent_class]
-            parent_vdevice_cnn = Connection.based_on(OrConnectionRelation(*parent_vdevice_cnns))
             # check if VDevice connection elements are all contained in the parent connection
-            for cur_element in cur_vdevice_cls_cnn:
-                if not cur_element.contained_in(parent_vdevice_cnn, ignore_metadata=True):
-                    raise VDeviceResolvingError(
-                        f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
-                        f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
-                        f"the child - the connection element `{cur_element.get_tree_str()})´ is not "
-                        f"contained in the connection-tree of the parent VDevice")
+            if not cur_vdevice_cls_cnn.contained_in(parent_vdevice_cnn, ignore_metadata=True):
+                raise VDeviceResolvingError(
+                    f"the VDevice `{cur_vdevice.__name__}` is a child of the VDevice "
+                    f"`{relevant_parent_class.__name__}`, which doesn't implements the connection of "
+                    f"the child - the connection element `{cur_vdevice_cls_cnn.get_tree_str()})´ is not "
+                    f"contained in the connection-tree of the parent VDevice")
 
         # validate inheritance levels for all features with parent VDevices as inner-classes
         for cur_feature in to_checking_parent_features:

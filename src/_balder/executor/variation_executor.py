@@ -727,7 +727,7 @@ class VariationExecutor(BasicExecutableExecutor):
 
                 # get relevant class based connections for the current feature on setup level (this is really be used
                 # here)
-                feature_cnns = \
+                feature_cnn = \
                     FeatureController.get_for(
                         cur_setup_feature.__class__).get_abs_class_based_for_vdevice()[cur_setup_feature_vdevice]
                 # connection that are relevant for this feature
@@ -739,19 +739,18 @@ class VariationExecutor(BasicExecutableExecutor):
                     # we have parallel possibilities -> determine the selected one (only one is allowed to fit)
                     for cur_relevant_cnn in relevant_cnns:
                         for cur_relevant_single_cnn in cur_relevant_cnn.get_singles():
-                            for cur_feature_cnn in feature_cnns:
-                                for cur_feature_single_cnn in cur_feature_cnn.get_singles():
-                                    if cur_feature_single_cnn.contained_in(cur_relevant_single_cnn):
-                                        if relevant_device_cnn is not None:
-                                            raise UnclearAssignableFeatureConnectionError(
-                                                f"the devices {cur_scenario_device.__name__} and "
-                                                f"{cur_mapped_scenario_device.__name__} have multiple parallel "
-                                                f"connections - the device `{cur_scenario_device.__name__}` uses a "
-                                                f"feature `{cur_scenario_feature.__class__.__name__}` that matches "
-                                                f"with the device `{cur_mapped_scenario_device.__name__}`, but it is "
-                                                f"not clear which of the parallel connection could be used"
-                                            )
-                                        relevant_device_cnn = cur_relevant_cnn
+                            for cur_feature_single_cnn in feature_cnn.get_singles():
+                                if cur_feature_single_cnn.contained_in(cur_relevant_single_cnn):
+                                    if relevant_device_cnn is not None:
+                                        raise UnclearAssignableFeatureConnectionError(
+                                            f"the devices {cur_scenario_device.__name__} and "
+                                            f"{cur_mapped_scenario_device.__name__} have multiple parallel "
+                                            f"connections - the device `{cur_scenario_device.__name__}` uses a "
+                                            f"feature `{cur_scenario_feature.__class__.__name__}` that matches "
+                                            f"with the device `{cur_mapped_scenario_device.__name__}`, but it is "
+                                            f"not clear which of the parallel connection could be used"
+                                        )
+                                    relevant_device_cnn = cur_relevant_cnn
                 elif len(relevant_cnns) == 1:
                     relevant_device_cnn = relevant_cnns[0]
                 if relevant_device_cnn is None:
@@ -762,9 +761,8 @@ class VariationExecutor(BasicExecutableExecutor):
                 # connection
                 new_cleaned_singles = OrConnectionRelation()
                 for cur_old_cnn_single in relevant_device_cnn.get_singles():
-                    for cur_feature_cnn in feature_cnns:
-                        if cur_feature_cnn.contained_in(cur_old_cnn_single, ignore_metadata=True):
-                            new_cleaned_singles.append(cur_old_cnn_single)
+                    if feature_cnn.contained_in(cur_old_cnn_single, ignore_metadata=True):
+                        new_cleaned_singles.append(cur_old_cnn_single)
 
                 new_cnn_to_replace = Connection.based_on(new_cleaned_singles)
                 new_cnn_to_replace.set_metadata_for_all_subitems(new_cleaned_singles[0].metadata)
