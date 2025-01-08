@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import List, Union, Type, Tuple
+from typing import Union, Type
 
 import inspect
+from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
 from _balder.collector import Collector
 from _balder.feature import Feature
 from _balder.vdevice import VDevice
@@ -13,9 +14,9 @@ from _balder.exceptions import DuplicateForVDeviceError, UnknownVDeviceException
 def for_vdevice(
         vdevice: Union[str, Type[VDevice]],
         with_connections: Union[
-            Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]],
-            List[Union[Type[Connection], Connection, Tuple[Union[Type[Connection], Connection]]]]] = Connection(),
-                ):
+            Type[Connection], Connection, AndConnectionRelation, OrConnectionRelation
+        ] = Connection(),
+):
     """
     With the `@for_vdevice` you can limit the decorated object for a special allowed connection tree for every existing
     vDevice. This decorator can be used to decorate whole :class:`Feature` classes just like single methods of a
@@ -37,26 +38,18 @@ def for_vdevice(
 
     :param with_connections: the assigned connection trees for this class/method (default: a universal connection)
     """
-    idx = 0
-    if not isinstance(with_connections, list):
-        with_connections = [with_connections]
-    for cur_conn in with_connections:
-        if isinstance(cur_conn, type):
-            if not issubclass(cur_conn, Connection):
-                raise ValueError(f"the given element type for the element on position `{idx}` has to be a subclass of "
-                                 f"`{Connection.__name__}` or a element of it")
-        elif isinstance(cur_conn, tuple):
-            tuple_idx = 0
-            for cur_tuple_elem in cur_conn:
-                if not isinstance(cur_tuple_elem, Connection) and not issubclass(cur_tuple_elem, Connection):
-                    raise ValueError(f"the given tuple element `{tuple_idx}` that is given on position `{idx}` "
-                                     f"has to be a subclass of `{Connection.__name__}`")
-                tuple_idx += 1
-        elif not isinstance(cur_conn, Connection):
-            raise ValueError(f"the given type on position `{idx}` has to be a subclass of `{Connection.__name__}` or "
-                             f"a element of it")
-
-        idx += 1
+    if isinstance(with_connections, Connection):
+        # do nothing
+        pass
+    elif isinstance(with_connections, (AndConnectionRelation, OrConnectionRelation)):
+        # use container connection
+        with_connections = Connection.based_on(with_connections)
+    elif isinstance(with_connections, type) and issubclass(with_connections, Connection):
+        # instantiate it
+        with_connections = with_connections()
+    else:
+        raise TypeError(f"the given element ``with_connection`` needs to be from type `AndConnectionRelation`, "
+                        f"`OrConnectionRelation` or `Connection` - `{type(with_connections)}` is not allowed")
 
     # note: if `args` is an empty list - no special sub-connection-tree bindings
 
@@ -105,7 +98,6 @@ def for_vdevice(
 
                     vdevice = relevant_vdevices[0]
                 cls_for_vdevice = fn_feature_controller.get_class_based_for_vdevice()
-                cls_for_vdevice = {} if cls_for_vdevice is None else cls_for_vdevice
                 if vdevice in cls_for_vdevice.keys():
                     raise DuplicateForVDeviceError(
                         f'there already exists a decorator for the vDevice `{vdevice}` in the Feature class '

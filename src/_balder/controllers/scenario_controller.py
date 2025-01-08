@@ -216,8 +216,8 @@ class ScenarioController(NormalScenarioSetupController):
 
                 # now check if one or more single of the classbased connection are CONTAINED IN the possible
                 # parallel connection (only if there exists more than one parallel)
-                feature_cnn = Connection.based_on(OrConnectionRelation(*FeatureController.get_for(
-                        cur_feature.__class__).get_abs_class_based_for_vdevice()[mapped_vdevice]))
+                feature_cnn = FeatureController.get_for(
+                    cur_feature.__class__).get_abs_class_based_for_vdevice()[mapped_vdevice]
 
                 # search node names that is the relevant connection
                 relevant_cnns: List[Connection] = []
@@ -339,10 +339,9 @@ class ScenarioController(NormalScenarioSetupController):
                     continue
 
                 # now try to reduce the scenario connections according to the requirements of the feature class
-                cur_feature_class_based_for_vdevice = \
+                cur_feature_cnn = \
                     FeatureController.get_for(
                         cur_feature.__class__).get_abs_class_based_for_vdevice()[mapped_vdevice]
-                cur_feature_cnn = Connection.based_on(OrConnectionRelation(*cur_feature_class_based_for_vdevice))
 
                 device_cnn_singles = get_single_cnns_between_device_for_feature(
                     from_device=cur_from_device, to_device=mapped_device, relevant_feature_cnn=cur_feature_cnn)
