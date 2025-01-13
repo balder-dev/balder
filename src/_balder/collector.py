@@ -564,12 +564,12 @@ class Collector:
             for cur_field_name, cur_value_list in cur_decorator_data_dict.items():
                 if isinstance(cur_value_list, FeatureAccessSelector):
                     # make sure that all parameters exist in test method parametrization
-                    for cur_value_parameter in cur_value_list.parameters.values():
-                        if isinstance(cur_value_parameter, Parameter):
-                            if cur_value_parameter.name not in cur_decorator_data_dict.keys():
-                                raise AttributeError(f'can not find attribute `{cur_value_parameter.name}` that is '
-                                                     f'used in parametrization for attribute `{cur_field_name}` in '
-                                                     f'test method `{cur_fn.__qualname__}`')
+                    value_parameters = filter(lambda p: isinstance(p, Parameter), cur_value_list.parameters.values())
+                    for cur_value_parameter in value_parameters:
+                        if cur_value_parameter.name not in cur_decorator_data_dict.keys():
+                            raise AttributeError(
+                                f'can not find attribute `{cur_value_parameter.name}` that is used in parametrization '
+                                f'for attribute `{cur_field_name}` in test method `{cur_fn.__qualname__}`')
                 if cur_field_name not in args_of_cur_fn:
                     raise ValueError(f'the argument `{cur_field_name}` does not exist in test method '
                                      f'`{cur_fn.__qualname__}`')
