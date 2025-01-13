@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import itertools
 from typing import List, Tuple, Generator, Dict, Union, Type, Callable, Iterable, TYPE_CHECKING
 
 import inspect
@@ -374,15 +376,14 @@ class FixtureManager:
             if cur_arg in ignore_attributes:
                 continue
             # go to the most specific fixture, because more specific ones overwrite the more global ones
-            for cur_possible_namespace in all_possible_namespaces:
-                for cur_level in FixtureExecutionLevel:
-                    if cur_level not in self.current_tree_fixtures.keys():
-                        continue
-                    # filter only these fixtures that have the same namespace
-                    for cur_fixture_metadata in self.current_tree_fixtures[cur_level]:
-                        if (cur_fixture_metadata.namespace == cur_possible_namespace
-                                and cur_fixture_metadata.callable.__name__ == cur_arg):
-                            result_dict[cur_arg] = cur_fixture_metadata.retval
+            for cur_possible_namespace, cur_level in itertools.product(all_possible_namespaces, FixtureExecutionLevel):
+                if cur_level not in self.current_tree_fixtures.keys():
+                    continue
+                # filter only these fixtures that have the same namespace
+                for cur_fixture_metadata in self.current_tree_fixtures[cur_level]:
+                    if (cur_fixture_metadata.namespace == cur_possible_namespace
+                            and cur_fixture_metadata.callable.__name__ == cur_arg):
+                        result_dict[cur_arg] = cur_fixture_metadata.retval
             if cur_arg not in result_dict.keys():
                 raise FixtureReferenceError(
                         f"the argument `{cur_arg}` in fixture `{callable_func.__qualname__}` could not be resolved")
