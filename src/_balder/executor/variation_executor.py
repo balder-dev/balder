@@ -874,11 +874,11 @@ class VariationExecutor(BasicExecutableExecutor):
                     relevant_abs_conn = []
                     for cur_cnn in self._abs_variation_connections:
                         if cur_cnn.has_connection_from_to(start_device=setup_device, end_device=mapped_setup_device):
-                            if cur_cnn.__class__ == Connection:
-                                # add the children
-                                relevant_abs_conn.extend(cur_cnn.based_on_elements.connections)
-                            else:
-                                relevant_abs_conn.append(cur_cnn)
+                            # add the children
+                            relevant_abs_conn.extend(
+                                cur_cnn.based_on_elements.connections if cur_cnn.__class__ == Connection else [cur_cnn]
+                            )
+
                     if len(relevant_abs_conn) is None:
                         raise RuntimeError(f"detect empty absolute connection between device `{setup_device.__name__}` "
                                            f"and device `{mapped_setup_device.__name__}`")
