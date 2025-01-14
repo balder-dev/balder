@@ -79,12 +79,10 @@ class RoutingPath:
         if alternative_setup_device_cnns is None:
             setup_devices_cnns = []
             for cur_setup_device in device_mapping.values():
-                cur_setup_device_abs_cnns = \
-                    DeviceController.get_for(cur_setup_device).get_all_absolute_connections()
-                for _, cur_cnn_list in cur_setup_device_abs_cnns.items():
-                    for cur_cnn in cur_cnn_list:
-                        if cur_cnn not in setup_devices_cnns:
-                            setup_devices_cnns.append(cur_cnn)
+                for cur_cnn_list in DeviceController.get_for(cur_setup_device).get_all_absolute_connections().values():
+                    setup_devices_cnns.extend(cur_cnn_list)
+            # remove duplicates
+            setup_devices_cnns = list(set(setup_devices_cnns))
 
         from_setup_device = device_mapping[scenario_connection.from_device]
         to_setup_device = device_mapping[scenario_connection.to_device]
