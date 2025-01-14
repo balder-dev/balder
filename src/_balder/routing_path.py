@@ -111,9 +111,7 @@ class RoutingPath:
         while len(all_possible_routes) > 0:
 
             # remove all routings that have a loop
-            for cur_routing in all_possible_routes.copy():
-                if cur_routing.has_loop():
-                    all_possible_routes.remove(cur_routing)
+            all_possible_routes = [route for route in all_possible_routes.copy() if not route.has_loop()]
 
             # remove all routings which do not work because they have the wrong connection type
             for cur_routing in all_possible_routes.copy():
