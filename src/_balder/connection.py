@@ -541,13 +541,13 @@ class Connection(metaclass=ConnectionType):
                     if next_higher_parent.__class__ in self.__class__.get_parents():
                         # is already a direct parent
                         copied_base.append_to_based_on(next_higher_parent.get_resolved())
-                    else:
-                        # only add the first level of direct parents - deeper will be added by recursively call of
-                        # `get_resolved`
-                        for cur_self_direct_parent in self.__class__.get_parents():
-                            if next_higher_parent.__class__.is_parent_of(cur_self_direct_parent):
-                                new_child = cur_self_direct_parent.based_on(next_higher_parent)
-                                copied_base.append_to_based_on(new_child.get_resolved())
+                        continue
+                    # only add the first level of direct parents - deeper will be added by recursively call of
+                    # `get_resolved`
+                    for cur_self_direct_parent in self.__class__.get_parents():
+                        if next_higher_parent.__class__.is_parent_of(cur_self_direct_parent):
+                            new_child = cur_self_direct_parent.based_on(next_higher_parent)
+                            copied_base.append_to_based_on(new_child.get_resolved())
 
         # if it is a connection container, where only one element exists that is no AND relation -> return this directly
         # instead of the container
