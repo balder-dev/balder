@@ -501,55 +501,53 @@ class Connection(metaclass=ConnectionType):
             the method returns this child connection directly without any :class:`Connection` container otherwise the
             :class:`Connection` container class with all resolved child classes will be returned.
         """
+        copied_base = self.clone_without_based_on_elements()
+
         if self.is_resolved():
-            copied_base = self.clone_without_based_on_elements()
             copied_base.append_to_based_on(self.based_on_elements.get_simplified_relation())
+        elif self.__class__ == Connection:
+            # the base object is a container Connection - iterate over the items and determine the values for them
+            copied_base.append_to_based_on(self.based_on_elements.get_simplified_relation().get_resolved())
         else:
-            copied_base = self.clone_without_based_on_elements()
+            # independent which based-on elements we have, we need to determine all elements between this connection
+            # and the elements of the relation
+            simplified_based_on = self.based_on_elements.get_simplified_relation()
 
-            if self.__class__ == Connection:
-                # the base object is a container Connection - iterate over the items and determine the values for them
-                copied_base.append_to_based_on(self.based_on_elements.get_simplified_relation().get_resolved())
-            else:
-                # independent which based-on elements we have, we need to determine all elements between this connection
-                # and the elements of the relation
-                simplified_based_on = self.based_on_elements.get_simplified_relation()
-
-                for next_higher_parent in simplified_based_on:
-                    if isinstance(next_higher_parent, AndConnectionRelation):
-                        # determine all possibilities
-                        direct_ancestors_relations = ()
-                        for cur_and_elem in next_higher_parent:
-                            # `cur_and_elem` needs to be a connection, because we are using simplified which has only
-                            # `OR[AND[Cnn, ...], Cnn, ..]`
-                            if cur_and_elem.__class__ in self.__class__.get_parents():
-                                # element already is a direct ancestor
-                                direct_ancestors_relations += (cur_and_elem, )
-                            else:
-                                all_pos_possibilities = []
-                                # add all possible direct parents to the possibilities list
-                                for cur_direct_parent in self.__class__.get_parents():
-                                    if cur_direct_parent.is_parent_of(cur_and_elem.__class__):
-                                        all_pos_possibilities.append(cur_direct_parent.based_on(cur_and_elem))
-                                direct_ancestors_relations += (all_pos_possibilities, )
-                        # resolve the opportunities and create multiple possible AND relations where all elements are
-                        # direct parents
-                        for cur_possibility in itertools.product(*direct_ancestors_relations):
-                            new_child_relation = AndConnectionRelation(*cur_possibility).get_resolved()
-                            copied_base.append_to_based_on(new_child_relation)
-                    else:
-                        # `next_higher_parent` needs to be a connection, because we are using simplified which has only
+            for next_higher_parent in simplified_based_on:
+                if isinstance(next_higher_parent, AndConnectionRelation):
+                    # determine all possibilities
+                    direct_ancestors_relations = ()
+                    for cur_and_elem in next_higher_parent:
+                        # `cur_and_elem` needs to be a connection, because we are using simplified which has only
                         # `OR[AND[Cnn, ...], Cnn, ..]`
-                        if next_higher_parent.__class__ in self.__class__.get_parents():
-                            # is already a direct parent
-                            copied_base.append_to_based_on(next_higher_parent.get_resolved())
+                        if cur_and_elem.__class__ in self.__class__.get_parents():
+                            # element already is a direct ancestor
+                            direct_ancestors_relations += (cur_and_elem, )
                         else:
-                            # only add the first level of direct parents - deeper will be added by recursively call of
-                            # `get_resolved`
-                            for cur_self_direct_parent in self.__class__.get_parents():
-                                if next_higher_parent.__class__.is_parent_of(cur_self_direct_parent):
-                                    new_child = cur_self_direct_parent.based_on(next_higher_parent)
-                                    copied_base.append_to_based_on(new_child.get_resolved())
+                            all_pos_possibilities = []
+                            # add all possible direct parents to the possibilities list
+                            for cur_direct_parent in self.__class__.get_parents():
+                                if cur_direct_parent.is_parent_of(cur_and_elem.__class__):
+                                    all_pos_possibilities.append(cur_direct_parent.based_on(cur_and_elem))
+                            direct_ancestors_relations += (all_pos_possibilities, )
+                    # resolve the opportunities and create multiple possible AND relations where all elements are
+                    # direct parents
+                    for cur_possibility in itertools.product(*direct_ancestors_relations):
+                        new_child_relation = AndConnectionRelation(*cur_possibility).get_resolved()
+                        copied_base.append_to_based_on(new_child_relation)
+                else:
+                    # `next_higher_parent` needs to be a connection, because we are using simplified which has only
+                    # `OR[AND[Cnn, ...], Cnn, ..]`
+                    if next_higher_parent.__class__ in self.__class__.get_parents():
+                        # is already a direct parent
+                        copied_base.append_to_based_on(next_higher_parent.get_resolved())
+                    else:
+                        # only add the first level of direct parents - deeper will be added by recursively call of
+                        # `get_resolved`
+                        for cur_self_direct_parent in self.__class__.get_parents():
+                            if next_higher_parent.__class__.is_parent_of(cur_self_direct_parent):
+                                new_child = cur_self_direct_parent.based_on(next_higher_parent)
+                                copied_base.append_to_based_on(new_child.get_resolved())
 
         # if it is a connection container, where only one element exists that is no AND relation -> return this directly
         # instead of the container
