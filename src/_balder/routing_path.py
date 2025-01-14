@@ -86,10 +86,8 @@ class RoutingPath:
                         if cur_cnn not in setup_devices_cnns:
                             setup_devices_cnns.append(cur_cnn)
 
-        from_scenario_device = scenario_connection.from_device
-        to_scenario_device = scenario_connection.to_device
-        from_setup_device = device_mapping[from_scenario_device]
-        to_setup_device = device_mapping[to_scenario_device]
+        from_setup_device = device_mapping[scenario_connection.from_device]
+        to_setup_device = device_mapping[scenario_connection.to_device]
 
         # contains a list with all routes that start and end correctly
         all_completed_routes = []
