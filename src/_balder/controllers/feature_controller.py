@@ -145,8 +145,16 @@ class FeatureController(Controller):
                                 VDevice
         :return: a dictionary that holds all available method variation that matches here
         """
+        all_vdevice_method_variations = self.get_method_based_for_vdevice()
+
+        if all_vdevice_method_variations is None:
+            raise ValueError("the current feature has no method variations")
+
+        if of_method_name not in all_vdevice_method_variations.keys():
+            raise ValueError(f"can not find the method `{of_method_name}` in method variation data dictionary")
+
         all_possible_method_variations = {}
-        for cur_impl_method, cur_method_impl_dict in self.get_method_based_for_vdevice()[of_method_name].items():
+        for cur_impl_method, cur_method_impl_dict in all_vdevice_method_variations[of_method_name].items():
             if for_vdevice in cur_method_impl_dict.keys():
                 cur_impl_method_cnns = cur_method_impl_dict[for_vdevice].get_singles()
                 for cur_single_impl_method_cnn in cur_impl_method_cnns:
@@ -331,14 +339,6 @@ class FeatureController(Controller):
         :return: the method variation callable for the given data (or none, if the method does not exist in this object
                  or in a parent class of it)
         """
-
-        all_vdevice_method_variations = self.get_method_based_for_vdevice()
-
-        if all_vdevice_method_variations is None:
-            raise ValueError("the current feature has no method variations")
-        if of_method_name not in all_vdevice_method_variations.keys():
-            raise ValueError(f"can not find the method `{of_method_name}` in method variation data dictionary")
-
         # first determine all possible method-variations
         all_possible_method_variations = self._determine_all_theoretically_unordered_method_variations(
             of_method_name=of_method_name, for_vdevice=for_vdevice, with_connection=with_connection)
