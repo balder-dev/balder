@@ -688,23 +688,16 @@ class VariationExecutor(BasicExecutableExecutor):
         :meth:`Collector.determine_absolute_device_connections_for`), but it considers the real applied vDevice and
         their feature restrictions too.
         """
-        abs_var_scenario_device_cnns = {}
+        abs_var_scenario_device_cnns = []
 
         # first determine all relevant absolute connection depending on the current scenario
         for cur_scenario_device, _ in self.base_device_mapping.items():
-            cur_scenario_device_abs_cnns = \
-                DeviceController.get_for(cur_scenario_device).get_all_absolute_connections()
-            for _, cur_cnn_list in cur_scenario_device_abs_cnns.items():
-                for cur_cnn in cur_cnn_list:
-                    if cur_scenario_device not in abs_var_scenario_device_cnns.keys():
-                        abs_var_scenario_device_cnns[cur_scenario_device] = {}
+            for cnn_list in DeviceController.get_for(cur_scenario_device).get_all_absolute_connections().values():
+                abs_var_scenario_device_cnns.extend(cnn_list)
 
-                    cur_to_device, _ = cur_cnn.get_conn_partner_of(cur_scenario_device)
-
-                    if cur_to_device not in abs_var_scenario_device_cnns[cur_scenario_device].keys():
-                        abs_var_scenario_device_cnns[cur_scenario_device][cur_to_device] = []
-
-                    abs_var_scenario_device_cnns[cur_scenario_device][cur_to_device].append(cur_cnn)
+        # remove duplicates (`get_all_absolute_connections()` returns same connection twice if `from_device` and
+        # `to_device` is switched)
+        abs_var_scenario_device_cnns = list(set(abs_var_scenario_device_cnns))
 
         # now iterate over every feature, that is used by the scenario and determine the class-based feature connections
         # of the mapped scenario feature (and its vDevice)
@@ -731,7 +724,8 @@ class VariationExecutor(BasicExecutableExecutor):
                     FeatureController.get_for(
                         cur_setup_feature.__class__).get_abs_class_based_for_vdevice()[cur_setup_feature_vdevice]
                 # connection that are relevant for this feature
-                relevant_cnns = abs_var_scenario_device_cnns[cur_scenario_device][cur_mapped_scenario_device]
+                relevant_cnns = [cnn for cnn in abs_var_scenario_device_cnns
+                                 if cnn.has_connection_from_to(cur_scenario_device, cur_mapped_scenario_device)]
 
                 relevant_device_cnn = None
 
@@ -740,7 +734,7 @@ class VariationExecutor(BasicExecutableExecutor):
                     for cur_relevant_cnn in relevant_cnns:
                         for cur_relevant_single_cnn in cur_relevant_cnn.get_singles():
                             for cur_feature_single_cnn in feature_cnn.get_singles():
-                                if cur_feature_single_cnn.contained_in(cur_relevant_single_cnn):
+                                if cur_feature_single_cnn.contained_in(cur_relevant_single_cnn, ignore_metadata=True):
                                     if relevant_device_cnn is not None:
                                         raise UnclearAssignableFeatureConnectionError(
                                             f"the devices {cur_scenario_device.__name__} and "
@@ -767,27 +761,13 @@ class VariationExecutor(BasicExecutableExecutor):
                 new_cnn_to_replace = Connection.based_on(new_cleaned_singles)
                 new_cnn_to_replace.set_metadata_for_all_subitems(new_cleaned_singles[0].metadata)
 
-                abs_var_scenario_device_cnns[cur_scenario_device][cur_mapped_scenario_device].remove(
-                    relevant_device_cnn)
-                abs_var_scenario_device_cnns[cur_scenario_device][cur_mapped_scenario_device].append(new_cnn_to_replace)
+                abs_var_scenario_device_cnns.remove(relevant_device_cnn)
+                abs_var_scenario_device_cnns.append(new_cnn_to_replace)
 
-                # also search the connection in the other direction
-                other_dir_relevant_device_cnn = None
-                for cur_cnn in abs_var_scenario_device_cnns[cur_mapped_scenario_device][cur_scenario_device]:
-                    if cur_cnn.equal_with(relevant_device_cnn):
-                        other_dir_relevant_device_cnn = cur_cnn
-                        break
-                # and also replace it
-                abs_var_scenario_device_cnns[cur_mapped_scenario_device][cur_scenario_device].remove(
-                    other_dir_relevant_device_cnn)
-                abs_var_scenario_device_cnns[cur_mapped_scenario_device][cur_scenario_device].append(new_cnn_to_replace)
+                # we do not need to check other direction because `has_connection_from_to()` returns both possibilities
 
         # set the determined values in variation object
-        self._abs_variation_scenario_device_connections = []
-        for _, from_device_dict in abs_var_scenario_device_cnns.items():
-            for _, cur_cnn_list in from_device_dict.items():
-                for cur_cnn in cur_cnn_list:
-                    self._abs_variation_scenario_device_connections.append(cur_cnn)
+        self._abs_variation_scenario_device_connections = abs_var_scenario_device_cnns
 
     def create_all_valid_routings(self):
         """
