@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import itertools
 from typing import Type, Union, List, Dict, Tuple, TYPE_CHECKING
 
 import inspect
@@ -732,19 +734,20 @@ class VariationExecutor(BasicExecutableExecutor):
                 if len(relevant_cnns) > 1:
                     # we have parallel possibilities -> determine the selected one (only one is allowed to fit)
                     for cur_relevant_cnn in relevant_cnns:
-                        for cur_relevant_single_cnn in cur_relevant_cnn.get_singles():
-                            for cur_feature_single_cnn in feature_cnn.get_singles():
-                                if cur_feature_single_cnn.contained_in(cur_relevant_single_cnn, ignore_metadata=True):
-                                    if relevant_device_cnn is not None:
-                                        raise UnclearAssignableFeatureConnectionError(
-                                            f"the devices {cur_scenario_device.__name__} and "
-                                            f"{cur_mapped_scenario_device.__name__} have multiple parallel "
-                                            f"connections - the device `{cur_scenario_device.__name__}` uses a "
-                                            f"feature `{cur_scenario_feature.__class__.__name__}` that matches "
-                                            f"with the device `{cur_mapped_scenario_device.__name__}`, but it is "
-                                            f"not clear which of the parallel connection could be used"
-                                        )
-                                    relevant_device_cnn = cur_relevant_cnn
+                        for cur_relevant_single_cnn, cur_feature_single_cnn in (
+                                itertools.product(cur_relevant_cnn.get_singles(), feature_cnn.get_singles())):
+                            if not cur_feature_single_cnn.contained_in(cur_relevant_single_cnn, ignore_metadata=True):
+                                continue
+                            if relevant_device_cnn is not None:
+                                raise UnclearAssignableFeatureConnectionError(
+                                    f"the devices {cur_scenario_device.__name__} and "
+                                    f"{cur_mapped_scenario_device.__name__} have multiple parallel connections - the "
+                                    f"device `{cur_scenario_device.__name__}` uses a feature "
+                                    f"`{cur_scenario_feature.__class__.__name__}` that matches with the device "
+                                    f"`{cur_mapped_scenario_device.__name__}`, but it is not clear which of the "
+                                    f"parallel connection could be used"
+                                )
+                            relevant_device_cnn = cur_relevant_cnn
                 elif len(relevant_cnns) == 1:
                     relevant_device_cnn = relevant_cnns[0]
                 if relevant_device_cnn is None:
