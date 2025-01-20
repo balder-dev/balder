@@ -263,7 +263,7 @@ class RoutingPath:
         """
         copied_elem = copy.copy(self)
         # also copy list reference
-        copied_elem._routing_elems = self._routing_elems.copy()
+        copied_elem._routing_elems = self._routing_elems.copy()  # pylint: disable=protected-access
         return copied_elem
 
     def append_element(self, elem: Union[Connection, NodeGateway]) -> None:
