@@ -117,7 +117,7 @@ class SetupController(NormalScenarioSetupController):
                 cur_device_controller = DeviceController.get_for(cur_device)
                 for _, cur_cnn_list in cur_device_controller.get_all_absolute_connections().items():
                     for cur_cnn in cur_cnn_list:
-                        if not cur_cnn.has_connection_from_to(cur_device, mapped_device):
+                        if not cur_cnn.has_connection_from_to(cur_device, end_device=mapped_device):
                             # this connection can be ignored, because it is no connection between the current device
                             # and the mapped device
                             continue

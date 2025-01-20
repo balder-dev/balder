@@ -224,7 +224,7 @@ class ScenarioController(NormalScenarioSetupController):
                 mapped_device_abs_cnns = DeviceController.get_for(mapped_device).get_all_absolute_connections()
                 for _, all_connections in mapped_device_abs_cnns.items():
                     relevant_cnns += [cur_cnn for cur_cnn in all_connections
-                                      if cur_cnn.has_connection_from_to(cur_from_device, mapped_device)]
+                                      if cur_cnn.has_connection_from_to(cur_from_device, end_device=mapped_device)]
 
                 if len(relevant_cnns) <= 1:
                     # ignore if there are not more than one relevant connection
