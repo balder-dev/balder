@@ -109,12 +109,12 @@ class RoutingPath:
             # remove all routings that have a loop
             all_possible_routes = [route for route in all_possible_routes.copy() if not route.has_loop()]
 
-            # remove all routings which do not work because they have the wrong connection type
-            for cur_routing in all_possible_routes.copy():
-                # check that one part connection matches the requirements of the given `scenario_connection`
-                if not scenario_connection.contained_in(cur_routing.get_virtual_connection(), ignore_metadata=True):
-                    # the virtual connection doesn't match the requirement -> delete possibility
-                    all_possible_routes.remove(cur_routing)
+            # remove all not working routing because they have the wrong connection type, by checking that one part
+            # connection matches the requirements of the given `scenario_connection`
+            all_possible_routes = [
+                r for r in all_possible_routes
+                if scenario_connection.contained_in(r.get_virtual_connection(), ignore_metadata=True)
+            ]
 
             # move all completely routed connections to `all_completed_routes`
             for cur_routing in all_possible_routes.copy():
