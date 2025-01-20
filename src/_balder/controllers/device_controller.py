@@ -16,6 +16,7 @@ from _balder.exceptions import DeviceScopeError, DeviceResolvingException, Inner
 if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.controllers import ScenarioController, SetupController
+    from _balder.node_gateway import NodeGateway
 
 logger = logging.getLogger(__file__)
 
@@ -60,6 +61,8 @@ class DeviceController(BaseDeviceController, ABC):
 
         #: describes the absolute connections from the related device to another device
         self._absolute_connections: Dict[Type[Device], List[Connection]] = {}
+
+        self._gateways: List[NodeGateway] = []
 
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
@@ -145,6 +148,17 @@ class DeviceController(BaseDeviceController, ABC):
             self._connections[own_node] = []
 
         self._connections[own_node].append(connection)
+
+    def add_new_raw_gateway(self, gateway: NodeGateway):
+        """
+        This method adds a new raw gateway to the internal property `_gateways`.
+
+        :param gateway: the gateway object (the related device has to be part of it)
+        """
+        if gateway.device != self.related_cls:
+            raise ValueError("the given gateway does not have the current device as component")
+
+        self._gateways.append(gateway)
 
     def add_new_absolute_connection(self, connection: Connection):
         """
