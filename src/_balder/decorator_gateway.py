@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from _balder.controllers.device_controller import DeviceController
 from _balder.device import Device
 from _balder.node_gateway import NodeGateway
 
@@ -25,10 +26,9 @@ def gateway(from_node: str, to_node: str, bidirectional: bool = True):
             raise TypeError(
                 f"The decorator `gateway` may only be used for `Device` objects. This is not possible for the applied "
                 f"class `{cls.__name__}`.")
+        decorated_cls_device_controller = DeviceController.get_for(cls)
 
-        if not hasattr(cls, '_gateways'):
-            cls._gateways = []
         new_gateway = NodeGateway(cls, from_node, to_node, bidirectional)
-        cls._gateways.append(new_gateway)
+        decorated_cls_device_controller.add_new_raw_gateway(new_gateway)
         return cls
     return decorator
