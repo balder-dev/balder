@@ -602,7 +602,13 @@ class Connection(metaclass=ConnectionType):
         """
         return self.metadata.get_conn_partner_of(device, node)
 
-    def has_connection_from_to(self, start_device, end_device=None) -> bool:
+    def has_connection_from_to(
+            self,
+            start_device: Type[Device],
+            start_device_node_name: Union[str, None] = None,
+            end_device: Union[Type[Device], None] = None,
+            end_device_node_name: Union[str, None] = None,
+    ) -> bool:
         """
         This method checks if there is a connection from ``start_device`` to ``end_device``. This will return
         true if the ``start_device`` and ``end_device`` given in this method are also the ``start_device`` and
@@ -612,14 +618,20 @@ class Connection(metaclass=ConnectionType):
 
         :param start_device: the device for which the method should check whether it is a communication partner (for
                              non-bidirectional connection, this has to be the start device)
-
+        :param start_device_node_name: the node name that start device should have or None if it should be ignored
         :param end_device: the other device for which the method should check whether it is a communication partner (for
                            non-bidirectional connection, this has to be the end device - this is optional if only the
                            start device should be checked)
+        :param end_device_node_name: the node name that start device should have or None if it should be ignored
 
         :return: returns true if the given direction is possible
         """
-        return self.metadata.has_connection_from_to(start_device, end_device)
+        return self.metadata.has_connection_from_to(
+            start_device=start_device,
+            start_device_node_name=start_device_node_name,
+            end_device=end_device,
+            end_device_node_name=end_device_node_name
+        )
 
     def equal_with(self, other_conn: Connection, ignore_metadata=False) -> bool:
         """

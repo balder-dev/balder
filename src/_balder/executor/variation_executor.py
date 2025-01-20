@@ -726,8 +726,10 @@ class VariationExecutor(BasicExecutableExecutor):
                     FeatureController.get_for(
                         cur_setup_feature.__class__).get_abs_class_based_for_vdevice()[cur_setup_feature_vdevice]
                 # connection that are relevant for this feature
-                relevant_cnns = [cnn for cnn in abs_var_scenario_device_cnns
-                                 if cnn.has_connection_from_to(cur_scenario_device, cur_mapped_scenario_device)]
+                relevant_cnns = [
+                    cnn for cnn in abs_var_scenario_device_cnns
+                    if cnn.has_connection_from_to(cur_scenario_device, end_device=cur_mapped_scenario_device)
+                ]
 
                 relevant_device_cnn = None
 

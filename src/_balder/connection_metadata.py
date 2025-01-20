@@ -147,7 +147,13 @@ class ConnectionMetadata:
 
         raise ValueError(f"the given node `{node}` is no component of the given device `{device.__qualname__}`")
 
-    def has_connection_from_to(self, start_device, end_device=None) -> bool:
+    def has_connection_from_to(
+            self,
+            start_device: Type[Device],
+            start_device_node_name: Union[str, None] = None,
+            end_device: Union[Type[Device], None] = None,
+            end_device_node_name: Union[str, None] = None,
+    ) -> bool:
         """
         This method checks if there is a connection from ``start_device`` to ``end_device``. This will return
         true if the ``start_device`` and ``end_device`` given in this method are also the ``start_device`` and
@@ -157,25 +163,40 @@ class ConnectionMetadata:
 
         :param start_device: the device for which the method should check whether it is a communication partner (for
                              non-bidirectional connection, this has to be the start device)
-
+        :param start_device_node_name: the node name that start device should have or None if it should be ignored
         :param end_device: the other device for which the method should check whether it is a communication partner (for
                            non-bidirectional connection, this has to be the end device - this is optional if only the
                            start device should be checked)
+        :param end_device_node_name: the node name that start device should have or None if it should be ignored
 
         :return: returns true if the given direction is possible
         """
-        if end_device is None:
+        if not (isinstance(start_device, type) and issubclass(start_device, Device)):
+            raise TypeError("argument `start_device` needs to be a device")
+        if not (start_device_node_name is None or isinstance(start_device_node_name, str)):
+            raise TypeError("argument `start_device_node_name` needs to be a string or None if it should be ignored")
+        if not (end_device is None or isinstance(end_device, type) and issubclass(end_device, Device)):
+            raise TypeError("argument `end_device` needs to be a device or None if it should be ignored")
+        if not (end_device_node_name is None or isinstance(end_device_node_name, str)):
+            raise TypeError("argument `end_device_node_name` needs to be a string or None if it should be ignored")
 
-            if self.bidirectional:
-                return start_device in (self.from_device, self.to_device)
-
-            return start_device == self.from_device
+        def check(start_dev, start_node_name, end_dev, end_node_name):
+            if start_device != start_dev:
+                return False
+            if start_device_node_name is not None and start_device_node_name != start_node_name:
+                return False
+            if end_device is not None and end_device != end_dev:
+                return False
+            if end_device_node_name is not None and end_device_node_name != end_node_name:
+                return False
+            return True
 
         if self.bidirectional:
-            return start_device == self.from_device and end_device == self.to_device or \
-                   start_device == self.to_device and end_device == self.from_device
-
-        return start_device == self.from_device and end_device == self.to_device
+            if check(start_dev=self.to_device, start_node_name=self.to_node_name,
+                     end_dev=self.from_device, end_node_name=self.from_node_name):
+                return True
+        return check(start_dev=self.from_device, start_node_name=self.from_node_name,
+                     end_dev=self.to_device, end_node_name=self.to_node_name)
 
     def equal_with(self, other: ConnectionMetadata) -> bool:
         """

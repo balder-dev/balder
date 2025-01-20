@@ -16,9 +16,8 @@ def test_connection_from_to():
                          to_device_node_name='ntest2')
 
     assert conn.has_connection_from_to(Device1), "method does not return true"
-    assert conn.has_connection_from_to(Device1, Device2), "method does not return true"
+    assert conn.has_connection_from_to(Device1, end_device=Device2), "method does not return true"
     assert conn.has_connection_from_to(Device2), "method does not return true, although this is a " \
                                                  "bidirectional connection"
-    assert conn.has_connection_from_to(Device2, Device1), "method does not return true, although this is a " \
-                                                          "bidirectional connection"
-
+    assert conn.has_connection_from_to(Device2, end_device=Device1), "method does not return true, although this is a " \
+                                                                     "bidirectional connection"
