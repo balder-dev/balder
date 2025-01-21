@@ -441,7 +441,7 @@ class VariationExecutor(BasicExecutableExecutor):
                     feature_replacement[cur_scenario_device][cur_attr_name] = \
                         (cur_scenario_feature_obj, cur_setup_feature_obj)
             # also add all setup features that are not assigned as autonomous features
-            for _, cur_setup_feature in cur_setup_features.items():
+            for cur_setup_feature in cur_setup_features.values():
                 if cur_setup_feature not in all_assigned_setup_features:
                     # determine free name
                     idx = 0
