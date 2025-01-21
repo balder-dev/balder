@@ -372,16 +372,10 @@ class VariationExecutor(BasicExecutableExecutor):
         :raises NotApplicableVariationError: will be thrown if this variation cannot be applied, because the setup-/
                                              scenario-device-features can not be resolved
         """
-        feature_replacement = {}
-        abs_setup_vdevice_mappings = {}
+        feature_replacement = {scenario_dev: {} for scenario_dev in self.base_device_mapping.keys()}
+        abs_setup_vdevice_mappings = {setup_dev: {} for setup_dev in self.base_device_mapping.values()}
         for cur_scenario_device, cur_setup_device in self.base_device_mapping.items():
             cur_setup_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
-
-            if cur_scenario_device not in feature_replacement.keys():
-                feature_replacement[cur_scenario_device] = {}
-
-            if cur_setup_device not in abs_setup_vdevice_mappings.keys():
-                abs_setup_vdevice_mappings[cur_setup_device] = {}
 
             all_assigned_setup_features = []
             cur_scenario_device_orig_features = \
