@@ -95,7 +95,7 @@ class BranchBodyResult(_Result):
     """
 
     def __init__(self, executor: BasicExecutor):
-        from _balder.executor.testcase_executor import TestcaseExecutor
+        from _balder.executor.testcase_executor import TestcaseExecutor  # pylint: disable=import-outside-toplevel
 
         if isinstance(executor, TestcaseExecutor):
             raise TypeError("testcase executors are not allowed to use in `BranchBodyResult`")
