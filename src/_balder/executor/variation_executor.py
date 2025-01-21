@@ -287,6 +287,39 @@ class VariationExecutor(BasicExecutableExecutor):
                     f'can not find a valid routing on setup level for the connection `{scenario_cnn.get_tree_str()}` '
                     f'between scenario devices `{scenario_cnn.from_device}` and `{scenario_cnn.to_device}`')
 
+    def _get_matching_setup_features_for(
+            self,
+            scenario_feature_obj: Feature,
+            in_setup_device: Type[Device]
+    ) -> List[Feature]:
+        """
+        Helper method that returns all matching setup features for the provided scenario feature in the provided setup
+        device.
+        """
+        cur_setup_features = DeviceController.get_for(in_setup_device).get_all_instantiated_feature_objects()
+
+        replacing_feature_candidates = [
+            cur_setup_feature for cur_setup_feature in cur_setup_features.values()
+            if isinstance(cur_setup_feature, scenario_feature_obj.__class__)
+        ]
+        active_scenario_vdev, mapped_scenario_dev = scenario_feature_obj.active_vdevice_device_mapping
+
+        replacing_features = replacing_feature_candidates.copy()
+        if mapped_scenario_dev is not None:
+            # get the related setup device for the mapped scenario device (on scenario level)
+            setup_dev_of_mapped_scenario_dev = self.get_setup_device_for(mapped_scenario_dev)
+
+            # now check if there is a mapping on setup level too
+            for cur_replacing_feature in replacing_feature_candidates:
+                mapped_setup_vdev, mapped_setup_dev = cur_replacing_feature.active_vdevice_device_mapping
+                if mapped_setup_vdev is not None and not issubclass(mapped_setup_vdev, active_scenario_vdev):
+                    # drop this feature matching, because we have different vdevice mapped
+                    replacing_features.remove(cur_replacing_feature)
+                elif mapped_setup_dev is not None and mapped_setup_dev != setup_dev_of_mapped_scenario_dev:
+                    # drop this feature matching, because it is not applicable here
+                    replacing_features.remove(cur_replacing_feature)
+        return replacing_features
+
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
     def testsummary(self) -> ResultSummary:
@@ -353,61 +386,45 @@ class VariationExecutor(BasicExecutableExecutor):
             all_assigned_setup_features = []
             cur_scenario_device_orig_features = \
                 DeviceController.get_for(cur_scenario_device).get_original_instanced_feature_objects()
-            for cur_attr_name, cur_abstract_scenario_feature_obj in cur_scenario_device_orig_features.items():
-                replacing_features = [cur_setup_feature for _, cur_setup_feature in cur_setup_features.items()
-                                      if isinstance(cur_setup_feature, cur_abstract_scenario_feature_obj.__class__)]
-                used_scenario_vdevice, mapped_scenario_device = \
-                    cur_abstract_scenario_feature_obj.active_vdevice_device_mapping
-                # check if there is a mapped device in scenario level
-                cleanup_replacing_features = replacing_features.copy()
-                if mapped_scenario_device is not None:
-                    # get the related setup device for the mapped scenario device (on scenario level)
-                    to_scenarios_vdevice_mapped_setup_device = self.get_setup_device_for(mapped_scenario_device)
+            for cur_attr_name, cur_scenario_feature_obj in cur_scenario_device_orig_features.items():
+                active_scenario_vdevice, mapped_scenario_device = cur_scenario_feature_obj.active_vdevice_device_mapping
 
-                    # now check if there is a mapping on setup level too
-                    for cur_replacing_feature in replacing_features:
-                        mapped_setup_vdevice, mapped_setup_device = cur_replacing_feature.active_vdevice_device_mapping
-                        if mapped_setup_vdevice is not None and \
-                                not issubclass(mapped_setup_vdevice, used_scenario_vdevice):
-                            # drop this feature matching, because we have different vdevice mapped
-                            cleanup_replacing_features.remove(cur_replacing_feature)
-                        elif mapped_setup_device is not None and \
-                                mapped_setup_device != to_scenarios_vdevice_mapped_setup_device:
-                            # drop this feature matching, because it is not applicable here
-                            cleanup_replacing_features.remove(cur_replacing_feature)
+                cur_setup_feature_objs = self._get_matching_setup_features_for(
+                    scenario_feature_obj=cur_scenario_feature_obj, in_setup_device=cur_setup_device
+                )
 
-                if len(cleanup_replacing_features) != 1:
+                if len(cur_setup_feature_objs) != 1:
                     raise NotApplicableVariationException(
                         f'this variation can not be applicable because there was no setup feature implementation of '
-                        f'`{cur_abstract_scenario_feature_obj.__class__.__name__}` (used by scenario device '
+                        f'`{cur_scenario_feature_obj.__class__.__name__}` (used by scenario device '
                         f'`{cur_scenario_device.__name__}`) in setup device `{cur_setup_device.__name__}`')
+                cur_setup_feature_obj = cur_setup_feature_objs[0]
 
                 if mapped_scenario_device is None:
                     # we have exactly one matching candidate, but also no vDevice mapping
                     # check if the matching candidate has a vDevice mapping
-                    _, mapped_setup_device = cleanup_replacing_features[0].active_vdevice_device_mapping
-                    cleanup_feature_controller = FeatureController.get_for(cleanup_replacing_features[0].__class__)
+                    _, mapped_setup_device = cur_setup_feature_obj.active_vdevice_device_mapping
+                    cleanup_feature_controller = FeatureController.get_for(cur_setup_feature_obj.__class__)
                     if mapped_setup_device is None \
                             and len(cleanup_feature_controller.get_abs_inner_vdevice_classes()) > 0:
                         # there is no vDevice mapping on scenario and no vDevice mapping on setup level, but the
                         # feature defined vDevices -> NOT APPLICABLE
                         logger.warning(
                             f"missing vDevice mapping for feature "
-                            f"`{cur_abstract_scenario_feature_obj.__class__.__name__}` (used in scenario device "
+                            f"`{cur_scenario_feature_obj.__class__.__name__}` (used in scenario device "
                             f"`{cur_scenario_device.__name__}` and in setup device `{cur_setup_device.__name__}`) - "
                             f"VARIATION CAN NOT BE APPLIED")
                         raise NotApplicableVariationException(
-                            f'this variation can not be applicable because there was no vDevice mapping given on '
+                            f'this variation can not be applied because there was no vDevice mapping given on '
                             f'scenario or on setup level for the feature '
-                            f'`{cur_abstract_scenario_feature_obj.__class__.__name__}` (used by scenario device '
+                            f'`{cur_scenario_feature_obj.__class__.__name__}` (used by scenario device '
                             f'`{cur_scenario_device.__name__}`) in setup device `{cur_setup_device.__name__}`')
 
-                all_assigned_setup_features.append(cleanup_replacing_features[0])
+                all_assigned_setup_features.append(cur_setup_feature_obj)
                 if cur_attr_name not in feature_replacement[cur_scenario_device].keys():
-                    cleanup_feature = cleanup_replacing_features[0]
-                    cleanup_feature_controller = FeatureController.get_for(cleanup_feature.__class__)
+                    cleanup_feature_controller = FeatureController.get_for(cur_setup_feature_obj.__class__)
 
-                    used_setup_vdevice, mapped_setup_device = cleanup_feature.active_vdevice_device_mapping
+                    used_setup_vdevice, mapped_setup_device = cur_setup_feature_obj.active_vdevice_device_mapping
 
                     # if there is a vDevice mapping on scenario level, but not on setup level, so update the
                     # VDevice-Device-Mapping there
@@ -416,19 +433,19 @@ class VariationExecutor(BasicExecutableExecutor):
                         # because check was already done in collector-stage)
                         setup_vdevices = [cur_vdevice for cur_vdevice
                                           in cleanup_feature_controller.get_abs_inner_vdevice_classes()
-                                          if cur_vdevice.__name__ == used_scenario_vdevice.__name__]
+                                          if cur_vdevice.__name__ == active_scenario_vdevice.__name__]
                         used_setup_vdevice = setup_vdevices[0]
                         # set the mapping
-                        abs_setup_vdevice_mappings[cur_setup_device][cleanup_feature] = {
+                        abs_setup_vdevice_mappings[cur_setup_device][cur_setup_feature_obj] = {
                             used_setup_vdevice: self.get_setup_device_for(mapped_scenario_device)}
                     # if there is a vDevice mapping on setup level, but not on scenario level, so directly update the
                     # VDevice-Device-Mapping there
                     elif mapped_scenario_device is None and mapped_setup_device is not None:
-                        abs_setup_vdevice_mappings[cur_setup_device][cleanup_feature] = {
+                        abs_setup_vdevice_mappings[cur_setup_device][cur_setup_feature_obj] = {
                             used_setup_vdevice: mapped_setup_device}
 
                     feature_replacement[cur_scenario_device][cur_attr_name] = \
-                        (cur_abstract_scenario_feature_obj, cleanup_feature)
+                        (cur_scenario_feature_obj, cur_setup_feature_obj)
             # also add all setup features that are not assigned as autonomous features
             for _, cur_setup_feature in cur_setup_features.items():
                 if cur_setup_feature not in all_assigned_setup_features:
