@@ -16,7 +16,7 @@ class Feature:
         :param kwargs: contains a dictionary that references all vDevices of the feature and a real
                         scenario :meth:`Device` as value
         """
-        from _balder.controllers import FeatureController
+        from _balder.controllers import FeatureController  # pylint: disable=import-outside-toplevel
 
         #: this property contains the active mapping for the devices
         self.active_vdevices: Dict[VDevice, Union[Device, str]] = {}
