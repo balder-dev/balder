@@ -60,6 +60,6 @@ class OrConnectionRelation(BaseConnectionRelation):
         if not other_conn.is_resolved():
             raise ValueError('can not execute method, because other connection relation is not resolved')
         for cur_inner_cnn in self._connections:
-            if cur_inner_cnn.contained_in(other_conn):
+            if cur_inner_cnn.contained_in(other_conn, ignore_metadata=ignore_metadata):
                 return True
         return False
