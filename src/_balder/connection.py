@@ -703,75 +703,65 @@ class Connection(metaclass=ConnectionType):
             # one of the resolved object is a raw `Connection` object without based-on-elements -> always true
             return True
 
-        self_possibilities = [resolved_self]
         if resolved_self.__class__ == Connection:
-            self_possibilities = resolved_self.based_on_elements.connections
+            return resolved_self.based_on_elements.contained_in(resolved_other, ignore_metadata=ignore_metadata)
 
-        # if one of the self_possibilities is contained_in the other, the method should return true
-        for cur_self in self_possibilities:
-            if isinstance(cur_self, OrConnectionRelation):
-                # should not happen, because we are using resolved elements (using simplified version)
-                raise ValueError(f'unexpected type `{OrConnectionRelation.__name__}`')
+        if resolved_self.__class__ == resolved_other.__class__:
+            # The element itself has already matched, now we still have to check whether at least one inner element
+            # of this type is contained in the minimum one element of the other
+            singles_self = resolved_self.get_singles()
+            singles_other = resolved_other.get_singles()
 
-            if cur_self.__class__ == resolved_other.__class__:
-                # The element itself has already matched, now we still have to check whether at least one inner element
-                # of this type is contained in the minimum one element of the other
-                singles_self = cur_self.get_singles()
-                singles_other = resolved_other.get_singles()
+            # check that for one single_self element all hierarchical based_on elements are in one of the single
+            # other element
+            for cur_single_self, cur_single_other in itertools.product(singles_self, singles_other):
+                # check if both consists of only one element
+                if len(cur_single_self.based_on_elements) == 0:
+                    # the cur self single is only one element -> this is contained in the other
+                    return True
 
-                # check that for one single_self element all hierarchical based_on elements are in one of the single
-                # other element
-                for cur_single_self, cur_single_other in itertools.product(singles_self, singles_other):
-                    # check if both consists of only one element
-                    if len(cur_single_self.based_on_elements) == 0:
-                        # the cur self single is only one element -> this is contained in the other
+                if len(cur_single_other.based_on_elements) == 0:
+                    # the other element is only one element, but the self element not -> contained_in
+                    # for this single definitely false
+                    continue
+
+                # note: for both only one `based_on_elements` is possible, because they are singles
+                self_first_based_on = cur_single_self.based_on_elements[0]
+                other_first_based_on = cur_single_other.based_on_elements[0]
+
+                self_is_and = isinstance(self_first_based_on, AndConnectionRelation)
+                self_is_cnn = isinstance(self_first_based_on, Connection)
+                other_is_and = isinstance(other_first_based_on, AndConnectionRelation)
+                other_is_cnn = isinstance(other_first_based_on, Connection)
+
+                if self_is_and and (other_is_and or other_is_cnn) or self_is_cnn and other_is_cnn:
+                    # find a complete valid match
+                    if self_first_based_on.contained_in(other_first_based_on, ignore_metadata=ignore_metadata):
+                        return True
+                # skip all others possibilities
+        else:
+            # the elements itself do not match -> go deeper within the other connection
+            if isinstance(resolved_other, AndConnectionRelation):
+                # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
+                # smaller AND contained in a bigger AND)
+                for cur_other_and_element in resolved_other.connections:
+                    if resolved_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
                         return True
 
-                    if len(cur_single_other.based_on_elements) == 0:
-                        # the other element is only one element, but the self element not -> contained_in
-                        # for this single definitely false
-                        continue
+            resolved_other_relation = resolved_other.based_on_elements \
+                if isinstance(resolved_other, Connection) else resolved_other
 
-                    # note: for both only one `based_on_elements` is possible, because they are singles
-                    self_first_based_on = cur_single_self.based_on_elements[0]
-                    other_first_based_on = cur_single_other.based_on_elements[0]
-
-                    self_is_and = isinstance(self_first_based_on, AndConnectionRelation)
-                    self_is_cnn = isinstance(self_first_based_on, Connection)
-                    other_is_and = isinstance(other_first_based_on, AndConnectionRelation)
-                    other_is_cnn = isinstance(other_first_based_on, Connection)
-
-                    if self_is_and and (other_is_and or other_is_cnn) or self_is_cnn and other_is_cnn:
-                        # find a complete valid match
-                        if self_first_based_on.contained_in(other_first_based_on, ignore_metadata=ignore_metadata):
-                            return True
-                    # skip all others possibilities
-            elif isinstance(cur_self, AndConnectionRelation):
-                if cur_self.contained_in(resolved_other):
-                    return True
-            else:
-                # the elements itself do not match -> go deeper within the other connection
-                if isinstance(resolved_other, AndConnectionRelation):
+            for cur_other_based_on in resolved_other_relation.connections:
+                if isinstance(cur_other_based_on, AndConnectionRelation):
                     # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
                     # smaller AND contained in a bigger AND)
-                    for cur_other_and_element in resolved_other.connections:
-                        if cur_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
+                    for cur_other_and_element in cur_other_based_on.connections:
+                        if resolved_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
                             return True
-
-                resolved_other_relation = resolved_other.based_on_elements \
-                    if isinstance(resolved_other, Connection) else resolved_other
-
-                for cur_other_based_on in resolved_other_relation.connections:
-                    if isinstance(cur_other_based_on, AndConnectionRelation):
-                        # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
-                        # smaller AND contained in a bigger AND)
-                        for cur_other_and_element in cur_other_based_on.connections:
-                            if cur_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
-                                return True
-                    else:
-                        if cur_self.contained_in(cur_other_based_on, ignore_metadata=ignore_metadata):
-                            # element was found in this branch
-                            return True
+                else:
+                    if resolved_self.contained_in(cur_other_based_on, ignore_metadata=ignore_metadata):
+                        # element was found in this branch
+                        return True
         return False
 
     def intersection_with(
