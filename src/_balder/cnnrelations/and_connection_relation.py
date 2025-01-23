@@ -136,7 +136,7 @@ class AndConnectionRelation(BaseConnectionRelation):
                     for cur_inner_self_elem in cur_self_single_and_relation.connections:
 
                         if not cur_inner_self_elem.contained_in(cur_sub_other_single,
-                                                                    ignore_metadata=ignore_metadata):
+                                                                ignore_metadata=ignore_metadata):
                             # at least one element is not contained in other AND relation - this complete element
                             # is not possible - skip this single!
                             break
