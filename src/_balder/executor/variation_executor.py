@@ -717,16 +717,8 @@ class VariationExecutor(BasicExecutableExecutor):
         :meth:`Collector.determine_absolute_device_connections_for`), but it considers the real applied vDevice and
         their feature restrictions too.
         """
-        abs_var_scenario_device_cnns = []
-
         # first determine all relevant absolute connection depending on the current scenario
-        for cur_scenario_device, _ in self.base_device_mapping.items():
-            for cnn_list in DeviceController.get_for(cur_scenario_device).get_all_absolute_connections().values():
-                abs_var_scenario_device_cnns.extend(cnn_list)
-
-        # remove duplicates (`get_all_absolute_connections()` returns same connection twice if `from_device` and
-        # `to_device` is switched)
-        abs_var_scenario_device_cnns = list(set(abs_var_scenario_device_cnns))
+        abs_var_scenario_device_cnns = self.cur_scenario_controller.get_all_abs_connections()
 
         # now iterate over every feature, that is used by the scenario and determine the class-based feature connections
         # of the mapped scenario feature (and its vDevice)
