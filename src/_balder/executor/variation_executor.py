@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from _balder.feature import Feature
     from _balder.scenario import Scenario
     from _balder.vdevice import VDevice
+    from _balder.controllers.scenario_controller import ScenarioController
+    from _balder.controllers.setup_controller import SetupController
     from _balder.executor.scenario_executor import ScenarioExecutor
     from _balder.fixture_manager import FixtureManager
 
@@ -100,9 +102,23 @@ class VariationExecutor(BasicExecutableExecutor):
         return self._parent_executor.base_scenario_class
 
     @property
+    def cur_scenario_controller(self) -> ScenarioController:
+        """
+        returns the current :class:`ScenarioController` for this variation
+        """
+        return self._parent_executor.base_scenario_controller
+
+    @property
     def cur_setup_class(self) -> Setup:
         """property returns the current :class:`Setup` for this variation"""
         return self._parent_executor.parent_executor.base_setup_class
+
+    @property
+    def cur_setup_controller(self) -> SetupController:
+        """
+        returns the current :class:`SetupController` for this variation
+        """
+        return self._parent_executor.parent_executor.base_setup_controller
 
     @property
     def base_device_mapping(self) -> Dict[Type[Device], Type[Device]]:
