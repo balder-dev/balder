@@ -709,8 +709,8 @@ class VariationExecutor(BasicExecutableExecutor):
 
     def determine_absolute_scenario_device_connections(self):
         """
-        This method determines the variation absolute connections for this variation and sets them to the internal
-        properties `_abs_variation_*_device_connections`. This will be used to determine the real connection-subtree
+        This method determines the absolute connections for this variation and sets the internal properties
+        `_abs_variation_*_device_connections` with them. This will be used to determine the real connection-subtree
         (that can be used for this variation) by the method `create_all_valid_routings()`.
 
         The method re-executes the algorithm to determine the absolute connections for a scenario/setup (see the method
