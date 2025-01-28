@@ -777,13 +777,11 @@ class VariationExecutor(BasicExecutableExecutor):
 
                 # now cleanup the scenario-device connection `relevant_device_cnn` according to the class-based feature
                 # connection
-                new_cleaned_singles = OrConnectionRelation(*[
+                new_cnn_to_replace = Connection.based_on(OrConnectionRelation(*[
                     cur_old_cnn_single for cur_old_cnn_single in relevant_device_cnn.get_singles()
                     if feature_cnn.contained_in(cur_old_cnn_single, ignore_metadata=True)
-                ])
-
-                new_cnn_to_replace = Connection.based_on(new_cleaned_singles)
-                new_cnn_to_replace.set_metadata_for_all_subitems(new_cleaned_singles[0].metadata)
+                ]))
+                new_cnn_to_replace.set_metadata_for_all_subitems(relevant_device_cnn.metadata)
 
                 abs_var_scenario_device_cnns.remove(relevant_device_cnn)
                 abs_var_scenario_device_cnns.append(new_cnn_to_replace)
