@@ -248,7 +248,7 @@ class VariationExecutor(BasicExecutableExecutor):
             #  mapped vDevice
             for _, cur_setup_feature_obj in all_inner_setup_features.items():
                 # only check if this feature is required by the scenario
-                if cur_setup_feature_obj.__class__ not in setup_to_scenario_feature_mapping.keys():
+                if cur_setup_feature_obj not in setup_to_scenario_feature_mapping.keys():
                     # ignore this, because this feature is not used in the scenario
                     continue
                 related_scenario_feature_obj = setup_to_scenario_feature_mapping[cur_setup_feature_obj]
@@ -260,7 +260,7 @@ class VariationExecutor(BasicExecutableExecutor):
                     # ignore because no mapping exist here
                     continue
 
-                partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_vdevice)
+                partner_setup_device = self.get_setup_device_for(scenario_device=partner_scenario_device)
                 # get the related vDevice on setup view that is currently active
                 mapped_setup_vdevices = [
                     cur_vdevice for cur_vdevice
