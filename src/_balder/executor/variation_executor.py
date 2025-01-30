@@ -235,23 +235,17 @@ class VariationExecutor(BasicExecutableExecutor):
             all_inner_setup_features = \
                 DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
 
-            # describes the mapping from the new setup feature (key) to the instantiated scenario feature (value)
-            #  note that this dictionary only contains the required one
-            # todo can we replace this implementation and use methods from FeatureReplacementMapping
-            setup_to_scenario_feature_mapping: Dict[Feature, Feature] = {
-                cur_feature_mapping.setup_feature: cur_feature_mapping.scenario_feature
-                for cur_feature_mapping in cur_replacement_mapping.mappings
-                if cur_feature_mapping.scenario_feature is not None
-            }
-
             # now secure that all features are available in the corresponding setup device, that are defined in the
             #  mapped vDevice
             for _, cur_setup_feature_obj in all_inner_setup_features.items():
+                related_scenario_feature_obj = \
+                    cur_replacement_mapping.get_replaced_scenario_feature_for(cur_setup_feature_obj)
+
                 # only check if this feature is required by the scenario
-                if cur_setup_feature_obj not in setup_to_scenario_feature_mapping.keys():
+                if related_scenario_feature_obj is None:
                     # ignore this, because this feature is not used in the scenario
                     continue
-                related_scenario_feature_obj = setup_to_scenario_feature_mapping[cur_setup_feature_obj]
+
                 # get vDevice and device mapping
                 partner_scenario_vdevice, partner_scenario_device = \
                     related_scenario_feature_obj.active_vdevice_device_mapping
