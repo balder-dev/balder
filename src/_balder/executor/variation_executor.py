@@ -17,6 +17,7 @@ from _balder.executor.unresolved_parametrized_testcase_executor import Unresolve
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.routing_path import RoutingPath
 from _balder.unmapped_vdevice import UnmappedVDevice
+from _balder.feature_vdevice_mapping import FeatureVDeviceMapping
 from _balder.controllers import DeviceController, VDeviceController, FeatureController, NormalScenarioSetupController
 from _balder.exceptions import NotApplicableVariationException, UnclearAssignableFeatureConnectionError
 
@@ -24,7 +25,6 @@ if TYPE_CHECKING:
     from _balder.setup import Setup
     from _balder.feature import Feature
     from _balder.scenario import Scenario
-    from _balder.vdevice import VDevice
     from _balder.controllers.scenario_controller import ScenarioController
     from _balder.controllers.setup_controller import SetupController
     from _balder.executor.scenario_executor import ScenarioExecutor
@@ -54,8 +54,7 @@ class VariationExecutor(BasicExecutableExecutor):
         self._feature_replacement: Union[None, Dict[Type[Device], FeatureReplacementMapping]] = None
         # buffer variable to save the feature replacement after it was determined with
         # `determine_feature_replacement_and_vdevice_mappings()`
-        self._abs_setup_feature_vdevice_mappings: \
-            Union[None, Dict[Type[Device], Dict[Feature, Dict[Type[VDevice], Type[Device]]]]] = None
+        self._abs_setup_feature_vdevice_mappings: Union[None, Dict[Type[Device], FeatureVDeviceMapping]] = None
 
         # contains the absolute scenario device connections for the current variation
         self._abs_variation_scenario_device_connections: Union[List[Connection], None] = None
@@ -67,8 +66,7 @@ class VariationExecutor(BasicExecutableExecutor):
         # contains the original active vdevice mappings for all scenario and setup devices (will be managed by
         # `update_active_vdevice_device_mappings_in_scenario_and_setup_devices()` and
         # `revert_active_vdevice_device_mappings_in_scenario_and_setup_devices()`)
-        self._original_active_vdevice_mappings: \
-            Dict[Type[Device], Dict[Feature, Dict[Type[VDevice], Type[Device]]]] = {}
+        self._original_active_vdevice_mappings: Dict[Type[Device], FeatureVDeviceMapping] = {}
 
         # is True if the applicability check was done
         self._applicability_check_done = False
@@ -148,8 +146,7 @@ class VariationExecutor(BasicExecutableExecutor):
         return self._feature_replacement
 
     @property
-    def abs_setup_feature_vdevice_mappings(self) \
-            -> Dict[Type[Device], Dict[Feature, Dict[Type[VDevice], Type[Device]]]]:
+    def abs_setup_feature_vdevice_mappings(self) -> Dict[Type[Device], FeatureVDeviceMapping]:
         """returns the feature replacement that was determined with
         `determine_feature_replacement_and_vdevice_mappings()`"""
         return self._abs_setup_feature_vdevice_mappings
@@ -388,7 +385,9 @@ class VariationExecutor(BasicExecutableExecutor):
             scenario_dev: FeatureReplacementMapping() for scenario_dev in self.base_device_mapping.keys()
         }
 
-        abs_setup_vdevice_mappings = {setup_dev: {} for setup_dev in self.base_device_mapping.values()}
+        abs_setup_vdevice_mappings = {
+            setup_dev: FeatureVDeviceMapping() for setup_dev in self.base_device_mapping.values()
+        }
         for cur_scenario_device, cur_setup_device in self.base_device_mapping.items():
             cur_setup_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
 
@@ -445,13 +444,21 @@ class VariationExecutor(BasicExecutableExecutor):
                                           if cur_vdevice.__name__ == active_scenario_vdevice.__name__]
                         used_setup_vdevice = setup_vdevices[0]
                         # set the mapping
-                        abs_setup_vdevice_mappings[cur_setup_device][cur_setup_feature_obj] = {
-                            used_setup_vdevice: self.get_setup_device_for(mapped_scenario_device)}
+                        abs_setup_vdevice_mappings[cur_setup_device].add(
+                            feature=cur_setup_feature_obj,
+                            mappings={
+                                used_setup_vdevice: self.get_setup_device_for(mapped_scenario_device)
+                            }
+                        )
                     # if there is a vDevice mapping on setup level, but not on scenario level, so directly update the
                     # VDevice-Device-Mapping there
                     elif mapped_scenario_device is None and mapped_setup_device is not None:
-                        abs_setup_vdevice_mappings[cur_setup_device][cur_setup_feature_obj] = {
-                            used_setup_vdevice: mapped_setup_device}
+                        abs_setup_vdevice_mappings[cur_setup_device].add(
+                            feature=cur_setup_feature_obj,
+                            mappings={
+                                used_setup_vdevice: mapped_setup_device
+                            }
+                        )
 
                     feature_replacement[cur_scenario_device].add(attr_name=cur_attr_name,
                                                                  scenario_feature=cur_scenario_feature_obj,
@@ -556,17 +563,20 @@ class VariationExecutor(BasicExecutableExecutor):
         scenario-device classes are set correctly.
         """
 
-        for cur_setup_device, feature_dict in self.abs_setup_feature_vdevice_mappings.items():
+        for cur_setup_device, feature_vdevice_mapping in self.abs_setup_feature_vdevice_mappings.items():
             if cur_setup_device not in self._original_active_vdevice_mappings.keys():
-                self._original_active_vdevice_mappings[cur_setup_device] = {}
-            for cur_setup_feature, mapping_dict in feature_dict.items():
+                self._original_active_vdevice_mappings[cur_setup_device] = FeatureVDeviceMapping()
+            for cur_setup_feature in feature_vdevice_mapping.features:
+                vdev_dev_mappings_of_setup_feat = feature_vdevice_mapping.get_mappings_for_feature(cur_setup_feature)
 
-                cur_setup_feature_vdevice = list(mapping_dict.keys())[0]
-                cur_mapped_setup_device = list(mapping_dict.values())[0]
+                cur_setup_feature_vdevice = vdev_dev_mappings_of_setup_feat[0].vdevice
+                cur_mapped_setup_device = vdev_dev_mappings_of_setup_feat[0].device
 
                 # first save old value to revert it later
-                self._original_active_vdevice_mappings[cur_setup_device][cur_setup_feature] = \
-                    cur_setup_feature.active_vdevices
+                self._original_active_vdevice_mappings[cur_setup_device].add(
+                    feature=cur_setup_feature,
+                    mappings=cur_setup_feature.active_vdevices
+                )
                 # now set new value
                 cur_setup_feature.active_vdevices = {cur_setup_feature_vdevice: cur_mapped_setup_device}
 
@@ -588,10 +598,12 @@ class VariationExecutor(BasicExecutableExecutor):
                         # only if there exists exactly one scenario vdevice with the same name
 
                         if cur_scenario_device not in self._original_active_vdevice_mappings.keys():
-                            self._original_active_vdevice_mappings[cur_scenario_device] = {}
+                            self._original_active_vdevice_mappings[cur_scenario_device] = FeatureVDeviceMapping()
                         # first save old value to revert it later
-                        self._original_active_vdevice_mappings[cur_scenario_device][cur_scenario_feature] = \
-                            cur_scenario_feature.active_vdevices
+                        self._original_active_vdevice_mappings[cur_scenario_device].add(
+                            feature=cur_scenario_feature,
+                            mappings=cur_scenario_feature.active_vdevices
+                        )
                         # now set new value
                         cur_scenario_feature.active_vdevices = \
                             {cur_scenario_feature_vdevice[0]: self.get_scenario_device_for(cur_mapped_setup_device)}
@@ -601,8 +613,12 @@ class VariationExecutor(BasicExecutableExecutor):
         This method ensures that the `active_vdevices` property that was changed with
         `update_active_vdevice_device_mappings_in_all_features()` will be reverted correctly.
         """
-        for _, cur_feature_mapping_dict in self._original_active_vdevice_mappings.items():
-            for cur_feature, cur_original_mapping in cur_feature_mapping_dict.items():
+        for cur_feature_vdevice_mapping in self._original_active_vdevice_mappings.values():
+            for cur_feature in cur_feature_vdevice_mapping.features:
+                cur_original_mapping = {
+                    mapping.vdevice:mapping.device
+                    for mapping in cur_feature_vdevice_mapping.get_mappings_for_feature(cur_feature)
+                }
                 cur_feature.active_vdevices = cur_original_mapping
 
     def exchange_unmapped_vdevice_references(self):
@@ -723,28 +739,26 @@ class VariationExecutor(BasicExecutableExecutor):
 
         # now iterate over every feature, that is used by the scenario and determine the class-based feature connections
         # of the mapped scenario feature (and its vDevice)
-        for cur_setup_device, feature_dict in self.abs_setup_feature_vdevice_mappings.items():
+        for cur_setup_device, feature_vdev_mapping in self.abs_setup_feature_vdevice_mappings.items():
             cur_scenario_device = self.get_scenario_device_for(cur_setup_device)
-            for cur_setup_feature, mapping_dict in feature_dict.items():
+            for cur_setup_feature, vdev_mappings_of_setup_feature in feature_vdev_mapping.items():
                 cur_scenario_feature: Feature = (
                     self.feature_replacement[cur_scenario_device].get_replaced_scenario_feature_for(
                         setup_feature=cur_setup_feature)
                 )
-                cur_setup_feature_vdevice = list(mapping_dict.keys())[0]
-                cur_mapped_setup_device = list(mapping_dict.values())[0]
 
-                if cur_mapped_setup_device not in self.base_device_mapping.values():
+                if vdev_mappings_of_setup_feature[0].device not in self.base_device_mapping.values():
                     raise NotApplicableVariationException(
-                        f'the mapped setup device `{cur_mapped_setup_device.__qualname__}` which is mapped to the '
-                        f'VDevice `{cur_setup_feature_vdevice.__qualname__}` is no part of this variation')
+                        f'the mapped setup device `{vdev_mappings_of_setup_feature[0].device.__qualname__}` which is '
+                        f'mapped to the VDevice `{vdev_mappings_of_setup_feature[0].vdevice.__qualname__}` is no part '
+                        f'of this variation')
 
-                cur_mapped_scenario_device = self.get_scenario_device_for(cur_mapped_setup_device)
+                cur_mapped_scenario_device = self.get_scenario_device_for(vdev_mappings_of_setup_feature[0].device)
 
                 # get relevant class based connections for the current feature on setup level (this is really be used
                 # here)
-                feature_cnn = \
-                    FeatureController.get_for(
-                        cur_setup_feature.__class__).get_abs_class_based_for_vdevice()[cur_setup_feature_vdevice]
+                feature_cnn = FeatureController.get_for(cur_setup_feature.__class__)\
+                    .get_abs_class_based_for_vdevice()[vdev_mappings_of_setup_feature[0].vdevice]
                 # connection that are relevant for this feature
                 relevant_cnns = [
                     cnn for cnn in abs_var_scenario_device_cnns
