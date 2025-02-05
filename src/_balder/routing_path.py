@@ -96,12 +96,15 @@ class RoutingPath:
         for cur_from_setup_node_conn in setup_devices_cnns:
             # only if there is a connection outgoing from `from_setup_device`
             if cur_from_setup_node_conn.has_connection_from_to(start_device=from_setup_device):
-                cur_from_setup_node = cur_from_setup_node_conn.from_node_name \
-                    if cur_from_setup_node_conn.from_device == from_setup_device \
-                    else cur_from_setup_node_conn.to_node_name
-                new_route = RoutingPath(cur_from_setup_node_conn, start_device=from_setup_device,
-                                        start_node_name=cur_from_setup_node)
-                all_possible_routes.append(new_route)
+                all_possible_routes.append(
+                    RoutingPath(
+                        cur_from_setup_node_conn,
+                        start_device=from_setup_device,
+                        start_node_name=(cur_from_setup_node_conn.from_node_name
+                                         if cur_from_setup_node_conn.from_device == from_setup_device
+                                         else cur_from_setup_node_conn.to_node_name)
+                    )
+                )
         # now go through every possibility and add them - filter all Routes that ``has_loop() == True`` or
         # are completed
         while len(all_possible_routes) > 0:
