@@ -391,9 +391,9 @@ class VariationExecutor(BasicExecutableExecutor):
             cur_setup_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
 
             all_assigned_setup_features = []
-            cur_scenario_device_orig_features = \
-                DeviceController.get_for(cur_scenario_device).get_original_instanced_feature_objects()
-            for cur_attr_name, cur_scenario_feature_obj in cur_scenario_device_orig_features.items():
+            cur_scenario_device_features = \
+                DeviceController.get_for(cur_scenario_device).get_all_instantiated_feature_objects()
+            for cur_attr_name, cur_scenario_feature_obj in cur_scenario_device_features.items():
                 active_scenario_vdevice, mapped_scenario_device = cur_scenario_feature_obj.active_vdevice_device_mapping
 
                 cur_setup_feature_objs = self._get_matching_setup_features_for(
@@ -677,7 +677,7 @@ class VariationExecutor(BasicExecutableExecutor):
                 cur_vdevice, cur_device = cur_feature.active_vdevice_device_mapping
                 if cur_vdevice is not None and cur_device is not None:
                     cur_vdevice_controller = VDeviceController.get_for(cur_vdevice)
-                    cur_vdevice_all_features = cur_vdevice_controller.get_original_instanced_feature_objects()
+                    cur_vdevice_all_features = cur_vdevice_controller.get_all_instantiated_feature_objects()
 
                     cur_device_controller = DeviceController.get_for(cur_device)
                     cur_device_all_features = cur_device_controller.get_all_instantiated_feature_objects()
