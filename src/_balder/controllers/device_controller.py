@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import copy
 from typing import Dict, List, Type, Union, TYPE_CHECKING
 
 import sys
@@ -443,10 +445,15 @@ class DeviceController(BaseDeviceController, ABC):
         if all_instanced_features is None:
             # has no features -> skip
             return
-        for _, cur_feature in all_instanced_features.items():
-            if cur_feature.active_vdevices != {}:
+        for cur_attr_name, cur_feature in all_instanced_features.items():
+            # clone feature and its active_device dict to make sure that shared instances in parent classes are handled
+            # correctly
+            new_feature = copy.copy(cur_feature)
+            new_feature.active_vdevices = {**cur_feature.active_vdevices}
+            setattr(self.related_cls, cur_attr_name, new_feature)
+            if new_feature.active_vdevices != {}:
                 # do something only if there exists an internal mapping
-                for cur_mapped_vdevice, cur_mapped_device in cur_feature.active_vdevices.items():
+                for cur_mapped_vdevice, cur_mapped_device in new_feature.active_vdevices.items():
                     if isinstance(cur_mapped_device, str):
                         resolved_device = \
                             scenario_or_setup_controller.get_inner_device_class_by_string(cur_mapped_device)
@@ -454,5 +461,5 @@ class DeviceController(BaseDeviceController, ABC):
                             raise RuntimeError(
                                 f"found no possible matching name while trying to resolve "
                                 f"the given vDevice string `{cur_mapped_vdevice}` in feature "
-                                f"`{cur_feature.__class__.__name__}`")
-                        cur_feature.active_vdevices[cur_mapped_vdevice] = resolved_device
+                                f"`{new_feature.__class__.__name__}`")
+                        new_feature.active_vdevices[cur_mapped_vdevice] = resolved_device
