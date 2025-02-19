@@ -14,6 +14,7 @@ from _balder.controllers.normal_scenario_setup_controller import NormalScenarioS
 from _balder.parametrization import FeatureAccessSelector, Parameter
 from _balder.exceptions import UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, \
     MultiInheritanceError
+from _balder.utils import get_scenario_inheritance_list_of
 
 logger = logging.getLogger(__file__)
 
@@ -195,6 +196,56 @@ class ScenarioController(NormalScenarioSetupController):
                 all_relevant_func.append(cur_function)
 
         return all_relevant_func
+
+    def get_ignore_test_methods(self) -> List[callable]:
+        """
+        This method returns a list of all methods that have the IGNORE marker. It automatically resolves marker that
+        were provided on parent class scenarios.
+        """
+        result = []
+        next_parent_class = get_scenario_inheritance_list_of(self.related_cls)[1]
+        if next_parent_class != Scenario:
+            next_parent_class_controller = ScenarioController.get_for(next_parent_class)
+            next_parent_ignore_meths = next_parent_class_controller.get_ignore_test_methods()
+            result.extend(next_parent_ignore_meths)
+        for cur_ignore_meth_as_str in self.related_cls.IGNORE:
+            cur_ignore_meth = getattr(self.related_cls, cur_ignore_meth_as_str)
+            result.append(cur_ignore_meth)
+        return list(set(result))
+
+    def get_skip_test_methods(self) -> List[callable]:
+        """
+        This method returns a list of all methods that have the SKIP marker. It automatically resolves marker that were
+        provided on parent class scenarios.
+        """
+        result = []
+        next_parent_class = get_scenario_inheritance_list_of(self.related_cls)[1]
+        next_parent_ignore_meths = []
+
+        if next_parent_class != Scenario:
+            next_parent_class_controller = ScenarioController.get_for(next_parent_class)
+            next_parent_ignore_meths = next_parent_class_controller.get_ignore_test_methods()
+            next_parent_skip_meths = next_parent_class_controller.get_skip_test_methods()
+            result.extend(next_parent_skip_meths)
+
+        for cur_skip_meth_as_str in self.related_cls.SKIP:
+            cur_skip_meth = getattr(self.related_cls, cur_skip_meth_as_str)
+            if cur_skip_meth in next_parent_ignore_meths:
+                raise ValueError(f'found skip method `{cur_skip_meth}` defined in `{self.related_cls}.SKIP`, but was '
+                                 f'already added to IGNORE in parent class')
+            result.append(cur_skip_meth)
+
+        return list(set(result))
+
+    def get_run_test_methods(self) -> List[callable]:
+        """
+        This method returns a list of all methods that should run in this scenario. It automatically resolves
+        SKIP/IGNORE marker that were provided on parent class scenarios.
+        """
+        result = (set(self.get_all_test_methods())
+                  - set(self.get_skip_test_methods())
+                  - set(self.get_ignore_test_methods()))
+        return list(result)
 
     def validate_feature_clearance_for_parallel_connections(self):
         """

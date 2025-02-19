@@ -78,19 +78,19 @@ class ScenarioExecutor(BasicExecutableExecutor):
         return self._fixture_manager
 
     @property
-    def all_run_tests(self):
+    def all_run_tests(self) -> List[callable]:
         """returns a list of all test methods that are declared to `RUN` in their base :class:`Scenario` class"""
-        return self._base_scenario_class.RUN
+        return self.base_scenario_controller.get_run_test_methods()
 
     @property
-    def all_skip_tests(self):
+    def all_skip_tests(self) -> List[callable]:
         """returns a list of all test methods that are declared to `SKIP` in their base :class:`Scenario` class"""
-        return self._base_scenario_class.SKIP
+        return self.base_scenario_controller.get_skip_test_methods()
 
     @property
-    def all_ignore_tests(self):
+    def all_ignore_tests(self) -> List[callable]:
         """returns a list of all test methods that are declared to `IGNORE` in their base :class:`Scenario` class"""
-        return self._base_scenario_class.IGNORE
+        return self.base_scenario_controller.get_ignore_test_methods()
 
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
@@ -99,11 +99,12 @@ class ScenarioExecutor(BasicExecutableExecutor):
 
     def _body_execution(self, show_discarded):
         for cur_variation_executor in self.get_variation_executors(return_discarded=show_discarded):
-            if cur_variation_executor.has_runnable_tests(show_discarded):
+            prev_mark = cur_variation_executor.prev_mark
+            if cur_variation_executor.has_runnable_tests() or cur_variation_executor.has_skipped_tests():
                 cur_variation_executor.execute(show_discarded=show_discarded)
-            elif cur_variation_executor.prev_mark == PreviousExecutorMark.SKIP:
+            elif prev_mark == PreviousExecutorMark.SKIP:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.SKIP)
-            elif cur_variation_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
+            elif prev_mark == PreviousExecutorMark.COVERED_BY:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
             else:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.NOT_RUN)

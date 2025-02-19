@@ -80,11 +80,12 @@ class SetupExecutor(BasicExecutableExecutor):
 
     def _body_execution(self, show_discarded):
         for cur_scenario_executor in self.get_scenario_executors():
-            if cur_scenario_executor.has_runnable_tests(consider_discarded_too=show_discarded):
+            prev_mark = cur_scenario_executor.prev_mark
+            if cur_scenario_executor.has_runnable_tests(show_discarded) or cur_scenario_executor.has_skipped_tests():
                 cur_scenario_executor.execute(show_discarded=show_discarded)
-            elif cur_scenario_executor.prev_mark == PreviousExecutorMark.SKIP:
+            elif prev_mark == PreviousExecutorMark.SKIP:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.SKIP)
-            elif cur_scenario_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
+            elif prev_mark == PreviousExecutorMark.COVERED_BY:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
             else:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.NOT_RUN)

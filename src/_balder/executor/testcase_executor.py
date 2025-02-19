@@ -99,12 +99,17 @@ class TestcaseExecutor(BasicExecutableExecutor):
 
     def _prepare_execution(self, show_discarded):
         print(f"      TEST {self.full_test_name_str} ", end='')
-        if self.should_be_skipped():
-            self.body_result.set_result(ResultState.SKIP)
-            self.execution_time_sec = 0
-            print("[S]")
 
     def _body_execution(self, show_discarded):
+        self.test_execution_time_sec = 0
+
+        if self.should_be_skipped():
+            self.body_result.set_result(ResultState.SKIP)
+            return
+        if self.should_be_ignored():
+            self.body_result.set_result(ResultState.NOT_RUN)
+            return
+
         start_time = time.perf_counter()
         try:
             _, func_type = inspect_method(self.base_testcase_callable)
@@ -150,6 +155,12 @@ class TestcaseExecutor(BasicExecutableExecutor):
         if self.base_testcase_callable in self.parent_executor.parent_executor.all_ignore_tests:
             return True
         return False
+
+    def has_skipped_tests(self) -> bool:
+        return self.prev_mark == PreviousExecutorMark.SKIP
+
+    def has_covered_by_tests(self) -> bool:
+        return self.prev_mark == PreviousExecutorMark.COVERED_BY
 
     def cleanup_empty_executor_branches(self, consider_discarded=False):
         """

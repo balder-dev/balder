@@ -352,120 +352,62 @@ class Collector:
                 result.append(cur_class)
         return result
 
-    def set_run_skip_ignore_of_test_methods_in_scenarios(self):
+    def _validate_skip_ignore(self):
         """
-        This method secures that the scenario classes have a valid RUN, SKIP and IGNORE attribute.
+        This method secures that the scenario classes have a valid SKIP and IGNORE attribute.
         """
+        ignore_str = "IGNORE"
+        skip_str = "SKIP"
+
+        def validate(scenario_class, list_attr_name: str):
+            # IGNORE/SKIP is mentioned in this specific class
+            if not isinstance(getattr(scenario_class, list_attr_name), list):
+                raise TypeError(f"the class attribute `{cur_class.__name__}.{list_attr_name}` has to be from type list")
+            # check that all elements that are mentioned here exists as a valid test method
+            for method in getattr(scenario_class, list_attr_name):
+                if isinstance(method, str):
+                    if not hasattr(scenario_class, method):
+                        raise ValueError(f'can not find the mentioned attribute `{method}` from '
+                                         f'{list_attr_name} list for scenario `{scenario_class}`')
+                    if not method.startswith('test_'):
+                        raise ValueError(f'the attribute `{method}` mentioned in {list_attr_name} list of scenario '
+                                         f'`{scenario_class}` is no valid test method and can not be used here')
+                elif not inspect.ismethod(method) or not method.__name__.startswith('test_'):
+                    raise TypeError(f"the given element {method.__name__} for class attribute "
+                                    f"`{scenario_class.__name__}.{list_attr_name}` is no valid test method")
+            return True
+
         for cur_scenario in self._all_scenarios:
             # determines hierarchy of inherited classes
             base_classes = get_scenario_inheritance_list_of(cur_scenario)
             # removes the last scenario class
             base_classes = base_classes[:-1]
-            # now determine all RUN, SKIP and IGNORE values if they aren't already mentioned - if there exists a value
+            # now determine all SKIP and IGNORE values if they aren't already mentioned - if there exists a value
             #  for them, check if the value is valid
             base_classes.reverse()
+            # now go through all RUN/SKIP/IGNORE values and check if the values are correct here
             for cur_idx, cur_class in enumerate(base_classes):
                 next_parent = None if cur_idx == 0 else base_classes[cur_idx - 1]
-                if "IGNORE" in cur_class.__dict__.keys():
-                    # IGNORE is mentioned in this specific class
-                    if not isinstance(cur_class.IGNORE, list):
-                        raise TypeError(f"the class attribute `{cur_class.__name__}.IGNORE` has to be from type list")
-                    # check that all elements that are mentioned here exists in the parent's RUN, SKIP or IGNORE class
-                    # variable or are defined in this class
-                    for cur_ignore_method in cur_class.IGNORE:
-                        if not inspect.ismethod(cur_ignore_method) or \
-                                not cur_ignore_method.__name__.startswith('test_'):
-                            raise TypeError(f"the given element {cur_ignore_method.__name__} for class attribute "
-                                            f"`{cur_class.__name__}.IGNORE` is no valid test method")
-                        if cur_ignore_method not in cur_class.__dict__.values() and next_parent is None or \
-                                cur_ignore_method not in cur_class.__dict__.values() and next_parent is not None \
-                                and cur_ignore_method not in next_parent.RUN + next_parent.SKIP + next_parent.IGNORE:
-                            raise ValueError(f"the element `{cur_ignore_method.__name__}` given at class attribute "
-                                             f"`{cur_class.__name__}.IGNORE` is not a test method of this scenario")
-                else:
-                    # IGNORE is not mentioned in this specific class -> so add an empty list for further access
-                    cur_class.IGNORE = []
-                if "SKIP" in cur_class.__dict__.keys():
-                    # SKIP is mentioned in this specific class
-                    if not isinstance(cur_class.SKIP, list):
-                        raise TypeError(f"the class attribute `{cur_class.__name__}.SKIP` has to be from type list")
-                    # check that all elements that are mentioned here exist in the parent's RUN or SKIP class variable
-                    # or are defined in this class
-                    for cur_skip_method in cur_class.SKIP:
-                        if not inspect.ismethod(cur_skip_method) or \
-                                not cur_skip_method.__name__.startswith('test_'):
-                            raise TypeError(f"the given element {cur_skip_method.__name__} for class attribute "
-                                            f"`{cur_class.__name__}.IGNORE` is no valid test method")
-                        if cur_skip_method not in cur_class.__dict__.values():
-                            if next_parent is None:
-                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class attribute "
-                                                 f"`{cur_class.__name__}.SKIP` is not a test method of this scenario")
 
-                            if cur_skip_method in next_parent.IGNORE:
-                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
-                                                 f"attribute `{cur_class.__name__}.SKIP` was already added to "
-                                                 f"IGNORE in a higher parent class - not possible to add it now to "
-                                                 f"SKIP")
+                validate(cur_class, 'IGNORE')
+                validate(cur_class, 'SKIP')
 
-                            if cur_skip_method not in next_parent.SKIP and cur_skip_method not in next_parent.IGNORE:
-                                raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
-                                                 f"attribute `{cur_class.__name__}.SKIP` is not a test method of "
-                                                 f"this scenario")
-                else:
-                    # SKIP is not mentioned in this specific class -> so add an empty list for further access
-                    cur_class.SKIP = []
-                if "RUN" in cur_class.__dict__.keys():
-                    # RUN is mentioned in this specific class
-                    if not isinstance(cur_class.RUN, list):
-                        raise TypeError(f"the class attribute `{cur_class.__name__}.RUN` has to be from type list")
-                    # check that all elements that are mentioned here exists in the parent's RUN class variable or are
-                    # defined in this class
-                    for cur_run_method in cur_class.RUN:
-                        if not inspect.ismethod(cur_run_method) or \
-                                not cur_run_method.__name__.startswith('test_'):
-                            raise TypeError(f"the given element {cur_run_method.__name__} for class attribute "
-                                            f"`{cur_class.__name__}.RUN` is no valid test method")
-                        if cur_run_method not in cur_class.__dict__.values():
-                            if next_parent is None:
-                                raise ValueError(
-                                    f"the element `{cur_run_method.__name__}` given at class attribute "
-                                    f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
-
-                            if cur_run_method in next_parent.IGNORE:
-                                raise ValueError(
-                                    f"the element `{cur_run_method.__name__}` given at class attribute "
-                                    f"`{cur_class.__name__}.RUN` was already added to IGNORE in a higher parent "
-                                    f"class - not possible to add it now to RUN")
-                            if cur_run_method in next_parent.SKIP:
-                                raise ValueError(
-                                    f"the element `{cur_run_method.__name__}` given at class attribute "
-                                    f"`{cur_class.__name__}.RUN` was already added to SKIP in a higher parent "
-                                    f"class - not possible to add it now to RUN")
-                            if cur_run_method not in next_parent.RUN:
-                                raise ValueError(
-                                    f"the element `{cur_run_method.__name__}` given at class attribute "
-                                    f"`{cur_class.__name__}.RUN` is not a test method of this scenario")
-                else:
-                    # RUN is not mentioned in this specific class -> so add an empty list for further access
-                    cur_class.RUN = []
-
-                # also add all in this class defined test methods to this RUN list
-                for cur_item_name, cur_item in cur_class.__dict__.items():
-                    if cur_item_name.startswith("test_") and inspect.ismethod(cur_item):
-                        cur_class.RUN.append(cur_item)
-                # now add all items from parent classes to the lists that are not mentioned yet
-                if next_parent is not None:
-                    for cur_parent_run_method in next_parent.RUN:
-                        if cur_parent_run_method not in cur_class.RUN and cur_parent_run_method not in cur_class.SKIP \
-                                and cur_parent_run_method not in cur_class.IGNORE:
-                            cur_class.RUN.append(cur_parent_run_method)
-                    for cur_parent_skip_method in next_parent.SKIP:
-                        if cur_parent_skip_method not in cur_class.SKIP \
-                                and cur_parent_skip_method not in cur_class.IGNORE:
-                            cur_class.SKIP.append(cur_parent_skip_method)
-                    for cur_parent_ignore_method in next_parent.IGNORE:
-                        if cur_parent_ignore_method not in cur_class.IGNORE:
-                            cur_class.IGNORE.append(cur_parent_ignore_method)
+                # make sure that the method is not mentioned in IGNORE and in SKIP
+                ignore_list = cur_class.__dict__.get(ignore_str, [])
+                skip_list = cur_class.__dict__.get(skip_str, [])
+                for cur_ignore_method_as_str in ignore_list:
+                    if cur_ignore_method_as_str in skip_list:
+                        raise ValueError(f'mentioned test method `{cur_ignore_method_as_str}` is in '
+                                         f'`{cur_class.__name__}.IGNORE` and `{cur_class.__name__}.SKIP`')
+                # make sure that the skip method was not defined in IGNORE in parent classes
+                if next_parent:
+                    for cur_skip_method_as_str in skip_list:
+                        cur_skip_method = getattr(cur_class, cur_skip_method_as_str)
+                        if cur_skip_method in ScenarioController.get_for(next_parent).get_ignore_test_methods():
+                            raise ValueError(f"the element `{cur_skip_method.__name__}` given at class "
+                                             f"attribute `{cur_class.__name__}.SKIP` was already added to "
+                                             f"IGNORE in a higher parent class - not possible to add it now to "
+                                             f"SKIP")
 
     @staticmethod
     def rework_method_variation_decorators():
@@ -847,8 +789,7 @@ class Collector:
         self._set_original_device_features()
         self._exchange_strings_with_objects()
 
-        # todo move this implementation in related controller
-        self.set_run_skip_ignore_of_test_methods_in_scenarios()
+        self._validate_skip_ignore()
 
         self._validate_scenario_and_setups()
 

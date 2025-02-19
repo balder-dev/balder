@@ -75,12 +75,6 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         return self._testcase_executors is not None
 
     def has_runnable_tests(self, consider_discarded_too=False) -> bool:
-        """
-        This method returns true if this executor element is runnable. The method returns true if this element has
-        `prev_mark=RUNNABLE` and minimum one of its children has `prev_mark=RUNNABLE` too.
-
-        :param consider_discarded_too: True if the method allows DISCARDED elements too
-        """
         if self.parametrization_has_been_resolved:
             return super().has_runnable_tests(consider_discarded_too=consider_discarded_too)
 
@@ -92,6 +86,12 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         if self.prev_mark not in allowed_prev_marks:
             return False
         return True
+
+    def has_skipped_tests(self) -> bool:
+        return self.prev_mark == PreviousExecutorMark.SKIP
+
+    def has_covered_by_tests(self) -> bool:
+        return self.prev_mark == PreviousExecutorMark.COVERED_BY
 
     def get_all_base_instances_of_this_branch(
             self, with_type: Type[Setup] | Type[Scenario] | Type[types.FunctionType],
