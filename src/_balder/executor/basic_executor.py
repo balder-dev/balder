@@ -115,6 +115,32 @@ class BasicExecutor(ABC):
             return False
         return True
 
+    def has_skipped_tests(self) -> bool:
+        """
+        This method returns true if this executor element has at least one test that is marked to be skipped. The method
+        returns true if minimum one of its children has `prev_mark=SKIP`.
+        """
+        if self.all_child_executors is not None:
+            # the executor has child executors -> check them
+            for cur_child in self.all_child_executors:
+                if cur_child.has_skipped_tests():
+                    return True
+            return False
+        return False
+
+    def has_covered_by_tests(self) -> bool:
+        """
+        This method returns true if this executor element has at least one test that is marked as covered-by. The method
+        returns true if minimum one of its children has `prev_mark=COVERED_BY`.
+        """
+        if self.all_child_executors is not None:
+            # the executor has child executors -> check them
+            for cur_child in self.all_child_executors:
+                if cur_child.has_covered_by_tests():
+                    return True
+            return False
+        return False
+
     def get_all_base_instances_of_this_branch(
             self, with_type: Union[Type[Setup], Type[Scenario], Type[types.FunctionType]],
             only_runnable_elements: bool = True) -> List[Union[Setup, Scenario, object]]:

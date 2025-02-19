@@ -63,11 +63,12 @@ class ExecutorTree(BasicExecutableExecutor):
 
     def _body_execution(self, show_discarded):
         for cur_setup_executor in self.get_setup_executors():
-            if cur_setup_executor.has_runnable_tests(consider_discarded_too=show_discarded):
+            prev_mark = cur_setup_executor.prev_mark
+            if cur_setup_executor.has_runnable_tests(show_discarded) or cur_setup_executor.has_skipped_tests():
                 cur_setup_executor.execute(show_discarded=show_discarded)
-            elif cur_setup_executor.prev_mark == PreviousExecutorMark.SKIP:
+            elif prev_mark == PreviousExecutorMark.SKIP:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.SKIP)
-            elif cur_setup_executor.prev_mark == PreviousExecutorMark.COVERED_BY:
+            elif prev_mark == PreviousExecutorMark.COVERED_BY:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.COVERED_BY)
             else:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.NOT_RUN)

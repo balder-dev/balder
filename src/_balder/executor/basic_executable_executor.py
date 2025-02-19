@@ -9,7 +9,7 @@ import traceback
 from abc import ABC, abstractmethod
 
 from _balder.executor.basic_executor import BasicExecutor
-from _balder.testresult import ResultState, TestcaseResult
+from _balder.testresult import ResultState
 
 if TYPE_CHECKING:
     from _balder.fixture_execution_level import FixtureExecutionLevel
@@ -73,9 +73,11 @@ class BasicExecutableExecutor(BasicExecutor, ABC):
         """
         if value not in (ResultState.SKIP, ResultState.COVERED_BY, ResultState.NOT_RUN):
             raise ValueError("can not set a state that is not NOT_RUN, SKIP or COVERED_BY for a whole branch")
-        for cur_child_executor in self.all_child_executors:
-            if isinstance(cur_child_executor.body_result, TestcaseResult):
-                cur_child_executor.body_result.set_result(result=value, exception=None)
+        if self.all_child_executors is None:
+            self.body_result.set_result(result=value, exception=None)
+        else:
+            for cur_child_executor in self.all_child_executors:
+                cur_child_executor.set_result_for_whole_branch(value)
 
     @abstractmethod
     def cleanup_empty_executor_branches(self, consider_discarded=False):
@@ -105,6 +107,8 @@ class BasicExecutableExecutor(BasicExecutor, ABC):
                 if self.has_runnable_tests():
                     self.fixture_manager.enter(self)
                     self.construct_result.set_result(ResultState.SUCCESS)
+                else:
+                    self.construct_result.set_result(ResultState.NOT_RUN)
 
                 self._body_execution(show_discarded=show_discarded)
             except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -116,6 +120,8 @@ class BasicExecutableExecutor(BasicExecutor, ABC):
                     if self.fixture_manager.is_allowed_to_leave(self):
                         self.fixture_manager.leave(self)
                         self.teardown_result.set_result(ResultState.SUCCESS)
+                else:
+                    self.teardown_result.set_result(ResultState.NOT_RUN)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             # this has to be a teardown fixture error
             traceback.print_exception(*sys.exc_info())
