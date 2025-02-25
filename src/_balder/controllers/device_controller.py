@@ -108,6 +108,7 @@ class DeviceController(BaseDeviceController, ABC):
     # ---------------------------------- PROTECTED METHODS -------------------------------------------------------------
 
     def __get_outer_class_controller(self) -> Union[ScenarioController, SetupController]:
+        # pylint: disable-next=import-outside-toplevel
         from _balder.controllers.normal_scenario_setup_controller import NormalScenarioSetupController
 
         outer_class = self.get_outer_class()
