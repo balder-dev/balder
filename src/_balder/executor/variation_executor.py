@@ -383,9 +383,6 @@ class VariationExecutor(BasicExecutableExecutor):
             setup_dev: FeatureVDeviceMapping() for setup_dev in self.base_device_mapping.values()
         }
         for cur_scenario_device, cur_setup_device in self.base_device_mapping.items():
-            cur_setup_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
-
-            all_assigned_setup_features = []
 
             for cur_attr_name, cur_scenario_feature_obj in \
                     DeviceController.get_for(cur_scenario_device).get_all_instantiated_feature_objects().items():
@@ -423,7 +420,6 @@ class VariationExecutor(BasicExecutableExecutor):
                             f'`{cur_scenario_feature_obj.__class__.__name__}` (used by scenario device '
                             f'`{cur_scenario_device.__name__}`) in setup device `{cur_setup_device.__name__}`')
 
-                all_assigned_setup_features.append(cur_setup_feature_obj)
                 if cur_attr_name not in feature_replacement[cur_scenario_device].attr_names:
 
                     # if there is a vDevice mapping on scenario level, but not on setup level, so update the
@@ -455,21 +451,7 @@ class VariationExecutor(BasicExecutableExecutor):
                                                                  scenario_feature=cur_scenario_feature_obj,
                                                                  setup_feature=cur_setup_feature_obj)
 
-            # also add all setup features that are not assigned as autonomous features
-            for cur_setup_feature in cur_setup_features.values():
-                if cur_setup_feature not in all_assigned_setup_features:
-                    # determine free name
-                    idx = 0
-                    autonomous_name = None
-                    while (autonomous_name is None
-                           or autonomous_name in feature_replacement[cur_scenario_device].attr_names):
-                        autonomous_name = f"_autonomous_feat_{idx}"
-                        idx += 1
-                    feature_replacement[cur_scenario_device].add(
-                        attr_name=autonomous_name,
-                        scenario_feature=None,
-                        setup_feature=cur_setup_feature
-                    )
+            feature_replacement[cur_scenario_device].add_remaining_setup_features_as_autonomous(cur_setup_device)
 
         # set the result to internal properties
         self._feature_replacement = feature_replacement
