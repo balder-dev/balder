@@ -100,7 +100,7 @@ class Connection(metaclass=ConnectionType):
 
         :param tree_name: the tree name the parents should be returned (default: use tree defined in `GlobalSetting`)
         """
-        from _balder.balder_session import BalderSession
+        from _balder.balder_session import BalderSession  # pylint: disable=import-outside-toplevel
         if tree_name is None:
             tree_name = BalderSession.get_current_active_global_conntree_name()
         conn_dict = Connection.__parents.get(cls, {})
