@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Union, Dict, Type, Tuple, TYPE_CHECKING
+from typing import List, Union, Dict, Type, Tuple, Iterable, TYPE_CHECKING
 
 import copy
 from _balder.connection import Connection
@@ -58,10 +58,23 @@ class RoutingPath:
     # ---------------------------------- STATIC METHODS ----------------------------------------------------------------
 
     @staticmethod
+    def __get_abs_setup_dev_cnns_for(setup_devices: Iterable[Type[Device]]) -> List[Connection]:
+        """
+        Determines all absolute device connections for a given list of setup devices.
+        """
+        setup_devices_cnns = []
+        for cur_setup_device in setup_devices:
+            for cur_cnn_list in DeviceController.get_for(cur_setup_device).get_all_absolute_connections().values():
+                setup_devices_cnns.extend(cur_cnn_list)
+        # remove duplicates
+        return list(set(setup_devices_cnns))
+
+    @staticmethod
     def route_through(
-            scenario_connection: Connection, device_mapping: Dict[Type[Device], Type[Device]],
-            alternative_setup_device_cnns: Union[List[Connection], None] = None) \
-            -> List[RoutingPath]:
+            scenario_connection: Connection,
+            device_mapping: Dict[Type[Device], Type[Device]],
+            alternative_setup_device_cnns: Union[List[Connection], None] = None
+    ) -> List[RoutingPath]:
         """
         This static method tries to route the given ``scenario_connection`` with the device_mapping. It returns a list
         of all matched routings between the mapped devices, where the routing is valid to support the requested
@@ -77,12 +90,7 @@ class RoutingPath:
         """
         setup_devices_cnns = alternative_setup_device_cnns
         if alternative_setup_device_cnns is None:
-            setup_devices_cnns = []
-            for cur_setup_device in device_mapping.values():
-                for cur_cnn_list in DeviceController.get_for(cur_setup_device).get_all_absolute_connections().values():
-                    setup_devices_cnns.extend(cur_cnn_list)
-            # remove duplicates
-            setup_devices_cnns = list(set(setup_devices_cnns))
+            setup_devices_cnns = RoutingPath.__get_abs_setup_dev_cnns_for(device_mapping.values())
 
         from_setup_device = device_mapping[scenario_connection.from_device]
         to_setup_device = device_mapping[scenario_connection.to_device]
