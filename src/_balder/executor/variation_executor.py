@@ -386,9 +386,9 @@ class VariationExecutor(BasicExecutableExecutor):
             cur_setup_features = DeviceController.get_for(cur_setup_device).get_all_instantiated_feature_objects()
 
             all_assigned_setup_features = []
-            cur_scenario_device_features = \
-                DeviceController.get_for(cur_scenario_device).get_all_instantiated_feature_objects()
-            for cur_attr_name, cur_scenario_feature_obj in cur_scenario_device_features.items():
+
+            for cur_attr_name, cur_scenario_feature_obj in \
+                    DeviceController.get_for(cur_scenario_device).get_all_instantiated_feature_objects().items():
                 active_scenario_vdevice, mapped_scenario_device = cur_scenario_feature_obj.active_vdevice_device_mapping
 
                 cur_setup_feature_objs = self._get_matching_setup_features_for(
@@ -402,13 +402,14 @@ class VariationExecutor(BasicExecutableExecutor):
                         f'`{cur_scenario_device.__name__}`) in setup device `{cur_setup_device.__name__}`')
                 cur_setup_feature_obj = cur_setup_feature_objs[0]
 
+                all_abs_inner_vdevs_of_setup = \
+                    FeatureController.get_for(cur_setup_feature_obj.__class__).get_abs_inner_vdevice_classes()
+                used_setup_vdevice, mapped_setup_device = cur_setup_feature_obj.active_vdevice_device_mapping
+
                 if mapped_scenario_device is None:
                     # we have exactly one matching candidate, but also no vDevice mapping
                     # check if the matching candidate has a vDevice mapping
-                    _, mapped_setup_device = cur_setup_feature_obj.active_vdevice_device_mapping
-                    cleanup_feature_controller = FeatureController.get_for(cur_setup_feature_obj.__class__)
-                    if mapped_setup_device is None \
-                            and len(cleanup_feature_controller.get_abs_inner_vdevice_classes()) > 0:
+                    if mapped_setup_device is None and len(all_abs_inner_vdevs_of_setup) > 0:
                         # there is no vDevice mapping on scenario and no vDevice mapping on setup level, but the
                         # feature defined vDevices -> NOT APPLICABLE
                         logger.warning(
@@ -424,17 +425,13 @@ class VariationExecutor(BasicExecutableExecutor):
 
                 all_assigned_setup_features.append(cur_setup_feature_obj)
                 if cur_attr_name not in feature_replacement[cur_scenario_device].attr_names:
-                    cleanup_feature_controller = FeatureController.get_for(cur_setup_feature_obj.__class__)
-
-                    used_setup_vdevice, mapped_setup_device = cur_setup_feature_obj.active_vdevice_device_mapping
 
                     # if there is a vDevice mapping on scenario level, but not on setup level, so update the
                     # VDevice-Device-Mapping there
                     if mapped_scenario_device is not None and mapped_setup_device is None:
                         # search the equivalent vDevice on setup level and use this one (we had not to check it,
                         # because check was already done in collector-stage)
-                        setup_vdevices = [cur_vdevice for cur_vdevice
-                                          in cleanup_feature_controller.get_abs_inner_vdevice_classes()
+                        setup_vdevices = [cur_vdevice for cur_vdevice in all_abs_inner_vdevs_of_setup
                                           if cur_vdevice.__name__ == active_scenario_vdevice.__name__]
                         used_setup_vdevice = setup_vdevices[0]
                         # set the mapping
