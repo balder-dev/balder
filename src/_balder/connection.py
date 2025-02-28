@@ -726,19 +726,17 @@ class Connection(metaclass=ConnectionType):
                     continue
 
                 # note: for both only one `based_on_elements` is possible, because they are singles
-                self_first_based_on = cur_single_self.based_on_elements[0]
-                other_first_based_on = cur_single_other.based_on_elements[0]
+                self_first_basedon = cur_single_self.based_on_elements[0]
+                other_first_basedon = cur_single_other.based_on_elements[0]
 
-                self_is_and = isinstance(self_first_based_on, AndConnectionRelation)
-                self_is_cnn = isinstance(self_first_based_on, Connection)
-                other_is_and = isinstance(other_first_based_on, AndConnectionRelation)
-                other_is_cnn = isinstance(other_first_based_on, Connection)
+                if isinstance(self_first_basedon, Connection) and \
+                        isinstance(other_first_basedon, AndConnectionRelation):
+                    continue
 
-                if self_is_and and (other_is_and or other_is_cnn) or self_is_cnn and other_is_cnn:
-                    # find a complete valid match
-                    if self_first_based_on.contained_in(other_first_based_on, ignore_metadata=ignore_metadata):
-                        return True
-                # skip all others possibilities
+                # find a complete valid match
+                if self_first_basedon.contained_in(other_first_basedon, ignore_metadata=ignore_metadata):
+                    return True
+
         else:
             # the elements itself do not match -> go deeper within the other connection
             if isinstance(resolved_other, AndConnectionRelation):
