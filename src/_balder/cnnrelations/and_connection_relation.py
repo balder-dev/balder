@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 import itertools
 
@@ -18,6 +18,33 @@ class AndConnectionRelation(BaseConnectionRelation):
     def get_tree_str(self) -> str:
         based_on_strings = [cur_elem.get_tree_str() for cur_elem in self._connections]
         return f"({' | '.join(based_on_strings)})"
+
+    def get_possibilities_for_direct_parent_cnn(self, for_cnn_class: Type[Connection]) -> list[AndConnectionRelation]:
+        """
+        Helper method that returns a list of possible :class:`AndConnectionRelation` elements that hold the next parent
+        in the connection-tree that can be there instead of the origin connection.
+        The method returns a list, because there can exist different possibilities for this AND connection.
+        """
+        direct_ancestors_relations = ()
+        for cur_and_elem in self.connections:
+            # `cur_and_elem` needs to be a connection, because we are using simplified which has only
+            # `OR[AND[Cnn, ...], Cnn, ..]`
+            if cur_and_elem.__class__ in for_cnn_class.get_parents():
+                # element already is a direct ancestor
+                direct_ancestors_relations += (cur_and_elem,)
+            else:
+                all_pos_possibilities = []
+                # add all possible direct parents to the possibilities list
+                for cur_direct_parent in for_cnn_class.get_parents():
+                    if cur_direct_parent.is_parent_of(cur_and_elem.__class__):
+                        all_pos_possibilities.append(cur_direct_parent.based_on(cur_and_elem))
+                direct_ancestors_relations += (all_pos_possibilities,)
+        # resolve the opportunities and create multiple possible AND relations where all elements are
+        # direct parents
+        return [
+            AndConnectionRelation(*cur_possibility).get_resolved()
+            for cur_possibility in itertools.product(*direct_ancestors_relations)
+        ]
 
     def get_simplified_relation(self) -> OrConnectionRelation:
         from ..connection import Connection  # pylint: disable=import-outside-toplevel

@@ -516,25 +516,8 @@ class Connection(metaclass=ConnectionType):
             for next_higher_parent in simplified_based_on:
                 if isinstance(next_higher_parent, AndConnectionRelation):
                     # determine all possibilities
-                    direct_ancestors_relations = ()
-                    for cur_and_elem in next_higher_parent:
-                        # `cur_and_elem` needs to be a connection, because we are using simplified which has only
-                        # `OR[AND[Cnn, ...], Cnn, ..]`
-                        if cur_and_elem.__class__ in self.__class__.get_parents():
-                            # element already is a direct ancestor
-                            direct_ancestors_relations += (cur_and_elem, )
-                        else:
-                            all_pos_possibilities = []
-                            # add all possible direct parents to the possibilities list
-                            for cur_direct_parent in self.__class__.get_parents():
-                                if cur_direct_parent.is_parent_of(cur_and_elem.__class__):
-                                    all_pos_possibilities.append(cur_direct_parent.based_on(cur_and_elem))
-                            direct_ancestors_relations += (all_pos_possibilities, )
-                    # resolve the opportunities and create multiple possible AND relations where all elements are
-                    # direct parents
-                    for cur_possibility in itertools.product(*direct_ancestors_relations):
-                        new_child_relation = AndConnectionRelation(*cur_possibility).get_resolved()
-                        copied_base.append_to_based_on(new_child_relation)
+                    for new_and_relation in next_higher_parent.get_possibilities_for_direct_parent_cnn(self.__class__):
+                        copied_base.append_to_based_on(new_and_relation)
                 else:
                     # `next_higher_parent` needs to be a connection, because we are using simplified which has only
                     # `OR[AND[Cnn, ...], Cnn, ..]`
