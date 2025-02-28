@@ -722,17 +722,12 @@ class Connection(metaclass=ConnectionType):
 
         else:
             # the elements itself do not match -> go deeper within the other connection
-            if isinstance(resolved_other, AndConnectionRelation):
-                # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
-                # smaller AND contained in a bigger AND)
-                for cur_other_and_element in resolved_other.connections:
-                    if resolved_self.contained_in(cur_other_and_element, ignore_metadata=ignore_metadata):
-                        return True
 
             resolved_other_relation = resolved_other.based_on_elements \
                 if isinstance(resolved_other, Connection) else resolved_other
 
             for cur_other_based_on in resolved_other_relation.connections:
+                # `cur_other_based_on` can only be a Connection or an AND (resolved can not ba a inner OR)
                 if isinstance(cur_other_based_on, AndConnectionRelation):
                     # check if the current connection fits in one of the AND relation items -> allowed too (f.e. a
                     # smaller AND contained in a bigger AND)
