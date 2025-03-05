@@ -175,14 +175,12 @@ class TestcaseExecutor(BasicExecutableExecutor):
         This method returns a list of elements where the whole scenario is covered from. This means, that the whole
         test methods in this scenario are already be covered from every single element in the list.
         """
-        all_covered_by_data = []
         scenario_executor = self.parent_executor.parent_executor
-        scenario_class = scenario_executor.base_scenario_class
-        covered_by_dict_resolved = scenario_executor.get_covered_by_dict()
-        if self.base_testcase_callable in covered_by_dict_resolved.keys():
-            all_covered_by_data += covered_by_dict_resolved[self.base_testcase_callable]
-        if scenario_class in covered_by_dict_resolved.keys():
-            all_covered_by_data += covered_by_dict_resolved[scenario_class]
+
+        covered_by_dict = scenario_executor.base_scenario_controller.get_abs_covered_by_dict()
+        all_covered_by_data = covered_by_dict.get(self.base_testcase_callable.__name__, [])
+        # also add all scenario specified covered-by elements
+        all_covered_by_data.extend(covered_by_dict.get(None, []))
         return all_covered_by_data
 
     def get_all_test_method_args(self):

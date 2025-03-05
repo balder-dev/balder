@@ -2,11 +2,12 @@ from __future__ import annotations
 from typing import Type, Union
 
 import inspect
+
+from _balder.controllers import ScenarioController
 from _balder.scenario import Scenario
-from _balder.utils import get_class_that_defines_method
 
 
-def covered_by(item: Union[Type[Scenario], callable, None]):
+def covered_by(item: Union[Type[Scenario], str, callable, None]):
     """
     This decorator defines that there exists another Scenario class or test method item that has a similar
     implementation like the decorated :class:`Scenario` class or the decorated test method.
@@ -16,8 +17,9 @@ def covered_by(item: Union[Type[Scenario], callable, None]):
 
     if item is None:
         pass
-    elif callable(item) and inspect.isfunction(item) and item.__name__.startswith("test_") and \
-            issubclass(get_class_that_defines_method(item), Scenario):
+    elif isinstance(item, str) and item.startswith("test_"):
+        pass
+    elif callable(item) and inspect.isfunction(item) and item.__name__.startswith("test_"):
         pass
     elif isinstance(item, type) and issubclass(item, Scenario):
         pass
@@ -36,15 +38,9 @@ def covered_by(item: Union[Type[Scenario], callable, None]):
                     raise TypeError(f"The decorator `@covered_by` may only be used for `Scenario` objects or for test "
                                     f"methods of one `Scenario` object. This is not possible for the applied class "
                                     f"`{func.__name__}`.")
-                if not hasattr(func, '_covered_by'):
-                    func._covered_by = {}
-                if func not in func._covered_by.keys():
-                    func._covered_by[func] = []
-                if item is None:
-                    # reset it
-                    func._covered_by[func] = []
-                elif item not in func._covered_by[func]:
-                    func._covered_by[func].append(item)
+                scenario_controller = ScenarioController.get_for(func)
+                # register for the whole class
+                scenario_controller.register_covered_by_for(meth=None, covered_by=item)
             elif inspect.isfunction(func):
                 # work will done in `__set_name__`
                 pass
@@ -62,16 +58,12 @@ def covered_by(item: Union[Type[Scenario], callable, None]):
                     raise TypeError(f"the use of the `@covered_by` decorator is only allowed for `Scenario` objects "
                                     f"and test methods of `Scenario` objects - the method `{owner.__name__}.{name}` "
                                     f"does not start with `test_` and is not a valid test method")
-
-                if not hasattr(owner, '_covered_by'):
-                    owner._covered_by = {}
-                if self.func not in owner._covered_by.keys():
-                    owner._covered_by[self.func] = []
-                if item is None:
-                    # reset it
-                    owner._covered_by[self.func] = []
-                elif item not in owner._covered_by[self.func]:
-                    owner._covered_by[self.func].append(item)
+                # if item is a string - resolve method
+                cleared_item = item
+                if isinstance(item, str):
+                    cleared_item = getattr(owner, item)
+                scenario_controller = ScenarioController.get_for(owner)
+                scenario_controller.register_covered_by_for(meth=name, covered_by=cleared_item)
             else:
                 raise TypeError(f"The use of the `@covered_by` decorator is not allowed for methods of a "
                                 f"`{owner.__name__}`. You should only use this decorator for `Scenario` objects or "
