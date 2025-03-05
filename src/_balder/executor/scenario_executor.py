@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import Type, Union, List, Dict, TYPE_CHECKING
+from typing import Type, Union, List, TYPE_CHECKING
 
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.testresult import ResultState, BranchBodyResult
-from _balder.utils import get_class_that_defines_method
 from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.executor.variation_executor import VariationExecutor
 from _balder.previous_executor_mark import PreviousExecutorMark
@@ -137,71 +136,12 @@ class ScenarioExecutor(BasicExecutableExecutor):
         for cur_variation_executor in to_remove_executor:
             self._variation_executors.remove(cur_variation_executor)
 
-    def get_covered_by_dict(self) -> Dict[Union[Type[Scenario], callable], List[Union[Type[Scenario], callable]]]:
-        """
-        This method returns the complete resolved ``@covered_by`` dictionary for this scenario. It automatically
-        cleans up every inheritance of the covered_by decorators for every parent class of our scenario.
-        """
-        def determine_most_inherited_class(class_list):
-            for cur_candidate in class_list:
-                candidate_is_valid = True
-                for cur_other_candidate in class_list:
-                    if cur_candidate == cur_other_candidate:
-                        pass
-                    if not issubclass(cur_candidate, cur_other_candidate):
-                        candidate_is_valid = False
-                        break
-                if candidate_is_valid:
-                    return cur_candidate
-            return None
-
-        # all data will be inherited while ``@covered_by`` overwrites elements only if there is a new decorator at the
-        # overwritten method
-        #  -> we have to filter the dictionary and only return the value given for highest overwritten method
-        relative_covered_by_dict = {}
-        if hasattr(self.base_scenario_class, '_covered_by'):
-            function_name_mapping = {}
-            classes = []
-            for cur_key in self.base_scenario_class._covered_by.keys():
-                if issubclass(cur_key, Scenario):
-                    # this is a covered_by definition for the whole class
-                    classes.append(cur_key)
-                else:
-                    # this is a covered_by definition for one test method
-                    if cur_key.__name__ in function_name_mapping.keys():
-                        function_name_mapping[cur_key.__name__] = [cur_key]
-                    else:
-                        function_name_mapping[cur_key.__name__].append(cur_key)
-
-            # determine the highest definition for class statement (only if necessary)
-            if len(classes) > 0:
-                most_inherited_class = determine_most_inherited_class(classes)
-                # this is the most inherited child -> add this definition
-                relative_covered_by_dict[most_inherited_class] = \
-                    self.base_scenario_class._covered_by[most_inherited_class]
-
-            # determine the highest definition for every test method
-            for cur_function_name, cur_possible_candidates in function_name_mapping.items():
-                classes = [get_class_that_defines_method(meth) for meth in cur_possible_candidates]
-                most_inherited_class = determine_most_inherited_class(classes)
-                most_inherited_test_method = cur_possible_candidates[classes.index(most_inherited_class)]
-                # this is the most inherited test method -> add the definition of this one and replace the method with
-                # this Scenario's one
-                relative_covered_by_dict[getattr(self.base_scenario_class, cur_function_name)] = \
-                    self.base_scenario_class._covered_by[most_inherited_test_method]
-        else:
-            pass
-        return relative_covered_by_dict
-
     def get_covered_by_element(self) -> List[Union[Scenario, callable]]:
         """
         This method returns a list of elements where the whole scenario is covered from. This means, that the whole
         test methods in this scenario are already be covered from one of the elements in the list.
         """
-        covered_by_dict_resolved = self.get_covered_by_dict()
-        if self in covered_by_dict_resolved.keys():
-            return covered_by_dict_resolved[self]
-        return []
+        return self.base_scenario_controller.get_abs_covered_by_dict().get(None, [])
 
     def add_variation_executor(self, variation_executor: VariationExecutor):
         """

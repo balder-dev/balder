@@ -37,6 +37,9 @@ class ScenarioController(NormalScenarioSetupController):
         # describes if the current controller is for setups or for scenarios (has to be set in child controller)
         self._related_type = Scenario
 
+        # holds covered-by configuration
+        self._covered_by = {}
+
         # this helps to make this constructor only possible inside the controller object
         if _priv_instantiate_key != ScenarioController.__priv_instantiate_key:
             raise RuntimeError('it is not allowed to instantiate a controller manually -> use the static method '
@@ -126,6 +129,73 @@ class ScenarioController(NormalScenarioSetupController):
                 continue
             ordered_dict[cur_arg] = params[cur_arg]
         return ordered_dict
+
+    def register_covered_by_for(self, meth: Union[str, None], covered_by: Union[Scenario, Callable, None]) -> None:
+        """
+        This method registers a covered-by statement for this Scenario. If `meth` is provided, the statement is for the
+        specific test method of the scenario, otherwise it is for the whole setup. The item provided in `covered_by`
+        describes the test object that covers this scenario (method).
+
+        :param meth: if provided this attribute describes the test method that should be registered, otherwise the whole
+                     scenario will be registered
+        :param covered_by: describes the test object that covers this scenario (method)
+        """
+        if not (meth is None or isinstance(meth, str)):
+            raise TypeError('meth needs to be None or a string')
+        if meth is not None:
+            if not meth.startswith('test_'):
+                raise TypeError(
+                    f"the use of the `@covered_by` decorator is only allowed for `Scenario` objects and test methods "
+                    f"of `Scenario` objects - the method `{self.related_cls.__name__}.{meth}` does not start with "
+                    f"`test_` and is not a valid test method")
+            if not hasattr(self.related_cls, meth):
+                raise ValueError(
+                    f"the provided test method `{meth}` does not exist in scenario `{self.related_cls.__name__}`"
+                )
+
+        if meth not in self._covered_by.keys():
+            self._covered_by[meth] = []
+        if covered_by is None:
+            # reset it
+            # todo what if there are more than one decorator in one class
+            del self._covered_by[meth]
+        else:
+            self._covered_by[meth].append(covered_by)
+
+    def get_raw_covered_by_dict(self) -> Dict[Union[str, None], List[Union[Scenario, Callable]]]:
+        """
+        :return: returns the internal covered-by dictionary
+        """
+        return self._covered_by.copy()
+
+    def get_abs_covered_by_dict(self) -> Dict[Union[str, None], List[Union[Scenario, Callable]]]:
+        """
+        This method resolves the covered-by statements over all inheritance levels. It automatically
+        cleans up every inheritance of the covered_by decorators for every parent class of this scenario.
+        """
+        parent_classes = [p for p in self.related_cls.__bases__ if issubclass(p, Scenario) and p != Scenario]
+        if len(parent_classes) > 1:
+            raise MultiInheritanceError(
+                f'can not resolve classes for `{self.related_cls}` because there are more than one Scenario based '
+                f'parent classes'
+            )
+        # no more parent classes -> raw is absolute
+        if len(parent_classes) == 0:
+            return self.get_raw_covered_by_dict()
+        parent_controller = self.__class__.get_for(parent_classes[0])
+        self_raw_covered_by_dict = self.get_raw_covered_by_dict()
+
+        #: first fill result with data from parent controller
+        result = {
+            k if k is None else getattr(self.related_cls, k.__name__): v
+            for k, v in parent_controller.get_abs_covered_by_dict().items()
+        }
+        for cur_callable, cur_coveredby in self_raw_covered_by_dict.items():
+            if cur_callable in result.keys():
+                result[cur_callable].extend(cur_coveredby)
+            else:
+                result[cur_callable] = cur_coveredby
+        return result
 
     def check_for_parameter_loop_in_dynamic_parametrization(self, cur_fn: Callable):
         """
