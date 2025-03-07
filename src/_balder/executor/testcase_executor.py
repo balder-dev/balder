@@ -109,6 +109,9 @@ class TestcaseExecutor(BasicExecutableExecutor):
         if self.should_be_ignored():
             self.body_result.set_result(ResultState.NOT_RUN)
             return
+        if self.is_covered_by():
+            self.body_result.set_result(ResultState.COVERED_BY)
+            return
 
         start_time = time.perf_counter()
         try:
@@ -155,6 +158,10 @@ class TestcaseExecutor(BasicExecutableExecutor):
         if self.base_testcase_callable in self.parent_executor.parent_executor.all_ignore_tests:
             return True
         return False
+
+    def is_covered_by(self):
+        """returns true if the testcase is covered-by"""
+        return self.prev_mark == PreviousExecutorMark.COVERED_BY
 
     def has_skipped_tests(self) -> bool:
         return self.prev_mark == PreviousExecutorMark.SKIP
