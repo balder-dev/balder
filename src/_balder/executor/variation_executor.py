@@ -179,7 +179,9 @@ class VariationExecutor(BasicExecutableExecutor):
             return
 
         for cur_testcase_executor in self.get_testcase_executors():
-            if cur_testcase_executor.has_runnable_tests() or cur_testcase_executor.has_skipped_tests():
+            if (cur_testcase_executor.has_runnable_tests()
+                    or cur_testcase_executor.has_skipped_tests()
+                    or cur_testcase_executor.has_covered_by_tests()):
                 cur_testcase_executor.execute()
             else:
                 cur_testcase_executor.set_result_for_whole_branch(ResultState.NOT_RUN)
