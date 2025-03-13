@@ -198,7 +198,7 @@ class BasicExecutor(ABC):
 
         if isinstance(self.body_result, TestcaseResult):
             setattr(summary, self.executor_result.value, 1)
-        else:
+        elif self.all_child_executors:
             for cur_child_exec in self.all_child_executors:
                 summary += cur_child_exec.testsummary()
         return summary
