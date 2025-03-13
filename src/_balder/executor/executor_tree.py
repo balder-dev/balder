@@ -38,7 +38,7 @@ class ExecutorTree(BasicExecutableExecutor):
     # ---------------------------------- PROPERTIES --------------------------------------------------------------------
 
     @property
-    def all_child_executors(self) -> List[BasicExecutableExecutor]:
+    def all_child_executors(self) -> List[BasicExecutableExecutor] | None:
         return self._setup_executors
 
     @property
