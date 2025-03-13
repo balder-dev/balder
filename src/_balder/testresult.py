@@ -106,9 +106,10 @@ class BranchBodyResult(_Result):
         """returns the determined result for the inner branch of the related executor"""
         relative_result = ResultState.NOT_RUN
         priority_order = ResultState.priority_order()
-        for cur_child in self._related_executor.all_child_executors:
-            if priority_order.index(cur_child.executor_result) < priority_order.index(relative_result):
-                relative_result = cur_child.executor_result
+        if self._related_executor.all_child_executors:
+            for cur_child in self._related_executor.all_child_executors:
+                if priority_order.index(cur_child.executor_result) < priority_order.index(relative_result):
+                    relative_result = cur_child.executor_result
         self._result = relative_result
         return self._result
 
