@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Union, Type, Dict, TypeVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
-from ..utils import cnn_type_check_and_convert
+from ..utils import cnn_type_check_and_convert  # pylint: disable=cyclic-import
 
 if TYPE_CHECKING:
     from ..connection import Connection
