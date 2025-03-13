@@ -171,7 +171,7 @@ class VariationExecutor(BasicExecutableExecutor):
             self.exchange_unmapped_vdevice_references()
             self.update_vdevice_referenced_feature_instances()
             self.set_conn_dependent_methods()
-            self.resolve_possible_parametrization()
+            self.resolve_and_exchange_unresolved_parametrization()
 
     def _body_execution(self, show_discarded):
         if show_discarded and not self.can_be_applied():
@@ -332,16 +332,9 @@ class VariationExecutor(BasicExecutableExecutor):
             return super().testsummary()
         return ResultSummary()
 
-    def get_testcase_executors(self) -> List[TestcaseExecutor]:
+    def get_testcase_executors(self) -> List[TestcaseExecutor | UnresolvedParametrizedTestcaseExecutor]:
         """returns all sub testcase executors that belongs to this variation-executor"""
-        result = []
-        for cur_executor in self._testcase_executors:
-            if (isinstance(cur_executor, UnresolvedParametrizedTestcaseExecutor) and
-                    cur_executor.parametrization_has_been_resolved):
-                result += cur_executor.get_testcase_executors()
-            else:
-                result.append(cur_executor)
-        return result
+        return self._testcase_executors.copy()
 
     def add_testcase_executor(self, testcase_executor: TestcaseExecutor | UnresolvedParametrizedTestcaseExecutor):
         """
@@ -878,8 +871,12 @@ class VariationExecutor(BasicExecutableExecutor):
 
                 cur_setup_feature_controller.set_active_method_variation(method_selection=method_var_selection)
 
-    def resolve_possible_parametrization(self):
+    def resolve_and_exchange_unresolved_parametrization(self):
         """resolves the parametrization if there are any :class:`UnresolvedParametrizedTestcaseExecutor` in the tree"""
+        replaced_executors = []
         for cur_child in self._testcase_executors:
             if isinstance(cur_child, UnresolvedParametrizedTestcaseExecutor):
-                cur_child.resolve_dynamic_parametrization()
+                replaced_executors.extend(cur_child.get_resolved_parametrized_testcase_executors())
+            else:
+                replaced_executors.append(cur_child)
+        self._testcase_executors = replaced_executors

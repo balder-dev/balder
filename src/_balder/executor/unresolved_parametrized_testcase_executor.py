@@ -37,9 +37,6 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         # holds the specific static parameters for this unresolved group
         self._static_parameters = static_parameters if static_parameters is not None else {}
 
-        # holds the dynamically created testcase executors as soon as this executor is entered
-        self._testcase_executors = None
-
         # contains the result object for the BODY part of this branch
         self.body_result = BranchBodyResult(self)
 
@@ -53,8 +50,8 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         return self._base_testcase_callable
 
     @property
-    def all_child_executors(self) -> List[ParametrizedTestcaseExecutor]:
-        return self.get_testcase_executors()
+    def all_child_executors(self) -> None:
+        return None
 
     @property
     def base_testcase_obj(self) -> Scenario:
@@ -68,24 +65,6 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         """
         returns the base class instance to which this executor instance belongs"""
         return self._base_testcase_callable
-
-    @property
-    def parametrization_has_been_resolved(self) -> bool:
-        """returns true if the parametrization has been resolved"""
-        return self._testcase_executors is not None
-
-    def has_runnable_tests(self, consider_discarded_too=False) -> bool:
-        if self.parametrization_has_been_resolved:
-            return super().has_runnable_tests(consider_discarded_too=consider_discarded_too)
-
-        allowed_prev_marks = [PreviousExecutorMark.RUNNABLE]
-
-        if consider_discarded_too:
-            allowed_prev_marks.append(PreviousExecutorMark.DISCARDED)
-
-        if self.prev_mark not in allowed_prev_marks:
-            return False
-        return True
 
     def has_skipped_tests(self) -> bool:
         return self.prev_mark == PreviousExecutorMark.SKIP
@@ -117,29 +96,27 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         all_covered_by_data.extend(covered_by_dict.get(None, []))
         return all_covered_by_data
 
-    def get_testcase_executors(self) -> List[ParametrizedTestcaseExecutor | UnresolvedParametrizedTestcaseExecutor]:
-        """returns all sub testcase executors that belongs to this variation-executor"""
-        if self._testcase_executors is None:
-            return [self]
-        return self._testcase_executors
-
-    def resolve_dynamic_parametrization(self):
+    def get_resolved_parametrized_testcase_executors(self):
         """
         resolves the dynamic parametrization - should be called when setup features are active in the scenario
         """
-        self._testcase_executors = []
+        executors = []
 
         parametrization = self.get_parametrization()
-        if parametrization:
-            for cur_parametrization in parametrization:
-                self._testcase_executors.append(
-                    ParametrizedTestcaseExecutor(
-                        self._base_testcase_callable,
-                        parent=self.parent_executor,
-                        parametrization=cur_parametrization,
-                        unresolved_group_obj=self
-                    )
+
+        if not parametrization:
+            return []
+
+        for cur_parametrization in parametrization:
+            executors.append(
+                ParametrizedTestcaseExecutor(
+                    self._base_testcase_callable,
+                    parent=self.parent_executor,
+                    parametrization=cur_parametrization,
+                    unresolved_group_obj=self
                 )
+            )
+        return executors
 
     def get_parametrization(self) -> List[OrderedDict[str, Any]] | None:
         """
