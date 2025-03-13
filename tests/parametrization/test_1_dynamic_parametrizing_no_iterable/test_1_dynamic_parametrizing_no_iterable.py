@@ -52,6 +52,8 @@ def processed(env_dir):
 
     all_variation_executor = all_scenario_executor[0].get_variation_executors()
 
+    assert len(all_variation_executor) == 1, f"detect more than one variation executor"
+
     assert all_variation_executor[0].executor_result == ResultState.NOT_RUN, \
         "the variation executor does not have result SUCCESS"
 
@@ -60,7 +62,13 @@ def processed(env_dir):
     assert all_variation_executor[0].teardown_result.result == ResultState.NOT_RUN
 
     all_testcase_executor = all_variation_executor[0].get_testcase_executors()
-    assert len(all_testcase_executor) == 0, f"detect some testcase executor"
+    assert len(all_testcase_executor) == 1, f"detect some testcase executor"
+    assert isinstance(all_testcase_executor[0], UnresolvedParametrizedTestcaseExecutor), \
+        f"test case executor is from unexpected type {type(all_testcase_executor[0])}"
+
+    assert all_testcase_executor[0].construct_result.result == ResultState.NOT_RUN
+    assert all_testcase_executor[0].body_result.result == ResultState.NOT_RUN
+    assert all_testcase_executor[0].teardown_result.result == ResultState.NOT_RUN
 
     exceptions = all_scenario_executor[0].get_all_recognized_exception()
     assert len(exceptions) == 1, f"detect more than one exception executor"
