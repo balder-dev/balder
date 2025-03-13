@@ -185,8 +185,9 @@ class BasicExecutor(ABC):
         """
         This method calls all user defined filters that are to be applied to the executor tree.
         """
-        for cur_child_executor in self.all_child_executors:
-            cur_child_executor.filter_tree_for_user_filters()
+        if self.all_child_executors:
+            for cur_child_executor in self.all_child_executors:
+                cur_child_executor.filter_tree_for_user_filters()
 
     def testsummary(self) -> ResultSummary:
         """
