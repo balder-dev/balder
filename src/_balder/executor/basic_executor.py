@@ -38,7 +38,7 @@ class BasicExecutor(ABC):
 
     @property
     @abstractmethod
-    def all_child_executors(self) -> List[BasicExecutor]:
+    def all_child_executors(self) -> list[BasicExecutor] | None:
         """
         returns all child executors of this object or None if no child executors can exist (this element is a leaf)
         """
