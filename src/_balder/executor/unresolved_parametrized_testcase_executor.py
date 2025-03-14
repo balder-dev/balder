@@ -7,18 +7,20 @@ from graphlib import TopologicalSorter
 from collections import OrderedDict
 
 from _balder.executor.basic_executor import BasicExecutor
+from _balder.executor.mixin_can_be_covered_by_executor import MixinCanBeCoveredByExecutor
 from _balder.executor.parametrized_testcase_executor import ParametrizedTestcaseExecutor
 from _balder.parametrization import Parameter
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import BranchBodyResult
 
 if TYPE_CHECKING:
+    from _balder.executor.scenario_executor import ScenarioExecutor
     from _balder.executor.variation_executor import VariationExecutor
     from _balder.scenario import Scenario
     from _balder.setup import Setup
 
 
-class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
+class UnresolvedParametrizedTestcaseExecutor(BasicExecutor, MixinCanBeCoveredByExecutor):
     """
     This executor class represents a group of dynamically parametrized tests.
     """
@@ -43,6 +45,10 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
     @property
     def parent_executor(self) -> VariationExecutor:
         return self._parent_executor
+
+    @property
+    def scenario_executor(self) -> ScenarioExecutor:
+        return self.parent_executor.parent_executor
 
     @property
     def base_testcase_callable(self) -> callable:
@@ -84,13 +90,7 @@ class UnresolvedParametrizedTestcaseExecutor(BasicExecutor):
         return []
 
     def get_covered_by_element(self) -> List[Scenario | callable]:
-        """
-        This method returns a list of elements where the whole scenario is covered from. This means, that the whole
-        test methods in this scenario are already be covered from every single element in the list.
-        """
-        scenario_executor = self.parent_executor.parent_executor
-
-        covered_by_dict = scenario_executor.base_scenario_controller.get_abs_covered_by_dict()
+        covered_by_dict = self.scenario_executor.base_scenario_controller.get_abs_covered_by_dict()
         all_covered_by_data = covered_by_dict.get(self.base_testcase_callable.__name__, [])
         # also add all scenario specified covered-by elements
         all_covered_by_data.extend(covered_by_dict.get(None, []))
