@@ -5,7 +5,7 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: false
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
