@@ -6,18 +6,20 @@ import time
 import traceback
 
 from _balder.executor.basic_executable_executor import BasicExecutableExecutor
+from _balder.executor.mixin_can_be_covered_by_executor import MixinCanBeCoveredByExecutor
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import ResultState, TestcaseResult
 from _balder.utils import inspect_method
 
 if TYPE_CHECKING:
+    from _balder.executor.scenario_executor import ScenarioExecutor
     from _balder.executor.variation_executor import VariationExecutor
     from _balder.fixture_manager import FixtureManager
     from _balder.scenario import Scenario
 
 
-class TestcaseExecutor(BasicExecutableExecutor):
+class TestcaseExecutor(BasicExecutableExecutor, MixinCanBeCoveredByExecutor):
     """
     A TestcaseExecutor class represents an actual single test that can be executed. It therefore references exactly to a
     test method of a scenario that can be executed on the specific setup this executor belongs to.
@@ -64,6 +66,10 @@ class TestcaseExecutor(BasicExecutableExecutor):
     @property
     def parent_executor(self) -> VariationExecutor:
         return self._parent_executor
+
+    @property
+    def scenario_executor(self) -> ScenarioExecutor:
+        return self.parent_executor.parent_executor
 
     @property
     def base_instance(self) -> object:
@@ -178,13 +184,7 @@ class TestcaseExecutor(BasicExecutableExecutor):
         """
 
     def get_covered_by_element(self) -> List[Union[Scenario, callable]]:
-        """
-        This method returns a list of elements where the whole scenario is covered from. This means, that the whole
-        test methods in this scenario are already be covered from every single element in the list.
-        """
-        scenario_executor = self.parent_executor.parent_executor
-
-        covered_by_dict = scenario_executor.base_scenario_controller.get_abs_covered_by_dict()
+        covered_by_dict = self.scenario_executor.base_scenario_controller.get_abs_covered_by_dict()
         all_covered_by_data = covered_by_dict.get(self.base_testcase_callable.__name__, [])
         # also add all scenario specified covered-by elements
         all_covered_by_data.extend(covered_by_dict.get(None, []))
