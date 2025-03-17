@@ -7,11 +7,11 @@ from graphlib import TopologicalSorter
 from collections import OrderedDict
 
 from _balder.executor.basic_executor import BasicExecutor
-from _balder.executor.mixin_can_be_covered_by_executor import MixinCanBeCoveredByExecutor
 from _balder.executor.parametrized_testcase_executor import ParametrizedTestcaseExecutor
 from _balder.parametrization import Parameter
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import BranchBodyResult
+from _balder.utils.mixin_can_be_covered_by_executor import MixinCanBeCoveredByExecutor
 
 if TYPE_CHECKING:
     from _balder.executor.scenario_executor import ScenarioExecutor
