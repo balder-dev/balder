@@ -19,7 +19,7 @@ from _balder.exceptions import LostInExecutorTreeException, FixtureReferenceErro
     UnclearUniqueClassReference
 
 if TYPE_CHECKING:
-    from _balder.utils import MethodLiteralType
+    from _balder.utils.functions import MethodLiteralType
     from _balder.executor.executor_tree import ExecutorTree
 
 

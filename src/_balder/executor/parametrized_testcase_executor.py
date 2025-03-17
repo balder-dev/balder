@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from collections import OrderedDict
-from _balder.utils import inspect_method
+from _balder.utils.functions import inspect_method
 from .testcase_executor import TestcaseExecutor
 
 if TYPE_CHECKING:

@@ -10,7 +10,7 @@ from _balder.executor.mixin_can_be_covered_by_executor import MixinCanBeCoveredB
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import ResultState, TestcaseResult
-from _balder.utils import inspect_method
+from _balder.utils.functions import inspect_method
 
 if TYPE_CHECKING:
     from _balder.executor.scenario_executor import ScenarioExecutor

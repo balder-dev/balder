@@ -8,7 +8,7 @@ from _balder.connection_metadata import ConnectionMetadata
 from _balder.device import Device
 from _balder.exceptions import IllegalConnectionTypeError
 from _balder.cnnrelations import AndConnectionRelation, OrConnectionRelation
-from _balder.utils import cnn_type_check_and_convert
+from _balder.utils.functions import cnn_type_check_and_convert
 
 
 class ConnectionType(type):

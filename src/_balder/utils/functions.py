@@ -1,16 +1,15 @@
 from __future__ import annotations
-from typing import List, Type, Tuple, Union, Literal, TYPE_CHECKING
+from typing import List, Type, Tuple, Union, TYPE_CHECKING
 
 import sys
 import inspect
 from _balder.scenario import Scenario
 from _balder.exceptions import InheritanceError
 
-MethodLiteralType = Literal["function", "classmethod", "staticmethod", "instancemethod"]
-
 if TYPE_CHECKING:
     from _balder.connection import Connection
     from _balder.cnnrelations.base_connection_relation import BaseConnectionRelationT
+    from _balder.utils.typings import MethodLiteralType
 
 
 def get_scenario_inheritance_list_of(scenario: Type[Scenario]) -> List[Type[Scenario]]:
@@ -57,9 +56,9 @@ def cnn_type_check_and_convert(elem: Union[Connection, Type[Connection], BaseCon
     :param elem: the connection object to be converted/checked
     """
 
-    from .connection import Connection  # pylint: disable=import-outside-toplevel
-    from .cnnrelations.and_connection_relation import AndConnectionRelation  # pylint: disable=import-outside-toplevel
-    from .cnnrelations.or_connection_relation import OrConnectionRelation  # pylint: disable=import-outside-toplevel
+    from ..connection import Connection  # pylint: disable=import-outside-toplevel
+    from ..cnnrelations.and_connection_relation import AndConnectionRelation  # pylint: disable=import-outside-toplevel
+    from ..cnnrelations.or_connection_relation import OrConnectionRelation  # pylint: disable=import-outside-toplevel
 
     if isinstance(elem, type):
         if issubclass(elem, Connection):

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union, Type, Callable, Generator, TYPE_CHECKING
 import dataclasses
 
-from .utils import MethodLiteralType
+from .utils.typings import MethodLiteralType
 
 if TYPE_CHECKING:
     from _balder.scenario import Scenario
