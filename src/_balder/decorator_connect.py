@@ -69,10 +69,10 @@ def connect(
             nonlocal self_node_name
             nonlocal dest_node_name
 
-            this_outer_class_name, _ = decorated_cls.__qualname__.split('.')
+            this_outer_ref = decorated_cls.__qualname__.split('.')[:-1]
             if not isinstance(with_device, str):
-                other_outer_class_name, _ = with_device.__qualname__.split('.')
-                if this_outer_class_name != other_outer_class_name:
+                other_outer_ref = with_device.__qualname__.split('.')[:-1]
+                if this_outer_ref != other_outer_ref:
                     raise ValueError(
                         f"the given device is not mentioned in this setup/scenario - please create a new "
                         f"direct inner device class, it can be inherited from `{with_device.__qualname__}`")
