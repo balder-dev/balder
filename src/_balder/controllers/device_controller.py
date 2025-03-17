@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 from typing import Dict, List, Type, Union, TYPE_CHECKING
 
-import sys
 import logging
 import inspect
 from abc import ABC
@@ -351,9 +350,8 @@ class DeviceController(BaseDeviceController, ABC):
                     return
 
                 # get outer class of `from_device`
-                outer_cls_name_from_device = cur_conn.from_device.__qualname__.rpartition('.')[0]
-                mod = sys.modules[cur_conn.from_device.__module__]
-                parent_cls_from_device = getattr(mod, outer_cls_name_from_device)
+                from_device_controller = DeviceController.get_for(cur_conn.from_device)
+                parent_cls_from_device = from_device_controller.get_outer_class()
 
                 all_inner_classes_of_outer = dict(inspect.getmembers(parent_cls_from_device, inspect.isclass))
                 if cur_conn.to_device in all_inner_classes_of_outer.keys():
