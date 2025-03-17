@@ -72,8 +72,7 @@ class NormalScenarioSetupController(Controller, ABC):
             if not issubclass(cur_class, Device):
                 # filter all classes and make sure that only the child classes of :meth:`Device` remain
                 continue
-            outer_class_name, _ = cur_class.__qualname__.split('.')
-            if outer_class_name != self.related_cls.__name__:
+            if DeviceController.get_for(cur_class).get_outer_class() != self.related_cls:
                 # filter all classes that do not match the setup name in __qualname__
                 continue
             # otherwise, add this candidate
