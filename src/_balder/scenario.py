@@ -1,7 +1,8 @@
 from __future__ import annotations
+from _balder.utils.inner_device_managing_metaclass import InnerDeviceManagingMetaclass
 
 
-class Scenario:
+class Scenario(metaclass=InnerDeviceManagingMetaclass):
     """
     This is the basic scenario class. It represents an abstract class that should be the base class for all scenarios.
     """

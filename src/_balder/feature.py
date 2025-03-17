@@ -3,9 +3,10 @@ from typing import Type, Dict, Tuple, Union
 
 from _balder.device import Device
 from _balder.vdevice import VDevice
+from _balder.utils.inner_device_managing_metaclass import InnerDeviceManagingMetaclass
 
 
-class Feature:
+class Feature(metaclass=InnerDeviceManagingMetaclass):
     """
     This is the basic feature class. It represents an abstract class that should not be used directly. It is the base
     class for all feature elements.
