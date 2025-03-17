@@ -14,7 +14,7 @@ from _balder.controllers.normal_scenario_setup_controller import NormalScenarioS
 from _balder.parametrization import FeatureAccessSelector, Parameter
 from _balder.exceptions import UnclearAssignableFeatureConnectionError, ConnectionIntersectionError, \
     MultiInheritanceError
-from _balder.utils import get_scenario_inheritance_list_of
+from _balder.utils.functions import get_scenario_inheritance_list_of
 
 logger = logging.getLogger(__file__)
 

@@ -10,7 +10,7 @@ import inspect
 import pathlib
 import functools
 import importlib.util
-from _balder.utils import get_class_that_defines_method, inspect_method
+from _balder.utils.functions import get_class_that_defines_method, inspect_method
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.feature import Feature
@@ -23,7 +23,7 @@ from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.controllers import ScenarioController, SetupController, DeviceController, VDeviceController, \
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import DuplicateForVDeviceError, UnknownVDeviceException
-from _balder.utils import get_scenario_inheritance_list_of
+from _balder.utils.functions import get_scenario_inheritance_list_of
 
 if TYPE_CHECKING:
     from _balder.plugin_manager import PluginManager
