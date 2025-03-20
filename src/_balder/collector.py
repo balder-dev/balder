@@ -10,7 +10,7 @@ import inspect
 import pathlib
 import functools
 import importlib.util
-from _balder.utils.functions import get_class_that_defines_method, inspect_method
+from _balder.utils.functions import get_class_that_defines_method, get_method_type
 from _balder.setup import Setup
 from _balder.device import Device
 from _balder.feature import Feature
@@ -24,6 +24,7 @@ from _balder.controllers import ScenarioController, SetupController, DeviceContr
     FeatureController, NormalScenarioSetupController
 from _balder.exceptions import DuplicateForVDeviceError, UnknownVDeviceException
 from _balder.utils.functions import get_scenario_inheritance_list_of
+from _balder.utils.typings import MethodLiteralType
 
 if TYPE_CHECKING:
     from _balder.plugin_manager import PluginManager
@@ -62,8 +63,13 @@ class Collector:
         sys.path.insert(0, str(self.working_dir.parent.absolute()))
 
         self._all_py_files: Union[List[pathlib.Path], None] = None
+
+        self._all_collected_scenarios: Union[List[Type[Scenario]], None] = None
+        self._all_collected_setups: Union[List[Type[Setup]], None] = None
+
         self._all_scenarios: Union[List[Type[Scenario]], None] = None
         self._all_setups: Union[List[Type[Setup]], None] = None
+
         self._all_connections: Union[List[Type[Connection]], None] = None
 
         self.balderglob_was_loaded = False
@@ -124,6 +130,20 @@ class Collector:
         return self._all_py_files
 
     @property
+    def all_collected_scenarios(self) -> List[Type[Scenario]]:
+        """returns a list of all collected scenarios that were found by the collector"""
+        if self._all_collected_scenarios is None:
+            raise AttributeError("please call the `collect()` method before omitting this value")
+        return self._all_collected_scenarios
+
+    @property
+    def all_collected_setups(self) -> List[Type[Setup]]:
+        """returns a list of all collected setups that were found by the collector"""
+        if self._all_collected_setups is None:
+            raise AttributeError("please call the `collect()` method before omitting this value")
+        return self._all_collected_setups
+
+    @property
     def all_scenarios(self) -> List[Type[Scenario]]:
         """returns a list of all scenarios that were found by the collector"""
         if self._all_scenarios is None:
@@ -154,6 +174,29 @@ class Collector:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_connections
 
+    def get_class_and_method_type_for(self, func) -> Tuple[Union[type, None], MethodLiteralType]:
+        """
+        This helper function returns the related class and the type of the method (`staticmethod`, `classmethod`,
+        `instancemethod` or `function`) as tuple.
+        """
+
+        available_classes = self.all_collected_scenarios + self.all_collected_setups
+        available_classes_with_mro = []
+        for cur_class in available_classes:
+            available_classes_with_mro.extend([*inspect.getmro(cur_class)])
+        available_classes_with_mro = set(available_classes_with_mro)
+
+        qualname = func.__qualname__
+
+        if '.' not in qualname:
+            return None, 'function'
+
+        expected_class_name = qualname.rpartition('.')[0]
+        for cur_class in available_classes_with_mro:
+            if cur_class.__qualname__ == expected_class_name:
+                return cur_class, get_method_type(cur_class, func)
+        raise ValueError(f'function {func.__qualname__} is not part of any scenario or setup')
+
     def get_fixture_manager(self) -> FixtureManager:
         """
         Resolves all fixtures and returns the fixture manager for this session
@@ -164,7 +207,7 @@ class Collector:
             cur_level = FixtureExecutionLevel(cur_level_as_str)
             resolved_dict[cur_level] = {}
             for cur_fn in cur_module_fixture_dict:
-                cls, func_type = inspect_method(cur_fn)
+                cls, func_type = self.get_class_and_method_type_for(cur_fn)
                 # mechanism also works for balderglob fixtures (`func_type` is 'function' and `cls` is None)
                 if cls not in resolved_dict[cur_level].keys():
                     resolved_dict[cur_level][cls] = []
@@ -771,12 +814,16 @@ class Collector:
         self._all_connections = self.get_all_connection_classes()
 
         # collect all `Scenario` classes
-        self._all_scenarios = self.get_all_scenario_classes(py_file_paths=all_scenario_filepaths, filter_abstracts=True)
+        self._all_collected_scenarios = self.get_all_scenario_classes(
+            py_file_paths=all_scenario_filepaths, filter_abstracts=True
+        )
         # collect all `Setup` classes
-        self._all_setups = self.get_all_setup_classes(py_file_paths=all_setup_filepaths, filter_abstracts=True)
+        self._all_collected_setups = self.get_all_setup_classes(
+            py_file_paths=all_setup_filepaths, filter_abstracts=True
+        )
 
         self._all_scenarios, self._all_setups = plugin_manager.execute_collected_classes(
-            scenarios=self._all_scenarios, setups=self._all_setups)
+            scenarios=self._all_collected_scenarios, setups=self._all_collected_setups)
 
         self._all_scenarios = Collector.filter_parent_classes_of(items=self._all_scenarios)
         self._all_setups = Collector.filter_parent_classes_of(items=self._all_setups)
