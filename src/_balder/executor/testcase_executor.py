@@ -9,7 +9,7 @@ from _balder.executor.basic_executable_executor import BasicExecutableExecutor
 from _balder.fixture_execution_level import FixtureExecutionLevel
 from _balder.previous_executor_mark import PreviousExecutorMark
 from _balder.testresult import ResultState, TestcaseResult
-from _balder.utils.functions import inspect_method
+from _balder.utils.functions import get_method_type
 from _balder.utils.mixin_can_be_covered_by_executor import MixinCanBeCoveredByExecutor
 
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ class TestcaseExecutor(BasicExecutableExecutor, MixinCanBeCoveredByExecutor):
 
         start_time = time.perf_counter()
         try:
-            _, func_type = inspect_method(self.base_testcase_callable)
+            func_type = get_method_type(self.base_testcase_obj.__class__, self.base_testcase_callable)
             all_args = self.get_all_test_method_args()
             if func_type == "staticmethod":
                 # testcase is a staticmethod - no special first attribute
@@ -194,7 +194,7 @@ class TestcaseExecutor(BasicExecutableExecutor, MixinCanBeCoveredByExecutor):
         """
         returns all kwargs values for the test method
         """
-        _, func_type = inspect_method(self.base_testcase_callable)
+        func_type = get_method_type(self.base_testcase_obj.__class__, self.base_testcase_callable)
         return self.fixture_manager.get_all_attribute_values(
             self,
             self.base_testcase_obj.__class__,

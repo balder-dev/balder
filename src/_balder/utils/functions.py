@@ -1,7 +1,6 @@
 from __future__ import annotations
-from typing import List, Type, Tuple, Union, TYPE_CHECKING
+from typing import List, Type, Union, TYPE_CHECKING
 
-import sys
 import inspect
 from _balder.scenario import Scenario
 from _balder.exceptions import InheritanceError
@@ -70,35 +69,35 @@ def cnn_type_check_and_convert(elem: Union[Connection, Type[Connection], BaseCon
                     f'`{elem}`')
 
 
-def inspect_method(func) -> Tuple[Union[type, None], MethodLiteralType]:
+def get_method_type(func_class, func) -> MethodLiteralType:
     """
-    This helper function returns the related class and the type of the method (`staticmethod`, `classmethod`,
-    `instancemethod` or `function`) as tuple.
+    This helper function returns the type of the method (`staticmethod`, `classmethod` or `instancemethod`). It never
+    returns `function` because this type does not have a class.
     """
+    expected_class_qualname = func.__qualname__.rpartition('.')[0]
 
-    def get_func_class():
-        """helper method to determine the class of the `func`"""
-        classes = []
-        cur_frame = sys.modules[func.__module__]
-        names = func.__qualname__.split('.')[:-1]
-        for cur_name in names:
-            cur_frame = getattr(cur_frame, cur_name)
-            if isinstance(cur_frame, type):
-                classes.append(cur_frame)
-        return classes[-1] if classes else None
+    def get_for(the_class):
+        if the_class.__qualname__ == expected_class_qualname:
+            fn_type = the_class.__dict__.get(func.__name__)
 
-    if func.__name__ == func.__qualname__ or '.<locals>' in func.__qualname__:
-        return None, 'function'
-    cls = get_func_class()
-    fn_type = cls.__dict__.get(func.__name__)
+            if isinstance(fn_type, classmethod):
+                return 'classmethod'
 
-    if isinstance(fn_type, classmethod):
-        return cls, 'classmethod'
+            if isinstance(fn_type, staticmethod):
+                return 'staticmethod'
 
-    if isinstance(fn_type, staticmethod):
-        return cls, 'staticmethod'
+            if fn_type is not None and fn_type.__class__.__name__ == 'function':
+                return 'instancemethod'
+            raise TypeError(f'unknown element type `{func}`')
 
-    if fn_type is not None and fn_type.__class__.__name__ == 'function':
-        return cls, 'instancemethod'
+        for cur_base in the_class.__bases__:
+            result = get_for(cur_base)
+            if result:
+                return result
+        return None
 
-    raise TypeError(f'unknown element type `{func}`')
+    meth_type = get_for(func_class)
+    if meth_type is None:
+        raise KeyError(f'the provided function `{func.__qualname__}` does not match with the provided class '
+                       f'`{func_class.__qualname__}`')
+    return meth_type

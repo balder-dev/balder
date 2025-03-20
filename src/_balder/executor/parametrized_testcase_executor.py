@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from collections import OrderedDict
-from _balder.utils.functions import inspect_method
+from _balder.utils.functions import get_method_type
 from .testcase_executor import TestcaseExecutor
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ class ParametrizedTestcaseExecutor(TestcaseExecutor):
         return super().full_test_name_str
 
     def get_all_test_method_args(self):
-        _, func_type = inspect_method(self.base_testcase_callable)
+        func_type = get_method_type(self.base_testcase_obj.__class__, self.base_testcase_callable)
         all_kwargs = self.fixture_manager.get_all_attribute_values(
             self,
             self.base_testcase_obj.__class__,
