@@ -12,7 +12,7 @@ from _balder.vdevice import VDevice
 from _balder.scenario import Scenario
 from _balder.controllers.base_device_controller import BaseDeviceController
 from _balder.controllers.feature_controller import FeatureController
-from _balder.exceptions import DeviceScopeError, DeviceResolvingException, InnerFeatureResolvingError, \
+from _balder.exceptions import DeviceResolvingException, InnerFeatureResolvingError, \
     FeatureOverwritingError, MultiInheritanceError
 if TYPE_CHECKING:
     from _balder.connection import Connection
@@ -307,25 +307,7 @@ class DeviceController(BaseDeviceController, ABC):
         This method delivers the outer class of the related device. This has to be a :class:`Setup` or a
         :class:`Scenario`.
         """
-
-        if self.related_cls.__qualname__.count('.') == 0:
-            raise DeviceScopeError("the current device class is no inner class")
-
-        if self.related_cls.__qualname__.count('.') > 1:
-            raise DeviceScopeError("the current device class is no direct inner class (deeper than one)")
-
-        outer_class_name, _ = self.related_cls.__qualname__.split('.')
-
-        outer_class = [cur_class for cur_name, cur_class in inspect.getmembers(
-            inspect.getmodule(self.related_cls)) if cur_name == outer_class_name][0]
-
-        all_inner_classes = [cur_inner_class for _, cur_inner_class in inspect.getmembers(outer_class, inspect.isclass)]
-        if self.related_cls in all_inner_classes:
-            if not issubclass(outer_class, Setup) and not issubclass(outer_class, Scenario):
-                raise TypeError(
-                    f"the outer class is of the type `{outer_class.__name__}` - this is not allowed")
-            return outer_class
-        raise RuntimeError(f"can not find the outer class of this given device `{self.related_cls.__qualname__}`")
+        return getattr(self.related_cls, '_outer_balder_class', None)
 
     def resolve_connection_device_strings(self):
         """

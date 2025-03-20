@@ -2,11 +2,10 @@ from __future__ import annotations
 from typing import Type, Dict, Union
 
 import logging
-import inspect
 from _balder.vdevice import VDevice
 from _balder.feature import Feature
 from _balder.controllers.base_device_controller import BaseDeviceController
-from _balder.exceptions import DeviceScopeError, VDeviceResolvingError
+from _balder.exceptions import VDeviceResolvingError
 
 logger = logging.getLogger(__file__)
 
@@ -69,27 +68,7 @@ class VDeviceController(BaseDeviceController):
         """
         This method delivers the outer class of this device. In Balder, this has to be a :class:`Feature`.
         """
-
-        if self.related_cls.__qualname__.count('.') == 0:
-            raise DeviceScopeError("the current device class is no inner class")
-        all_splits = self.related_cls.__qualname__.split('.')
-
-        outer_class = [cur_class for cur_name, cur_class in inspect.getmembers(
-            inspect.getmodule(self.related_cls), inspect.isclass) if cur_name == all_splits[0]][0]
-        # only get the next outer class (not higher)
-        for cur_class_name in all_splits[1:-1]:
-            outer_class = getattr(outer_class, cur_class_name)
-        # instantiate it to get the real type (not the decorator class of `@for_vdevice`)
-        #  we can instantiate it, because we do nothing in it
-        outer_class = outer_class().__class__
-
-        all_inner_classes = [cur_inner_class for _, cur_inner_class in inspect.getmembers(outer_class, inspect.isclass)]
-        if self.related_cls in all_inner_classes:
-            if not issubclass(outer_class, Feature):
-                raise TypeError(f"the found outer class is of type `{outer_class.__name__}` - this is a type which is "
-                                f"not allowed (outer class has to be a `Feature` class)")
-            return outer_class
-        raise RuntimeError(f"can not find the outer class of this vDevice `{self.related_cls.__qualname__}`")
+        return getattr(self.related_cls, '_outer_balder_class', None)
 
     def get_next_parent_vdevice(self) -> Union[Type[VDevice], None]:
         """
