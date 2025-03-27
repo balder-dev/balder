@@ -224,15 +224,17 @@ class Collector:
         :return: the fixture manager that is valid for this session
         """
         resolved_dict = {}
-        for cur_level_as_str, cur_module_fixture_dict in self._raw_fixtures.items():
+        for cur_level_as_str, all_fixture_callable_of_that_level in self._raw_fixtures.items():
             cur_level = FixtureExecutionLevel(cur_level_as_str)
             resolved_dict[cur_level] = {}
-            for cur_fn in cur_module_fixture_dict:
-                cls, func_type = self.get_class_and_method_type_for(cur_fn)
-                # mechanism also works for balderglob fixtures (`func_type` is 'function' and `cls` is None)
-                if cls not in resolved_dict[cur_level].keys():
-                    resolved_dict[cur_level][cls] = []
-                resolved_dict[cur_level][cls].append((func_type, cur_fn))
+            for cur_callable in all_fixture_callable_of_that_level:
+                callable_meth_type_tuple = self.get_class_and_method_type_for(cur_callable)
+                if callable_meth_type_tuple:
+                    cls, func_type = callable_meth_type_tuple
+                    # mechanism also works for balderglob fixtures (`func_type` is 'function' and `cls` is None)
+                    if cls not in resolved_dict[cur_level].keys():
+                        resolved_dict[cur_level][cls] = []
+                    resolved_dict[cur_level][cls].append((func_type, cur_callable))
         return FixtureManager(resolved_dict)
 
     def load_balderglob_py_file(self) -> Union[types.ModuleType, None]:
