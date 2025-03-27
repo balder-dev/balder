@@ -144,6 +144,26 @@ class Collector:
         return self._all_collected_setups
 
     @property
+    def all_collected_scenarios_with_mro(self) -> List[Type[Scenario] | Type[object]]:
+        """returns a list of all collected scenarios that were found by the collector incl. all parent classes"""
+        if self._all_collected_scenarios is None:
+            raise AttributeError("please call the `collect()` method before omitting this value")
+        available_classes_with_mro = []
+        for cur_class in self._all_collected_scenarios:
+            available_classes_with_mro.extend([*inspect.getmro(cur_class)])
+        return list(set(available_classes_with_mro))
+
+    @property
+    def all_collected_setups_with_mro(self) -> List[Type[Setup] | Type[object]]:
+        """returns a list of all collected setups that were found by the collector incl. all parent classes"""
+        if self._all_collected_setups is None:
+            raise AttributeError("please call the `collect()` method before omitting this value")
+        available_classes_with_mro = []
+        for cur_class in self._all_collected_setups:
+            available_classes_with_mro.extend([*inspect.getmro(cur_class)])
+        return list(set(available_classes_with_mro))
+
+    @property
     def all_scenarios(self) -> List[Type[Scenario]]:
         """returns a list of all scenarios that were found by the collector"""
         if self._all_scenarios is None:
@@ -179,12 +199,7 @@ class Collector:
         This helper function returns the related class and the type of the method (`staticmethod`, `classmethod`,
         `instancemethod` or `function`) as tuple.
         """
-
-        available_classes = self.all_collected_scenarios + self.all_collected_setups
-        available_classes_with_mro = []
-        for cur_class in available_classes:
-            available_classes_with_mro.extend([*inspect.getmro(cur_class)])
-        available_classes_with_mro = set(available_classes_with_mro)
+        available_classes_with_mro = self.all_collected_scenarios_with_mro + self.all_collected_setups_with_mro
 
         qualname = func.__qualname__
 
