@@ -194,10 +194,16 @@ class Collector:
             raise AttributeError("please call the `collect()` method before omitting this value")
         return self._all_connections
 
-    def get_class_and_method_type_for(self, func) -> Tuple[Union[type, None], MethodLiteralType]:
+    def get_class_and_method_type_for(self, func) -> Tuple[Union[type, None], MethodLiteralType] | None:
         """
         This helper function returns the related class and the type of the method (`staticmethod`, `classmethod`,
         `instancemethod` or `function`) as tuple.
+        The method returns None if the provided element isn't a method of a valid :class:`Scenario` / :class:`Setup`
+        class.
+
+        :param func: the function/method the class/function type should be returned for
+        :return: tuple with the class (or None for functions) and the method type or None if this function/method is not
+                 part of any known and active scenario/setup or their parent classes
         """
         available_classes_with_mro = self.all_collected_scenarios_with_mro + self.all_collected_setups_with_mro
 
@@ -210,7 +216,7 @@ class Collector:
         for cur_class in available_classes_with_mro:
             if cur_class.__qualname__ == expected_class_name:
                 return cur_class, get_method_type(cur_class, func)
-        raise ValueError(f'function {func.__qualname__} is not part of any scenario or setup')
+        return None
 
     def get_fixture_manager(self) -> FixtureManager:
         """
