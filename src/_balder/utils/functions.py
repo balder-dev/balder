@@ -77,7 +77,7 @@ def get_method_type(func_class, func) -> MethodLiteralType:
     expected_class_qualname = func.__qualname__.rpartition('.')[0]
 
     def get_for(the_class):
-        if the_class.__qualname__ == expected_class_qualname:
+        if func.__name__ in the_class.__dict__.keys() and the_class.__qualname__ == expected_class_qualname:
             fn_type = the_class.__dict__.get(func.__name__)
 
             if isinstance(fn_type, classmethod):
