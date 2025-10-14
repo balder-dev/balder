@@ -48,13 +48,6 @@ Please name your balder-plugin project ``balderplugin-*`` in pypi.
 If you port your balder-plugin project to the main developer group, your documentation will be provided on 
 ``https://plugins.balder.dev/your-balder-plugin-name``.
 
-## Pull-Request Review process
-
-Currently, I (@matosys) am the only active developer. If you like, I will gladly give you commit access once you have 
-contributed a couple of pull requests. Once we are three active members, I'd suggest using a 
-pull-request-and-review process. Until then, I will review every pull request as soon as possible. 
-I will gladly make an effort to answer every question, suggestion, bug-fix and pull-request.
-
 ## Add new test
 
 Every contribution is welcome! We can never have enough tests. You can also take a look 
