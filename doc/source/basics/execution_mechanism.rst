@@ -1,115 +1,152 @@
 Balder execution mechanism
 **************************
 
-.. important::
+Balder execution mechanism runs in three primary phases after invoking the balder command: collection, solving, and
+execution. These phases ensure that tests are gathered, matched to available setups, and run efficiently in compatible
+configurations. The process revolves around key concepts like :ref:`Scenarios` (describing what is needed for a test),
+:ref:`Setups` (describing what is available in the environment), :ref:`Devices` (components within scenarios and
+setups), :ref:`Connections` (links between devices), and :ref`Features` (functionalities added to devices).
 
-    .. todo complete reworking of this section
+In the first stage, the collecting phase, Balder collects all relevant items from the project
+directory (the current working directory) and imports their Balder-related classes and functions. This builds an
+internal registry of components like :ref:`Setup <Setups>`, :ref:`Scenario <Scenarios>`, :ref:`Feature <Features>` and
+:ref:`Connection <Connections>` classes that will be used in later phases.
 
-    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+The solving phase, also known as the matching process, is where Balder determines valid combinations (called
+variations) between scenarios and setups. It generates potential mappings of scenario devices to setup devices, filters
+them based on connections and features, and organizes the valid ones into an execution tree. This tree represents a
+hierarchical structure of all executable matches, including device mappings and sub-variations.
 
-After you start the execution in a Balder project with the command line `balder ..`, Balder will go through a procedure
-of tree steps. First Balder collects all relevant items that can be found in the project directory (the current working
-directory) and imports their Balder related classes and functions. For this purpose Balder keeps an internal overview
-of all :ref:`Setup <Setups>`, :ref:`Scenario <Scenarios>` and :ref:`Connection <Connections>` classes. With that
-information, Balder will start to create possible matching between the collected setups and scenario instances. In this
-step, Balder creates the whole execution tree that contains all existing matches with its device-mappings organized in
-an execution-tree. In the last step Balder executes this tree with the inclusion of all :ref:`Features` and test cases.
+In the final execution phase, Balder traverses the execution tree built in the solving phase and runs all valid
+variations. This involves instantiating devices, applying features, executing test methods, and handling fixtures
+(setup/cleanup functions).
 
-To make it easier to understand the functionality of Balder, we will start to consider the differences between
-:ref:`Setup <Setups>` classes and :ref:`Scenario <Scenarios>` classes a little bit more in detail.
+Before we going into the process in more detail, we want to have a look for the exact difference between :ref:`Setups`
+and :ref:`Scenarios`.
 
 Difference between setup and scenario
 =====================================
 
-Balder is based on individual :ref:`Scenario <Scenarios>` and :ref:`Setup <Setups>` classes.
-Scenarios define a situation in which individual tests can be carried out. Setups, on the other hand, describes how a
-test environment currently looks like. In other words, the following definition is important to understand:
+Balder is based on individual :ref:`Scenario <Scenarios>` and :ref:`Setup <Setups>` classes. These both classes are
+fundamental concepts that enable reusable, environment-agnostic testing. While they work together to facilitate
+scenario-based testing, they serve distinct purposes: scenarios define the situation in which individual tests can be
+carried out, while setups provide concrete implementations for specific environments.
+
+The following definition is important to understand:
 
 **Scenario:** Describes what you need
 
 **Setup:** Describes what you have
 
-So what does this mean? Take a look deeper in these definitions.
+So what does this mean? Let's take a deeper look at it.
 
 Describes what you need: Scenarios
 ----------------------------------
 
-A :ref:`Scenario <Scenarios>` always defines what **you need**. So for example, if you want to test a online login of a
-server, you need the server device and a client device that tries to connect with the server. This describes what you
-need, and these are the components of a :ref:`Scenario <Scenarios>`. In this case all other devices that are connected
-with the network (for example another client) doesn't matter, because we only need these two devices. If we want to test
-if the server can handle two clients to the same time in another scenario, we have to define a scenario that needs these
-three devices. So we only define what we need.
+A scenario represents the required structure and behavior for a test. It describes **what is needed** to perform the
+test in an abstract way, without the need to tying it to a specific implementation. Scenarios focus on the reusable
+test pattern or logic, such as the steps involved in a process (e.g., logging into a system: opening a login interface,
+entering credentials, submitting, and verifying success). In a scenario only the devices are defined, that are relevant
+for this specific test scenario.
+
+* Defined in Python files named ``scenario_*.py``.
+* Classes must subclass ``balder.Scenario`` and typically start with ``Scenario*``.
+* Contain test methods (starting with test_*) that execute the actual assertions.
+* Define required devices (components needed for the test) and features (interfaces or capabilities those devices must support).
+
+**Purpose:** To create a shared, platform-independent blueprint for tests that can be applied across multiple setups.
+
 
 Describes what you have: Setups
 -------------------------------
 
-It is different when we look at the :ref:`Setup <Setups>`. In a setup you define everything that is available and
-relevant in this setup. So for example, if you have your computer, the router, the server of company X and the server of
-company Y in your influenceable spectrum of devices you can add these to your setup.
+A setup describes the available environment or configuration where the test can run. Or in simpler words: It describes,
+**what we have**. Here you define everything that is available and relevant in this setup. It provides the concrete
+details of how the devices are implemented in a particular context, such as specific hardware, software, or protocols.
+For example, if you have your computer, a smartphone, the router, the server of company X, and the server of company Y
+in your controllable spectrum of devices, you can add these devices with all its features to your setup. If you are
+planing that your login scenario can be executed with this setup later on for example, Balder could find matches within
+these devices to log in via a web browser of the computer, via a web browser of the smartphone, via a mobile app or
+even via an API. All this depends on the provided device features and if they match with the feature-requirement of the
+applicable scenario devices.
 
-Balder will manage the determination of all available matching between the :ref:`Scenario <Scenarios>` devices
-and the :ref:`Setup <Setups>` devices automatically. If it finds matchings, it will execute these possible variations
-in the execution step. You can read more about this in the further subsections of this guide (see
+In short, a setup is:
+
+* Defined in Python files named ``setup_*.py``.
+* Classes must subclass ``balder.Setup`` and typically start with ``Setup*``.
+* Provide actual device instances that match the devices required by scenarios.
+* Implement features as subclasses that fulfill the interfaces defined in scenarios.
+
+**Purpose:** To represent real-world variations or environments, allowing the same scenario to be tested in different
+contexts without rewriting the test code.
+
+Balder will automatically manage the determination of all available matches between the :ref:`Scenario <Scenarios>`
+devices and the :ref:`Setup <Setups>` devices. If it finds any matches, it will execute these possible variations
+in the execution step. You can read more about this in the following subsections of this guide (see
 :ref:`Matching process of setups and scenarios (SOLVING)`).
 
-Collecting process
-==================
+Loading Balder Objects (COLLECTING)
+===================================
 
 The collection process is the first stage of the Balder execution mechanism, directly after executing the ``balder ...``
-command. In this stage all available relevant Balder classes within the working directory are collected.
+command. In this stage, all available relevant Balder classes within the working directory are collected.
 
 Collect setups and scenarios
 ----------------------------
 
-First the collector begins to find all setup and scenario classes that are located directly in the Python files
+First, the collector begins to find all Setup and Scenario classes that are located directly in the Python files
 collected in the earlier step.
 
-Balder searches for scenarios exclusively in files with the name ``scenario_*.py``. In these files it searches for
-classes, which are subclasses of the master :class:`Scenario` class and if their name starts with ``Scenario*``.
-Only for classes that meet all these criteria, Balder will acknowledge these classes as valid scenarios and add
-them to the internal collection of executable scenarios.
+Balder searches for scenarios exclusively in files with the name ``scenario_*.py``. In these files, it searches for
+classes that are subclasses of the master :class:`Scenario` class and whose names start with ``Scenario*``.
+Only classes that meet all these criteria will be acknowledged by Balder as valid scenarios and added to the internal
+collection of executable scenarios.
 
-In the same way, Balder searches for scenarios, it will do that for setups. These setups have to be in files that have
-the name ``setup_*.py`` and whose classes have the name ``Setup*`` and are child classes of :class:`Setup`.
-
-.. note::
-    Note that every ``.py`` file will be loaded that starts with ``scenario_*`` or ``setup_*``.
+In the same way that Balder searches for scenarios, it will do so for setups. These setups have to be in files with the
+name ``setup_*.py``, and their classes must have names starting with ``Setup*`` and be subclasses of :class:`Setup`.
 
 Collect tests
 -------------
 
-With the previous step, Balder has automatically loaded all defined testcase methods too, because in Balder all
-testcases have to be defined as a method in a :ref:`Scenario <Scenarios>` class. The name of these test methods always
-has to start with ``test_ *``. A scenario could define as much test methods as you like.
+With the previous step, Balder has automatically loaded all defined test case methods too, because in Balder, all test
+cases have to be defined as a method in a :ref:`Scenario <Scenarios>` class. The names of these test methods always
+have to start with ``test_*``. A scenario can define as many test methods as you like.
 
 Collect connections
 -------------------
 
-:ref:`Connections` are objects that connects devices with each other. These objects will be included in a global
-connection tree, which is the general representation of usable Balder connections. In every project you can define your
-own connections within python modules/files with the name ``connections``. These files will be read by Balder
+:ref:`Connections` are objects that connect devices to each other. These objects will be included in a global
+connection tree, which is the general representation of usable Balder connections. In every project, you can define
+your own connections within Python modules or files with the name ``connections``. These files will be read by Balder
 automatically during the collecting process. They will be inserted into the
-:ref:`global connection-tree <The global connection tree>`.
+:ref:`global connection tree <The global connection tree>`.
+
+.. note::
+    Balder is shipped with a default global connection tree. In many cases, this is sufficient.
 
 Matching process of setups and scenarios (SOLVING)
 ==================================================
 
-After the collecting process, Balder knows all existing setup and scenario classes. Now it is time to determine
-the matchings between them. For this Balder checks if the definition of the :ref:`Scenario <Scenarios>` (defines what
-we need) matches in one possible constellation of one or more :ref:`Setup(s) <Setups>` (defines what we have).
+After the collection process, Balder has identified all existing Setup and Scenario classes. Next, it determines the
+matches between them. To do this, Balder checks whether the definition of a :ref:`Scenario <Scenarios>` (which
+specifies what is required) can be fulfilled by one possible configuration of one or more :ref:`Setups <Setups>`
+(which define what is available).
+
+To accomplish this, Balder creates variations between the devices specified in the Scenario and Setup by generating all
+possible ways these devices can match.
 
 What are variations?
 --------------------
 
-In the SOLVING stage, Balder determines so called variations. This describes the device mappings between all required
-:ref:`Scenario-Devices <Scenario-Device>` and their mapped :ref:`Setup-Device`. First all variations will be
-added, regardless of whether they are executable. In the first part of the SOLVING stage, Balder will create a
-variation for every possible device mapping first. If a mapping really fits (same feature and containing connection
-trees between all device mappings - later more) will be determined
+In the SOLVING stage, Balder determines so-called variations. These represent the device mappings between all required
+:ref:`Scenario-Devices <Scenario-Device>` and their corresponding :ref:`Setup-Devices <Setup-Device>`. Initially,
+Balder adds all possible variations, regardless of whether they are executable. In the first part of the SOLVING stage,
+it creates a variation for every conceivable device mapping. Whether a mapping truly fits - meaning it shares the same
+features and includes matching connection trees between all device mappings (more on this later) - is checked
 :ref:`in the second part of the SOLVING stage <SOLVING Part 2: Filtering Variations>`.
 
-To make this clearer, lets take a look to the following example. Imagine, we have the following scenario:
+To make this clearer, let's take a look at the following example.
+Imagine, we have the following scenario:
 
 .. mermaid::
     :align: center
@@ -124,7 +161,7 @@ To make this clearer, lets take a look to the following example. Imagine, we hav
 
 
 
-In Balder this could be described like the following:
+In Balder this could be described like shown in the following snippet:
 
 .. code-block:: python
 
@@ -141,7 +178,7 @@ In Balder this could be described like the following:
             pass
 
 
-In addition to that, we create a setup in our project too. This setup looks like the following:
+We also want to create a setup in our project. This setup should look like:
 
 .. mermaid::
     :align: center
@@ -157,7 +194,7 @@ In addition to that, we create a setup in our project too. This setup looks like
         This <--> MyServerDevice2: HttpConnection
 
 
-In code, this will looks like the following:
+In code:
 
 .. code-block:: python
 
@@ -178,8 +215,7 @@ In code, this will looks like the following:
             pass
 
 
-With this both definitions, the single scenario ``ScenarioLogin`` and the single setup ``SetupBasic``, Balder will
-totally create 6 possible variations:
+With these both definitions, Balder will create six variations:
 
 .. code-block:: none
 
@@ -203,20 +239,21 @@ totally create 6 possible variations:
         Scenario `ServerDevice` <=> Setup `MyServerDevice1`
 
 
-As you can see, every assignment possibility between the scenario devices to every possible setup device will be
-created as match here. Till now, no variation was filtered, also no obviously false.
+As you can see, every possible assignment between the Scenario devices and the available Setup devices is created as a
+potential match at this stage. Up to this point, no variations have been filtered out - not even the ones that are
+obviously invalid.
 
 SOLVING Part 2: Filtering Variations
 ------------------------------------
 
-Balder has created all possible variations now, but it has not check if all of them can be executed. In our example
-the scenario device ``ClientDevice`` and the ``ServerDevice`` are connected over a ``HttpConnection``, but the mapped
-setup devices in ``Variation4`` or ``Variation6`` aren't connected with each other - they have only a ``HttpConnection``
-to the ``This`` device, but not between each other. These variations simply doesn't make sense, because the devices
-have a complete different connection with each other.
+Balder has now created all possible variations, but it has not yet checked whether all of them can be executed. In our
+example, the Scenario devices ``ClientDevice`` and ``ServerDevice`` are connected via an ``HttpConnection``. However,
+the mapped Setup devices in ``Variation4`` or ``Variation6`` aren't connected to each other - they only have an
+``HttpConnection`` to the ``This`` device, but not between themselves. These variations simply don't make sense, because
+the devices have completely different connections to each other.
 
-In view of this fact the ``Variation4`` or the ``Variation6`` can not be executed and will be filtered by Balder. Balder
-now has 4 active variations that could be executed from the current point of view:
+In light of this fact, ``Variation4`` and ``Variation6`` cannot be executed and will be filtered out by Balder. Balder
+now has four active variations that could be executed from the current point of view:
 
 .. code-block:: none
 
@@ -233,31 +270,29 @@ now has 4 active variations that could be executed from the current point of vie
         Scenario `ClientDevice` <=> Setup `MyServerDevice2`
         Scenario `ServerDevice` <=> Setup `This`
 
-As you can see there are still some variations, we do not want to be executed. For example in the ``Variation3``
-our scenario device ``ClientDevice`` is mapped to the server device ``MyServerDevice1``, but this doesn't make
-sense, we want a client device here. But wait - how should Balder know this? Only the name is an indication that these
-two elements do not go together..
+As you can see, there are still some variations that we do not want to execute. For example, in ``Variation3``, the
+Scenario device ``ClientDevice`` is mapped to the Setup device ``MyServerDevice1``. However, this doesn't make sense
+because we need a client device here, not a server. But wait - how should Balder know this?
 
 They need some :ref:`Features`!
 
 Devices with features
 =====================
 
-In the previous step all our devices doesn't have a real functionality, they only exist. For this Balder provides
-:ref:`Features`. Features are classes that can be used by devices and offers functionality for these. If you have gone
-through the :ref:`Balder Intro Example` you have learned the basic functionality of features. For a full introduction
-to features, you can also discover the basic documentation section :ref:`Features`.
+In the previous steps, our devices didn't have any real functionality; they simply existed. To address this, Balder
+provides :ref:`Features`. Features are classes that devices can use to add specific functionalities. If you've gone
+through the :ref:`Balder Intro Example`, you've already learned the basics of how features work.
 
 Add feature functionality
 -------------------------
 
-So let us add some functionality to our scenario definition. For this we have to add some features. Get the rule back
-in your mind for what a scenario is for - **A scenario defines what we need**.
+So let's add some functionality to our Scenario definition. To do this, we need to incorporate some Features. Remember
+the key rule for what a Scenario represents: **A Scenario defines what we need**.
 
-What does this mean in terms of our features? - We only have to provide the features, we really need in our scenario.
-We will not add features, that we do not need here!
+What does this mean in terms of our Features? It means we should only include the Features that are truly required for
+the Scenario. We won't add any Features that aren't necessary here!
 
-So let us add some features to our example before:
+With that in mind, let's enhance our previous example by adding a couple of relevant Features:
 
 .. mermaid::
     :align: center
@@ -290,14 +325,14 @@ This scenario can be described like the following:
 
 
 .. note::
-    Normally we can not provide parameters in the :class:`Feature` constructor, except for one use case - to set the
-    active vDevice mapping. For now it is enough to understand that the feature ``SendGetRequestFeature`` can access
-    the required information of the mapped ``ServerDevice``, while making some GET or POST requests.
-    If you want to find out more about vDevices, take a look at :ref:`VDevices <VDevices and method-variations>`.
+    Normally, we cannot provide parameters in the :class:`Feature` constructor, except in one specific case: to set the
+    active vDevice mapping. For now, it's enough to understand that the ``SendGetRequestFeature`` can access the
+    necessary information from the mapped ServerDevice when performing GET or POST requests. If you'd like to learn
+    more about vDevices, check out the :ref:`VDevices <VDevices and method-variations>` section.
 
-With this we have defined our required feature classes. We define that our ``ServerDevice`` needs an implementation of
-the ``WebServerFeature`` and our ``ClientDevice`` needs an implementation of the ``SendGetRequestFeature``, otherwise
-the scenario can not be executed.
+With this, we have defined our required Feature classes. This means that our ``ServerDevice`` needs an implementation
+of the ``WebServerFeature``, while our ``ClientDevice`` requires an implementation of the ``SendGetRequestFeature``.
+Otherwise, the Scenario cannot be executed.
 
 Implement features in setup
 ---------------------------
@@ -312,7 +347,19 @@ our ``ScenarioLogin``.
 Every of these setup features contains the implementation of all interface methods and properties that are defined in
 the related scenario feature.
 
-For this, we expand our setup in the following way:
+With that, we have defined the Features required by the Scenario. Of course, we also need to implement these Features
+in our Setups. Most of the time, this is where we add the actual code. As you'll see later, Features in
+:ref:`Scenario-Devices <Scenario-Device>` often only define the interface needed by the Scenario device, without
+providing a direct implementation there. Instead, the actual implementation is usually handled at the Setup level.
+
+To understand Balder's execution mechanism, it doesn't matter where the implementation takes place. For now, it's
+enough to know that every ``*ImplFeature`` in our Setup is a subclass of the Feature classes defined in our
+``ScenarioLogin``.
+
+For Balder to find a match between our Scenario and the Setup(s), the Setup devices must provide implementations for
+all the Features defined in the corresponding Scenario devices.
+
+For this, we expand our setup like that:
 
 .. mermaid::
     :align: center
@@ -333,7 +380,7 @@ For this, we expand our setup in the following way:
         This <--> MyServerDevice1: HttpConnection
         This <--> MyServerDevice2: HttpConnection
 
-In Balder, his looks like the following:
+In Balder, his looks like:
 
 .. code-block:: python
 
@@ -356,10 +403,11 @@ In Balder, his looks like the following:
             req = WebServerImplFeature()  # implements the `WebServerFeature`
             ...
 
+
 .. note::
-    The names of the class properties, the feature instances are assigned to, doesn't matter for Balder. They are
-    only relevant, if you want to access the feature instance in the setup class itself (you will see later in
-    :ref:`Using Fixtures`).
+    Note that the names of the class properties to which the Feature instances are assigned do not matter to Balder.
+    These names are only relevant if you need to access the Feature instances within the Setup class itself (as you'll
+    see later in the :ref:`Using Fixtures` section).
 
 .. note::
     It doesn't matter if one or more of the devices has more features. Balder will scan them to determine if
@@ -367,6 +415,14 @@ In Balder, his looks like the following:
     defined features in the corresponding scenario-device. It doesn't matter if the setup has features, the scenario
     does not have.
     Also here: **Scenarios define what you need** - **Setups define what you have**
+
+.. note::
+    It doesn't matter if one or more of the devices have additional Features. Balder will scan them to determine
+    whether the variation can be executed, by verifying that every mapped Setup device provides a valid implementation
+    of the Features defined in the corresponding Scenario device. It also doesn't matter if the Setup includes Features
+    that the Scenario does not require.
+
+    Remember: **Scenarios define what you need** - **Setups define what you have**.
 
 What happens with our Variations?
 ---------------------------------
@@ -388,37 +444,35 @@ Get back in mind, that we had four of our six variations left:
         Scenario `ClientDevice` <=> Setup `MyServerDevice2`
         Scenario `ServerDevice` <=> Setup `This`
 
-These are already filtered after their connections, but Balder hasn't check their feature implementation.
-For this Balder will go through every possible variation and check it the mapped devices on the setup side uses child
-classes of the feature that are defined in the corresponding scenario device. Only if every feature of every mapped
-scenario device has a relevant child implementation in the corresponding setup device, the variation is still
-applicable.
+These variations have already been filtered based on their connections, but Balder hasn't checked their feature
+implementations yet. To do this, Balder goes through every remaining variation and verifies whether the mapped devices
+on the Setup side provide subclasses of the Features defined in the corresponding Scenario devices. A variation remains
+applicable only if every Feature from every mapped Scenario device has a matching subclass implementation in the
+corresponding Setup device.
 
-In ``Variation1`` Balder will start looking for the ``ClientDevice``. It will notices that it **needs** the
-``SendGetRequestFeature``. The ``This`` device on the other side is the mapped setup device for the ``ClientDevice``.
-For this variation matches, Balder has to secure, that this setup device implements all existing features (as child
-subclasses). With that, it iterates over the features of the setup device ``This``, and recognize the feature
-``SendGetRequestImplFeature``. This feature is a valid subclass of the ``SendGetRequestFeature``, which result in a GO
-for this device mapping.
+Take ``Variation1`` as an example. Balder starts by examining the ``ClientDevice``. It notices that this device
+**needs** the ``SendGetRequestFeature``. The ``This`` device is the mapped Setup device for the ``ClientDevice``. For
+the variation to match, Balder must ensure that this Setup device implements all required Features (as subclasses). It
+iterates over the Features of the Setup device ``This`` and recognizes the ``SendGetRequestImplFeature``. Since this is
+a valid subclass of ``SendGetRequestFeature``, it gives a green light for this device mapping.
 
-If there would be only one scenario feature that is not a child of one of the setup features this results into an not
-applicable mapping and makes these variation non-applicable! In our case this works, so we can go further and execute
-the checking process for our last mapping ``ServerDevice`` <-> ``MyServerDevice1`` in our ``Variation1`` too.
+If even one Scenario Feature lacks a matching subclass in the Setup Features, the mapping would be invalid, making the
+entire variation non-applicable. In our case, everything checks out, so Balder moves on to the final mapping in
+``Variation1``: ``ServerDevice`` <-> ``MyServerDevice1``.
 
-We iterate over the features in our scenario-based ``ServerDevice``. Within that, we can only find the
-``WebServerFeature``. For that, we have to check that it is available as subclass in our mapped setup-based
-``MyServerDevice1`` too. We will find the ``WebServerImplFeature`` which is a child of the scenario-based
-``WebServerFeature``.
+Next, Balder iterates over the Features in the scenario-based ``ServerDevice``. It finds only the ``WebServerFeature``.
+Now, it checks if this is available as a subclass in the mapped setup-based ``MyServerDevice1``. Sure enough, it finds
+the ``WebServerImplFeature``, which is a subclass of the scenario-based ``WebServerFeature``.
 
-The ``Variation1`` completely supports our features. ``Variation1`` is an executable mapping.
+As a result, ``Variation1`` fully supports the required Features, making it an executable mapping.
 
-Balder will continue with this check for every other variation too. ``Variation2`` will also pass, because it is
-similar the same. But it is different with ``Variation3`` and ``Variation4``, because both has the mapping
-``ClientDevice`` <-> ``MyServerDeviceX`` and also ``ServerDevice`` <-> ``This``. In both mappings, the features are
-not supported from each other and so there is no applicable mapping here! ``Variation3`` and ``Variation4`` will be
-filtered.
+Balder continues this check for all other variations. ``Variation2`` passes as well, since it's essentially the same
+setup. However, things are different for ``Variation3`` and ``Variation4``. Both have swapped mappings:
+``ClientDevice`` <-> ``MyServerDeviceX`` and ``ServerDevice`` <-> ``This`` (where ``MyServerDeviceX`` refers to
+``MyServerDevice1`` or ``MyServerDevice2``, depending on the variation). In these cases, the Features do not match
+between the devices, so there is no valid mapping. Therefore, ``Variation3`` and ``Variation4`` get filtered out.
 
-This results in our two of six mappings, that can be really executed:
+This results in two of previously six mappings, that can be really executed:
 
 .. code-block:: none
 
@@ -429,88 +483,117 @@ This results in our two of six mappings, that can be really executed:
         Scenario `ClientDevice` <=> Setup `This`
         Scenario `ServerDevice` <=> Setup `MyServerDevice2`
 
-Balder will add them to the execution-tree and run these in the last stage, the EXECUTION stage.
+Balder will add them to the execution-tree and run these variations in the last stage, the EXECUTION stage.
 
 Using Fixtures
 ==============
 
-Balder also supports the concept of fixtures. Fixtures are functions (or methods) that will be executed to prepare or
-clean-up devices or other things before or after a testcase or a scenario/setup will be executed.
+Balder also supports the concept of fixtures. Fixtures are functions (or methods) that are executed to prepare or clean
+up devices or other resources before or after a test case, scenario, or setup runs.
 
-Fixtures have two main properties that determine the behaviour and validity of a fixture. First they have a
-**definition-scope**, that describes where the fixture is defined. In addition to that, they have a **execution-level**,
-that defines at which point the fixture should be executed.
+Structure of a Fixture
+----------------------
+
+As mentioned, fixtures are functions or methods that execute setup (construct) and cleanup (teardown) code at specific
+points during the test process. They use the ``yield`` statement to separate the construct code (which runs before the
+``yield``) from the teardown code (which runs after the ``yield``). Fixtures can also return values through the
+``yield``, allowing these values to be passed to dependent fixtures or test cases.
+
+.. code-block:: python
+
+    @balder.fixture(level="scenario")  # the level describes when the fixture should be executed
+    def resource():
+        # Construction Code: Will be executed before the tests
+        my_resource = MyResource()
+        my_resource.start()
+        yield my_resource  # returns the resource object to make it available in other fixtures or even in test methods
+
+        # Cleanup Code: Will be executed after the tests
+        my_resource.quit()
+
+
+Fixtures have two main properties that determine their behavior and validity. First, they have an **execution-level**,
+which defines at which point the fixture should be executed. In addition, they have a **definition-scope**, which is
+determined by the position in which the fixture is defined.
+
 
 The execution-level
 -------------------
 
-If you define a fixture, you have to set the **execution-level** with the attribute ``level`` in the fixture
-decorator ``@balder.fixture(level="..")``. For this the following execution levels can be used:
+When defining a fixture, you must specify its **execution-level** using the level attribute in the fixture decorator,
+like this: ``@balder.fixture(level="..")``. This determines when the fixture's setup and teardown code will run during
+the test process.
+
+The following execution levels are available:
+
 
 +------------------------+---------------------------------------------------------------------------------------------+
-| level                  | description                                                                                 |
+| level                  | Description                                                                                 |
 +========================+=============================================================================================+
-| ``session``            | This is the furthest out execution-level. The construct part of the fixture will be         |
-|                        | executed directly after the collecting and solving process and before some user code will   |
-|                        | run. The teardown code will be executed after the whole test session was executed.          |
+| ``session``            | This is the outermost level. The fixture's setup code runs right after the collecting and   |
+|                        | solving phases, before any test code executes. The teardown code runs after the entire test |
+|                        | session completes.                                                                          |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``setup``              | This fixture runs before and after an underlying :class:`Setup` has changed. It embraces    |
-|                        | every new :class:`Setup` class that will get active in the test session.                    |
+| ``setup``              | This level runs the fixture before and after each change to an underlying Setup. It wraps   |
+|                        | around every new Setup class that becomes active in the test session.                       |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``scenario``           | This fixture runs before and after an underlying :class:`Scenario` has changed. It          |
-|                        | embraces every new :class:`Scenario` class that will get active in the test session.        |
+| ``scenario``           | This level runs the fixture before and after each change to an underlying Scenario. It      |
+|                        | wraps around every new Scenario class that becomes active in the test session.              |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``variation``          | This fixture runs before and after every new device variation of its scoped                 |
-|                        | :class:`Setup` / :class:`Scenario` constellation. It embraces every new variation that      |
-|                        | will be get active in the test session.                                                     |
+| ``variation``          | This level runs the fixture before and after each new device variation within the current   |
+|                        | Setup/Scenario combination. It wraps around every new variation that activates in the test  |
+|                        | session.                                                                                    |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``testcase``           | This fixture runs before and after every testmethod. It embraces every new testcase which   |
-|                        | is defined in the :class:`Scenario` class.                                                  |
+| ``testcase``           | This is the innermost level. The fixture runs before and after each individual test method, |
+|                        | wrapping around every test case defined in the Scenario class.                              |
 +------------------------+---------------------------------------------------------------------------------------------+
 
-These execution-levels defines on which position the fixture should be executed, but if a fixture will be really
-executed or not also depends on the **definition-scope**.
+These levels help you control the granularity of your fixtures, ensuring resources are prepared and cleaned up at the
+right points in Balder's execution flow.
+
+These execution levels define at which point the fixture should be executed. However, whether a fixture is actually
+executed or not also depends on its **definition-scope**.
 
 The definition-scope
 --------------------
 
-In Balder there exists a lot of different **definition-scopes**. These scopes define to a certain extent the validity
-of them. The following table shows them with the scope, they are valid.
+Balder supports several different definition scopes for fixtures. These scopes determine, to a certain extent, when and
+where a fixture is valid and can be executed. The following table lists the available definition-scopes, along with
+their validity and a brief description.
 
 +------------------------+------------------------+--------------------------------------------------------------------+
-| Definition             | Validity               | description                                                        |
+| Definition             | Validity               | Description                                                        |
 +========================+========================+====================================================================+
-| as function in         | everywhere             | This fixture will be executed always. It doesn't matter which      |
-| ``balderglob.py`` file |                        | specific testset you are calling. This fixture will be executed in |
-|                        |                        | every test run.                                                    |
+| As a function in the   | Everywhere             | This fixture will always be executed, no matter which specific     |
+| balderglob.py file     |                        | test set you are running. It will be called in every test run.     |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this setup     | This fixture runs only if this setup will be executed in the       |
-| :class:`Setup`         |                        | current testrun. If the **execution-level** is ``session`` it will |
-|                        |                        | be executed as session-fixture only if this setup is in the        |
-|                        |                        | executor tree. If the  **execution-level** is ``setup`` or lower,  |
-|                        |                        | this fixture will only be called if the setup is currently active  |
-|                        |                        | in the test run.                                                   |
+| As a method in a       | Only in this Setup     | This fixture runs only if the related Setup is executed in the     |
+| :class:Setup class     |                        | current test run. If the execution level is ``session``, it        |
+|                        |                        | will be executed as a session fixture only if this Setup appears   |
+|                        |                        | in the executor tree. If the execution level is ``setup`` or       |
+|                        |                        | lower, the fixture will only be called when the Setup is currently |
+|                        |                        | active in the test run.                                            |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this scenario  | This fixture runs only if this scenario will be executed in the    |
-| :class:`Scenario`      |                        | current testrun. If the **execution-level** is ``session`` or      |
-|                        |                        | `setup` it will be executed as session-/ or setup-fixture only if  |
-|                        |                        | this Scenario is in the executor tree. If the  **execution-level** |
-|                        |                        | is ``scenario`` or lower, this fixture will only be called if the  |
-|                        |                        | scenario is currently active in the test run.                      |
+| As a method in a       | Only in this Scenario  | This fixture runs only if the related Scenario is executed in the  |
+| :class:Scenario class  |                        | current test run. If the execution level is ``session`` or         |
+|                        |                        | ``setup```, it will be executed as a session or setup fixture only |
+|                        |                        | if this Scenario appears in the executor tree. If the execution    |
+|                        |                        | level is ``scenario`` or lower, the fixture will only be called    |
+|                        |                        | when the Scenario is currently active in the test run.             |
 +------------------------+------------------------+--------------------------------------------------------------------+
 
-As you can see, it depends on the **execution-level** and on the **definition-scope** whether and when a fixture will be
-executed.
+As you can see, whether and when a fixture gets executed depends on both its **execution-level** and its
+**definition-scope**.
 
 Define fixture
 --------------
 
-If you want to use a fixture globally you can simply add it to the ``balderglob.py`` file, that has to be located in
-the root directory. You can define the startup code that will be executed before and also the teardown code that will be
-executed after the embracing object in one function/method. For this you have to separate the code with the ``yield``
-command.
+If you want to define a global fixture that applies everywhere, you can simply add it as a function in the
+``balderglob.py`` file, which must be located in the root directory of your project. In this function, you can include
+both the setup code that runs before the wrapped object and the teardown code that runs after it. To separate these two
+parts, use the ``yield`` statement.
 
-This fixture can look like the following:
+For example, this fixture can look like:
 
 .. code-block:: python
 
@@ -524,16 +607,16 @@ This fixture can look like the following:
         notification.send("balder terminated")
 
 .. note::
-    Note that Balder will collect only the ``balderglob.py`` file that is located directly in the working directory. If
-    you want to separate your global elements, you can distribute your code but you have to import it in the global
-    ``balderglob.py`` file.
+    Note that Balder will only load the ``balderglob.py`` file located directly in the working directory. If you want
+    to organize your global elements across multiple files, you can split your code accordingly, but be sure to import
+    everything into this main ``balderglob.py`` file.
 
 
 Add setup fixture
 -----------------
 
-If you want to interact with a special setup, you can define a fixture also in that setup. The big advantage here is,
-that you can interact with the setup-devices on this stage too.
+If you want to interact with a specific Setup, you can define a fixture directly within that Setup class. The major
+advantage here is that you can access and interact with the Setup's devices at this stage as well.
 
 .. code-block:: python
 
@@ -564,23 +647,11 @@ that you can interact with the setup-devices on this stage too.
             self.MyServerDevice1.server.shutdown()
             self.MyServerDevice2.server.shutdown()
 
-.. note::
-    In a real-world example, we would have a separate setup-only feature that allows to start and shutdown the
-    webserver, because we want to develop these scenarios as universal as possible. Our feature ``WebServerFeature``
-    would only define that we have a webserver, but not that we can start and stop it. If we want to test the login of
-    pypi for example, we have not the possibility to start and stop the server, but we can assume that the server is
-    running.
-    With this, we can apply the scenario also for a webserver we can start and stop as we can for the webserver we
-    can't start and stop.
-
-    Remember, that we define **what we need** in our scenario and we would not need the possibility to start and stop
-    the server for this. This work should be done in setup code only.
-
 Add scenario fixture
 --------------------
 
-The same shown within :ref:`Setups` is also possible on :ref:`Scenario <Scenarios>` level. Similar to the setup, you
-provide a method here too:
+The same approach shown previously for Setups can also be applied at the Scenario level. Just like in Setups, you can
+define fixtures as methods within the Scenario class.
 
 .. code-block:: python
 
@@ -601,4 +672,5 @@ provide a method here too:
             yield
             self.ClientDevice.req.logout()
 
-For more about fixtures, take a look :ref:`here <Fixtures>`.
+If you want to learn more about fixtures, feel free to jump straight to the :ref:`Fixtures` section. Otherwise, let's
+continue with a more detailed explanation of scenarios.
