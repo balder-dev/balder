@@ -1,52 +1,46 @@
 Scenarios
 *********
 
-.. important::
+A test scenario describes the environment that a test **needs** in order to be carried out (in contrast to the
+:ref:Setups, which describe **what you have**).
 
-    .. todo complete reworking of this section
-
-    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
-
-A (test) scenario describes the environment that a test **needs** to be able to be carried out (in contrast to the
-:ref:`Setups` that describes what you **have**). A scenario allows to define a test environment first, after the
-individual test cases will be implemented.
+A scenario holds the definition of the required test environment and the test logic itself.
 
 Create a scenario
 =================
 
-Every scenario class have to be located in a file that fulfils the naming ``scenario_*.py``. To keep it clear, it
-is often useful to create a own directory for the scenario which has the same name like the scenario python file. So you
-can define your related objects, you only use for your single scenario inside this directory.
-However Balder will load the python file (with naming ``scenario_*.py``) in its collecting process and searches for
-classes that are a subclass of :class:`Scenario` and starts with the name `Scenario`.
+Every scenario class has to be located in a file that matches the naming pattern ``scenario_*.py``. Balder will load
+the Python file (matching the pattern ``scenario_*.py``) during its collection process. It then searches for classes
+that are subclasses of :class:`Scenario` and whose names start with ``Scenario*``.
 
-.. code-block:: py
+.. code-block:: python
 
-        # file `scenario_simple_send_msg.py`
+        # file `scenarios/scenario_simple_send_msg.py`
 
         import balder
 
         class ScenarioSimpleSendMsg(balder.Scenario):
                 pass
 
-Get it back in your mind, **a scenario defines the things your test needs**. The most obvious is that you want to test
-something, usually a device or an object. For this Balder provides :class:`Device` classes.
+Recall that **a scenario defines the environment your test needs**. The most obvious aspect is that you want to test
+something - typically a device or an object. To support this, Balder provides :class:`Device` classes.
 
 Add one or more devices
 =======================
 
-If you need more than one :class:`Device` classes, you should also define their relationship. This can be done by
-connecting them. Let's assume, we want to test the connection between two devices. The devices should send a msg between
-each other. For this example, it doesn't matter over which connection these two devices are connected, because we can
-send a message over an EthernetConnection as well as a morse signal. So we define our scenario connection (remember,
-**defines what we need**) with the highest universal :class:`Connection`. We can connect two devices over the
-``@balder.connect()`` decorator.
+If you need more than one :class:`Device`, you should also think about defining their relationships. This can be done
+by connecting them.
 
-Let's expand our example with the two devices and there connection:
+Let's assume we want to test the communication between two devices, where they send a message to each other. For this
+example, it doesn't matter how these two devices are connected - whether via an Ethernet connection or even a Morse
+signal. So, we define our scenario connection (remember, **a scenario defines what we need**) using the most universal
+:class:`Connection` class. We can connect two devices using the ``@balder.connect()`` decorator.
 
-.. code-block:: py
+Let's expand our example with the two devices and their connection:
 
-        # file `scenario_simple_send_msg/scenario_simple_send_msg.py`
+.. code-block:: python
+
+        # file `scenarios/scenario_simple_send_msg.py`
 
         import balder
 
@@ -59,45 +53,28 @@ Let's expand our example with the two devices and there connection:
                 class RecvDevice(balder.Device):
                         pass
 
-Let's just capture the whole thing again. :class:`Device` classes are inner classes that defines the devices we need
-for our test scenario. They always have to be subclasses of :class:`Device`. These devices can be in a relationship with
-each other. For this relationship, we use the ``@balder.connect(..)`` decorator. You can read more about devices at
-:ref:`Devices`.
+Let's recapture it again: :class:`Device` classes are inner classes that define the devices we need for our test scenario. They must always be
+subclasses of :class:`Device`. These devices can be related to each other. To establish these relationships, we use the
+``@balder.connect(..)`` decorator. You can read more about devices in :ref:`Devices` section.
 
-In this example, we have used the universal :class:`Connection` object, but there are a lot of other connections too.
-You can also define some by your own.
+In this example, we used the universal :class:`Connection` object, but there are many other connection types available.
+You can also define your own custom connections. However, by using this universal :class:`Connection`, we specify that
+the exact method of connection between the devices doesn't matter, as long as they are connected. Connections provide
+a powerful tool, so if you want to read more about them, please refer to the :ref:`Connections` section.
 
-.. note::
-    These connection objects are already in a relationship before you use them. They are included in a global
-    connection-tree. This tree defines a hierarchical structure of the connections (for example, that Ethernet can be
-    transmitted over a ``CoaxialCableConnection`` or a ``OpticalFiberConnection``.
-
-    It is also possible to expand this tree by your own or if necessary to use a complete custom tree.
-
-    You can read more about this :ref:`here <connection trees>`.
-
-In addition to define single connections, you can also select a part of the global connection tree or combine some
-connections with an OR or an AND relationship. So for example you could connect our devices and allow an Ethernet as
-well as a Serial connection, by defining
-``@balder.connect(SendDevice, over_connection=MyEthernet | MySerial)``. Of course you could also
-define, that you need both, the Serial and the Ethernet connection. This can be done with:
-``@balder.connect(SendDevice, over_connection=MyEthernet & MySerial``
-
-In our example we only define that we want a universal :class:`Connection` between our devices ``SendDevice`` and
-``RecvDevice``. With this the connection type doesn't matter and every connection works here.
 
 Add new device features
 =======================
 
 Now we have two devices, but they can't do anything yet. We can add functionality to them by creating or using
-so called :class:`Feature` classes. We want to define some by ourselves. For this we add a new file
-``features.py`` inside our scenario directory, we've created before. For this example we need one feature that
-can send messages and one that can receive the sent messages. First let us define these new features without an
+:class:`Feature` classes. We want to define some ourselves. To do this, we add a new file ``messaging_features.py`` in
+our common scenario feature directory ``lib/scenario_features``. Within this file, we want to define one feature that
+can send messages and another that can receive the sent messages. First, let's define these new features without an
 implementation:
 
-.. code-block:: py
+.. code-block:: python
 
-        # file `scenario_simple_send_msg/features.py`
+        # file `lib/scenario_features/messaging_features.py`
 
         import balder
 
@@ -107,15 +84,15 @@ implementation:
         class RecvMessageFeature(balder.Feature):
                 pass
 
-You can assign a feature to a scenario-device in a way that this scenario device now needs this feature for an
-execution by instantiating it as class attribute inside the device:
+You can assign a feature to a scenario device such that the device requires this feature for execution. This is done
+by instantiating the feature as a class attribute inside the device class:
 
-.. code-block:: py
+.. code-block:: python
 
-        # file `scenario_simple_send_msg/scenario_simple_send_msg.py`
+        # file `scenarios/scenario_simple_send_msg.py`
 
         import balder
-        from .features import SendMessageFeature, RecvMessageFeature
+        from lib.scenario_features.messaging_features import SendMessageFeature, RecvMessageFeature
 
         class ScenarioSimpleSendMsg(balder.Scenario):
 
@@ -126,26 +103,26 @@ execution by instantiating it as class attribute inside the device:
                 class RecvDevice(balder.Device):
                         recv = RecvMessageFeature()
 
-As you can see above, we have to instantiate our new :class:`.Feature` classes as class attribute of the
-device classes. With this we want to define that they implement it.
+As you can see above, we have to instantiate our new :class:`Feature` classes as class attributes of the device classes.
+This defines that the devices require these features.
 
-In this example we define that we need a ``SendDevice`` which has a ``SendMessageFeature`` and a ``RecvDevice`` which
-has the ``RecvMessageFeature``. Both have to be connected over a universal :class:`Connection`. These are the things, we
-need in a setup later, to allow the execution of this scenario. Otherwise the variation between the not-working setup
-and this scenario is not applicable. Balder uses this information to check if a variation (matching between a setup and
-a scenario) is possible or not.
+In this example, we define that we need a ``SendDevice`` with a ``SendMessageFeature`` and a ``RecvDevice`` with a
+``RecvMessageFeature``. Both must be connected via a universal :class:`Connection`. These are the elements we need in a
+setup later to enable the execution of this scenario. Otherwise, the variation between a non-matching setup and this
+scenario would not be applicable. Balder uses this information to determine whether a variation (the matching between
+a setup and a scenario) is possible or not.
 
 Add real functionality
 ----------------------
 
-Up to now we have defined some  :ref:`Features`, but they still have no real implementation. So we can't really do
-something with them.
+Up to now, we have defined some :ref:`Features`, but they still have no real implementation. So, we can't really do
+anything with them yet.
 
-Now we want to update our features to add some methods. We expand our ``features.py`` file a little bit:
+Now, we want to update our features by adding some methods. Let's expand our ``features.py`` file a bit:
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `scenario_simple_send_msg/features.py`
+    # file `lib/scenario_features/messaging_features.py`
 
     import balder
 
@@ -156,7 +133,7 @@ Now we want to update our features to add some methods. We expand our ``features
             raise NotImplementedError("has to be implemented in subclass")
 
         def send_bytes_to(self, other, the_bytes):
-            """sends the bytes to the object"""
+            """sends the bytes to the `other` object"""
             raise NotImplementedError("has to be implemented in subclass")
 
     class RecvMessageFeature(balder.Feature):
@@ -172,24 +149,27 @@ Now we want to update our features to add some methods. We expand our ``features
 With that, we added two abstract methods without an implementation yet. We are going to implemented them in the
 :class:`Feature` subclass of our :ref:`Setups` later.
 
-.. note::
-    In some cases it can be useful to provide a implementation in the scenario-feature implementation too.
-    You can find more details about that in the :ref:`Features section <Features>`.
+With that, we have added two abstract methods without implementations yet. We will implement them later in the
+:class:`Feature` subclasses within our :ref:`Setups`.
 
-Use the features and write tests
+.. note::
+    In some cases, it can be useful to provide an implementation in the scenario's feature class as well. You can
+    find more details about this in the :ref:`Features <Features>` section.
+
+Use the features to write tests
 ================================
 
-Now we can write our first test method. We want to send a Hello-World message and want to make sure that it was
-received successfully. It is important that the name of a test method always starts with ``test_*()``, otherwise Balder
-will not collect it as a testcase.
+Now, we can write our first test method. We want to send a "Hello World" message and ensure that it was received
+successfully. It is important that the name of a test method always starts with ``test_``, otherwise Balder will not
+collect it as a test case.
 
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `scenario_simple_send_msg/scenario_simple_send_msg.py`
+    # file `scenarios/scenario_simple_send_msg.py`
 
     import balder
-    from .features import SendMessageFeature, RecvMessageFeature
+    from lib.scenario_features.messaging_features import SendMessageFeature, RecvMessageFeature
 
     class ScenarioSimpleSendMsg(balder.Scenario):
 
@@ -206,54 +186,133 @@ will not collect it as a testcase.
             recv_list = self.RecvDevice.listen_for_incoming_msgs(timeout=1)
             assert (self.SendDevice.send.address, send_msg) in recv_list, "can not find the message in received message list"
 
-It is very easy to access a device inside a test method. With ``self.SendDevice`` or ``self.RecvDevice`` we can access
-our created devices and over their class attributes we can access the :ref:`Features` objects too. This allows us to
-execute our newly created properties and methods.
+Accessing a device inside a test method is straightforward. You can use ``self.SendDevic``e or ``self.RecvDevice`` to
+reach the devices you've defined. Through their attributes, you can also access the :ref:`Features` objects. This
+allows you to call and execute the newly defined methods and properties.
 
-..
-    this is currently not official supported todo
-    Mark test to SKIP or IGNORE
-    ===========================
+When executing the scenario with a matching setup, Balder will automatically replace the feature references with the
+actual instances provided by the setup. Balder handles all of this for you behind the scenes.
 
-    Balder provides an easy integration to mark a test in the way to SKIP or IGNORE it from Balder test system. This can be
-    done with the class attributes ``IGNORE``, ``SKIP`` and ``RUN``, which are part of every :class:`.Scenario` class. Per
-    default the ``RUN`` attribute contains a list with all testcases that are mentioned in the :class:`.Scenario` and
-    inherited tests that are still active in the higher classes.
+Mark test to SKIP or IGNORE
+===========================
 
-    If we want to add our newly creates test to the ``SKIP`` list, we have to define it like shown in the example below:
+Balder provides an integration to mark a test in the way to SKIP or IGNORE it from Balder test system. This can be
+done with the class attributes ``IGNORE``, ``SKIP`` and ``RUN``, which are part of every :class:`.Scenario` class. Per
+default the ``RUN`` attribute contains a list with all testcases that are mentioned in the :class:`.Scenario` and
+inherited tests that are still active in the higher classes.
 
-    .. code-block:: py
+If we want to add our newly creates test to the ``SKIP`` list, we have to define it like shown in the example below:
 
-        # file `scenario_simple_send_msg/scenario_simple_send_msg.py`
+Balder provides a way to mark tests as SKIP or IGNORE within the Balder test system. This can be done using the class
+attributes ``IGNORE``, ``SKIP``, and ``RUN``, which are available in every :class:`Scenario` class. By default, the
+``RUN`` attribute contains a list of all test cases defined in the :class:`Scenario`, along with any inherited tests
+that remain active from parent classes.
 
-        import balder
-        from .features import SendMessageFeature, RecvMessageFeature
+If we would like to add our newly created test to the ``SKIP`` list, we have to define it as shown in the example below:
 
-        class ScenarioSimpleSendMsg(balder.Scenario):
+.. code-block:: python
 
-            SKIP = [ScenarioSimpleSendMsg.test_simple]
+    # file `scenarios/scenario_simple_send_msg.py`
 
-            class SendDevice(balder.Device):
-                send = SendMessageFeature()
+    import balder
+    from lib.scenario_features.messaging_features import SendMessageFeature, RecvMessageFeature
 
-            @balder.connect(SendDevice, over_connection=balder.Connection)
-            class RecvDevice(balder.Device):
-                recv = RecvMessageFeature()
+    class ScenarioSimpleSendMsg(balder.Scenario):
 
-            def test_simple(self):
-                send_msg = b"Hello World!"
-                self.SendDevice.send.send_bytes_to(self.RecvDevice.recv.address, send_msg)
-                recv_list = self.RecvDevice.listen_for_incoming_msgs(timeout=1)
-                assert (self.SendDevice.send.address, send_msg) in recv_list, "can not find the message in received message list"
+        SKIP = [ScenarioSimpleSendMsg.test_simple]
 
-    In this case the testcase ``test_simple`` will be marked as **SKIP** and will never be called. This can be used, if
-    you are in the developing process of a test and you don't want to activate it before the development is completed.
+        class SendDevice(balder.Device):
+            send = SendMessageFeature()
+
+        @balder.connect(SendDevice, over_connection=balder.Connection)
+        class RecvDevice(balder.Device):
+            recv = RecvMessageFeature()
+
+        def test_simple(self):
+            ...
+
+In this case, the test case ``test_simple`` will be marked as **SKIP** and will never be executed. This can be useful
+during the development process of a test, if you don't want to activate it until the implementation is complete.
 
 Scenario inheritance
 ====================
 
-.. warning::
-    This section is still under development.
+Balder supports inheritance for scenario classes, just like in standard Python class inheritance. This allows you to
+create a base scenario with common devices and fixtures and extend or modify it in child scenarios. It's particularly
+helpful when you have similar tests that share device structures or setup/cleanup code, that can be summarized in
+fixtures, which should be reused over different scenarios.
 
-..
-    .. todo
+
+To use inheritance, simply subclass your new scenario from an existing one. Balder will automatically inherit all the
+devices, features, connections, and test methods from the parent class. You can add new elements or override existing
+ones in the child class.
+
+Overwriting Scenario Devices
+----------------------------
+
+You can overwrite devices and **extend** their feature set, but you can never replace an existing feature set from the
+parent class. It is also important to use the same device names when a device exists in a parent class.
+This ensures that Balder can properly map, connect, and resolve the devices across the inheritance chain without
+conflicts. For instance, if the parent has a device named ``SendDevice``, any override in the child must also be called
+``SendDevice``.
+
+.. code-block:: python
+
+    class ScenarioInherited(ScenarioSimpleSendMsg):
+
+        class SendDevice(ScenarioSimpleSendMsg.SendDevice): # Balder only allows overwriting and assigning the same name
+            # if you do not overwrite features here, the features from `ScenarioSimpleSendMsg.SendDevice` are still active
+            pass
+
+        @balder.connect(SendDevice, over_connection=balder.Connection)
+        class RecvDevice(ScenarioSimpleSendMsg.RecvDevice):
+            # if you do not overwrite features here, the features from `ScenarioSimpleSendMsg.RecvDevice` are still active
+            pass
+
+        # the test `InheritedScenario.test_simple` is still active and will be executed for this scenario
+
+Keep in mind that inherited test methods (those starting with ``test_``) will be collected and executed unless you
+explicitly skip or ignore them using the SKIP or IGNORE class attributes. This way, you can build modular and reusable
+test structures while maintaining clarity and consistency.
+
+Overwriting Features of overwritten Devices
+-------------------------------------------
+
+Sometimes it makes sense to overwrite a specific feature in a scenario device's parent class. So for example, if we want
+to use a more specific implementation for our ``SendMessageFeature`` within our ``ScenarioInherited``, we can overwrite
+it, by using the new feature in the sub class:
+
+.. code-block:: python
+
+    class ScenarioInherited(ScenarioSimpleSendMsg):
+
+        class SendDevice(ScenarioSimpleSendMsg.SendDevice):
+            send = MoreSpecificSendMessageFeature()
+        ...
+
+This works, but there need to be two conditions, that Balder allows it:
+
+1) you need to use the same attribute name ``send``, that is used in the parent class
+2) ``MoreSpecificSendMessageFeature`` needs to be a subclass of ``SendMessageFeature``
+
+These conditions are necessary, because Balder would not be able to execute the test
+``ScenarioSimpleSendMsg.test_simple`` from parent scenario class, if the interface defined in ``SendMessageFeature``
+would not be available.
+
+Behavior for collected sub and parent classes
+---------------------------------------------
+
+Balder has a mechanism that detects duplicated scenarios because of inheritance. If balder collects the same variation
+(same setup and same device mapping) with the ``ScenarioSimpleSendMsg`` and the ``ScenarioInherited``, Balder
+automatically removes the variation with the parent class ``ScenarioSimpleSendMsg`` because it is fully covered up by
+the inherited scenario ``ScenarioInherited``.
+
+If you want to avoid this, just creating a new subclass without any further implementation:
+
+.. code-block:: python
+
+    class ScenarioUnchanged(ScenarioSimpleSendMsg):
+        pass
+
+This will collect ``ScenarioUnchanged`` instead of ``ScenarioSimpleSendMsg`` which results in the execution of
+the unchanged test code provided in ``ScenarioSimpleSendMsg``.
