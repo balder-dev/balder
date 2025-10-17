@@ -3,10 +3,9 @@
   <img style="margin: 20px;max-width: 68%" src="https://docs.balder.dev/en/latest/_static/balder_w_boarder.png" alt="Balder logo">
 </div>
 
-Balder is a very powerful, universal and flexible python test system that allows you to reuse a once written testcode as 
-efficiently as possible for different but similar platforms/devices/applications. Balder's goal is
-being a platform for combining the single steps of defining, developing and documenting the entire test 
-process while using test scenarios which can be reused across different projects.
+Balder is a flexible Python test system that allows you to reuse test code written once for different but similar 
+platforms, devices, or applications. It enables you to install ready-to-use test cases and provides various test 
+development features that help you test your software or devices much faster.
 
 You can share your own testcode by creating a new BalderHub project, or you use an 
 [existing BalderHub project](https://hub.balder.dev), by simply installing and using it. This makes the test development 
@@ -42,8 +41,7 @@ Balder allows you to reuse previously written test code by dividing it into the 
 test (`Scenario`) and the components that **we have** (`Setup`).
 
 `Scenario` classes define a test. Only describe the most important aspects **you need** for the execution of the 
-corresponding test (method of the scenario class) inside `Scenario` classes. Often it is enough to define abstract 
-methods in the scenario-level features.
+corresponding test (method of the scenario class) inside `Scenario` classes. 
 
 In contrast, `Setup` classes describe exactly what **you have**. This is where you define all the devices and their 
 features. Balder will then automatically search for mappings and run your test with them.
@@ -338,13 +336,9 @@ TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 8 | TOTAL 
 Any help is appreciated. If you want to contribute to balder, take a look into the 
 [contribution guidelines](https://github.com/balder-dev/balder/blob/main/CONTRIBUTING.md).
 
-Balder is still in its early steps. Unfortunately, this also means that we don't have a broad variety of 
-[BalderHub projects](https://hub.balder.dev) at the moment. 
-
-Are you an expert in your field? Do you enjoy the concept of balder? How about you create your own
-BalderHub project? Take a look into our [Balder GitHub Group](https://github.com/balder-dev) and feel free to share 
-your ideas. You can contribute to an existing project or create your own. If you are not sure, a project for your idea 
-already exists or if you want to discuss your ideas with others, feel free to
+Are you an expert in your field? Do you enjoy the concept of balder? How about creating your own
+BalderHub project? You can contribute to an existing project or create your own. If you are not sure, a project for 
+your idea already exists or if you want to discuss your ideas with others, feel free to
 [create an issue in the BalderHub main entry project](https://github.com/balder-dev/hub.balder.dev/issues) or
 [start a new discussion](https://github.com/balder-dev/hub.balder.dev/discussions).
 
@@ -352,6 +346,6 @@ already exists or if you want to discuss your ideas with others, feel free to
 
 Balder is free and Open-Source
 
-Copyright (c) 2022 Max Stahlschmidt and others
+Copyright (c) 2022-2025 Max Stahlschmidt and others
 
 Distributed under the terms of the MIT license
