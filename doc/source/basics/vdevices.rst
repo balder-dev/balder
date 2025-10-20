@@ -1,21 +1,15 @@
 VDevices and method-variations
 ******************************
 
-.. important::
+In many circumstances, it can be helpful to access the :ref:`Features` of other :ref:`Devices` from within a feature.
+This allows you to retrieve information from outside the feature itself and also enables you to define the expected
+external environment directly within features.
 
-    .. todo complete reworking of this section
+For example, if you have a ``LoadSiteFeature`` that lets you load a website, or a ``SendMessageFeature`` that lets you
+send a message to another device, you often need details about that other device.
 
-    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
-
-In many circumstances, it can be helpful, that you are able to access the :ref:`Features` of other :ref:`Devices`
-inside a feature. This allows you to get information from outside the feature and also allows you to definite the
-expected outside environment in features too.
-
-For example if you have a ``LoadSiteFeature``, which allows to load a website or a ``SendMessageFeature``, which allows
-to send a message *to another device*, you need some information about this other device.
-
-One possibility to get data from one device to another is the providing of data through a method argument, like shown
-in the following example:
+One way to pass data from one device to another is by providing it through a method argument, as shown in the following
+example:
 
 .. code-block:: python
 
@@ -34,27 +28,27 @@ in the following example:
             self.Client.load.open_website(url)
             ...
 
-But this could getting really confusing, after you have defined tons of information and provide this on every different
-scope. Actually it would be enough if the feature gets access to the other device. For this you can use so called
-:class:`VDevice` objects.
-
+However, this approach can become really confusing once you start defining large amounts of information and providing
+it across every different scope. In fact, it would be sufficient for the feature to simply gain access to the other
+device. To achieve this, you can use so-called :class:`VDevice` objects.
 
 vDevices
 ========
 
-A vDevice is a device-like class that describes a virtual device this feature interacts with. It is defined as an inner
-class of a feature which is a subclass of :class:`VDevice`. Balder will ensure that in case you are using this feature
-inside an scenario/setup, a real device (which implements at least the features of your VDevice) is mapped to it.
+A VDevice is a device-like class that describes a virtual device with which this feature interacts. It is defined as an
+inner class within a feature and must be a subclass of :class:`VDevice`. Balder ensures that when you use this feature
+inside a scenario or setup, a real device (which implements at least the features of your VDevice) need to be
+mapped to it in the scenario or the setup class.
 
-You simply create a vDevice, describe which features it should have (by instantiating them like it is done with normal
-devices) and use them. All other things will be automatically managed from Balder.
+You simply create a VDevice, specify which features it should have (by instantiating them in the same way as with
+normal devices), and then use them. Balder handles all other aspects automatically.
 
-Let's go back to the example from earlier. Instead of giving the attribute as method parameters, you can create a
-vDevice that uses the ``HttpServerFeature``. This allows you to access the properties and methods of the
-``HttpServerFeature`` from the ``LoadSiteFeature`` (in which you have defined the vDevice).
+Let's return to the earlier example. Instead of passing attributes as method parameters, you can create a VDevice that
+incorporates the ``HttpServerFeature``. This allows you to access the properties and methods of the
+``HttpServerFeature`` directly from the ``LoadSiteFeature`` (where you defined the VDevice).
 
-To make this a little bit clearer, please take a look for the following scenario (and the feature implementation) which
-implements the functionality of the earlier example, but with vDevices:
+To make this clearer, please take a look at the following scenario (and its feature implementation), which achieves the
+same functionality as the earlier example but uses VDevices:
 
 .. code-block:: python
 
@@ -64,6 +58,7 @@ implements the functionality of the earlier example, but with vDevices:
         # inner-feature referencing (more details about this in the `Features` section)
         my_browser = ...
 
+        # describes that there needs to be a peer device that has a `HttpServerFeature`
         class WebServerVDevice(balder.VDevice):
             serv = HttpServerFeature()
 
@@ -76,7 +71,7 @@ implements the functionality of the earlier example, but with vDevices:
 
 .. code-block:: python
 
-    # scenario_load_web.py
+    # scenarios/scenario_load_web.py
 
     class ScenarioLoadWeb(balder.Scenario):
 
@@ -85,7 +80,7 @@ implements the functionality of the earlier example, but with vDevices:
             ...
 
         class Client(balder.Device):
-            # we have to map the vDevice with our real device (use the class name of the vDevice as key and the
+            # we have to map the vDevice with the real device (use the class name of the vDevice as key and the
             #  device class you want to map as value)
             load = LoadSiteFeature(WebServerVDevice=ScenarioLoadWeb.Server)
 
@@ -94,22 +89,30 @@ implements the functionality of the earlier example, but with vDevices:
             self.Client.load.open_website()
             ...
 
-As you can see, you don't have to provide the url in the testcase. This is not necessary, because the value is already
-available trough the vDevice ``WebServerVDevice``.
+As you can see, you don't have to provide the URL in the scenario. This is not necessary because the value is already
+available through the VDevice ``WebServerVDevice``.
 
 .. note::
-    By specifying and mapping vDevices you describe that it is only allowed to use this feature with a device that at
-    least implements the required features instantiated in the vDevice.
+    By specifying and mapping VDevices, you indicate that this feature can only be used with a real device that
+    implements at least the required features defined within the VDevice.
 
 Multiple vDevices
 -----------------
 
-Balder allows only to map one vDevice, but it is possible to define more than one vDevice in one feature class. This
+At the moment, Balder allows only to map one vDevice, but it is possible to define more than one vDevice in one feature class. This
 will be really powerful while creating a feature class which allows to do the similar process, but in very different
 ways. Let's extend the example from above a little bit. Assume we want to create a feature that opens a webpage and
 returns the title of the page. Instead of allowing this feature only to work with webpages we can also update the
 feature working with apps and other GUI applications, like programs or machine interfaces. With this information,
 we can rework our feature class:
+
+Currently, Balder only allows mapping one VDevice at a time. However, you can define more than one VDevice within a
+single feature class. This approach becomes particularly powerful when creating a feature class that performs similar
+processes but in very different ways, for example for GUI or for CLI.
+
+Let's extend the example from above a bit. Suppose we want to create a feature that opens a webpage and returns the
+title of the page. Instead of limiting this feature to webpages only, we can update it to also work with apps and other
+GUI applications, such as desktop programs or machine interfaces. With this in mind, we can rework our feature class:
 
 .. code-block:: python
 
@@ -144,20 +147,20 @@ As you can see, we have three different vDevices in our feature implementation. 
 |                                  |                        | app information about the current shown page             |
 +----------------------------------+------------------------+----------------------------------------------------------+
 | ``HumanMachineInterfaceVDevice`` | ``HMIReaderFeature``   | allows to read the data of a human-machine-interface,    |
-|                                  |                        | which is often used to interact with machines            |
+|                                  |                        | which is often used to interact with physical machines   |
 +----------------------------------+------------------------+----------------------------------------------------------+
 
 For all of these different types, the feature should be able to work with. But how should our method ``get_title()`` be
 implemented to work with all these different vDevices?
 
-Use the property ``mapped_device``
-----------------------------------
+Use the property ``mapped_device`` (NOT RECOMMENDED)
+----------------------------------------------------
 
 **NOT RECOMMENDED**
 
-One possibility to implement your method to support all available vDevices is the using of the property
-:meth:`Feature.active_vdevice`. This method returns the current active **vDevice**.
-If you use our feature in a scenario and add the following vDevice mapping:
+One way to implement your method so that it supports all available VDevices is by using the property
+:meth:`Feature.active_vdevice`. This property returns the currently active VDevice. For example, if you use our feature
+in a scenario and add the following VDevice mapping:
 
 .. code-block:: python
 
@@ -177,11 +180,10 @@ If you use our feature in a scenario and add the following vDevice mapping:
         def test_check_title(self):
             ...
 
-The property ``self.active_vdevice`` (inside the ``LoadSiteFeature``) will return the
-``GetTitleFeature.WebserverVDevice`` class and the property ``self.active_mapped_device`` will return the
-``ScenarioTitleCheck.Server`` class.
+The property ``self.active_vdevice`` (inside the GetTitleFeature) will return the ``GetTitleFeature.WebserverVDevice``
+class, while the property ``self.active_mapped_device`` will return the ``ScenarioTitleCheck.Server`` class.
 
-Take a look at the implementation of our ``GetTitleFeature`` if we are using the :meth:`Feature.active_vdevice` property
+Take a look at the implementation of our GetTitleFeature, where we use the :meth:`Feature.active_vdevice` property
 to determine the currently active mapping:
 
 .. code-block:: python
@@ -192,9 +194,7 @@ to determine the currently active mapping:
 
     class GetTitleFeature(balder.Features):
 
-        browser = ..
-        emulator = ..
-        hmi = ..
+        guicontrol = ...
 
         class WebserverVDevice(balder.VDevice):
             serv = HttpServerFeature()
@@ -213,28 +213,26 @@ to determine the currently active mapping:
             if self.active_vdevice == self.WebserverVDevice:
                 # do the stuff for the `WebserverVDevice`
                 url = self.WebserverVDevice.serv.url
-                self.browser.open_website(url)
-                return self.browser.title
+                self.guicontrol.open(url)
+                return self.guicontrol.session.title
             elif self.active_vdevice == self.AppEmulatorVDevice:
                 page_id = self.AppEmulatorVDevice.main_page_id
-                self.emulator.start(page_id)
-                return self.emulator.page_title
+                self.guicontrol.open(page_id)
+                return self.guicontrol.get_property('emulator::page_title')
             elif self.active_vdevice == self.HumanMachineInterfaceVDevice:
-                self.hmi.start(self.HumanMachineInterfaceVDevice.power_on)
-                return self.hmi.read_title()
+                self.guicontrol.start(self.HumanMachineInterfaceVDevice.power_on)
+                return self.guicontrol.get_property('hmi::title')
             else:
                 raise UnknownVDeviceException('unknown vDevice mapping was given')
 
-Using method variations
-=======================
+Using method variations (RECOMMENDED)
+=====================================
 
-Another possibility to create the functionality above is the using of method variations. This allows you to define a
-method multiple times, while you decorate it with the ``@for_vdevice(..)`` decorator, which binds the method to a
-specific vDevice. Balder will automatically determine the correct method before the fixture or the testcase will be
-executed.
+Another way to achieve the functionality described above is by using method variations. This allows you to define a
+method multiple times, decorating each version with the ``@for_vdevice(..)`` decorator to bind it to a specific VDevice.
+Balder will automatically select the correct method variation before executing the fixture or the test case.
 
-The example from before becomes much clearer if you use method variations:
-
+The example from before becomes much clearer when using method variations:
 
 .. code-block:: python
 
@@ -244,9 +242,7 @@ The example from before becomes much clearer if you use method variations:
 
     class GetTitleFeature(balder.Features):
 
-        browser = ..
-        emulator = ..
-        hmi = ..
+        guicontrol = ...
 
         class WebserverVDevice(balder.VDevice):
             serv = HttpServerFeature()
@@ -264,191 +260,135 @@ The example from before becomes much clearer if you use method variations:
         def get_title(self):
             # do the stuff for the `WebserverVDevice`
             url = self.WebserverVDevice.serv.url
-            self.browser.open_website(url)
-            return self.browser.title
+            self.guicontrol.open(url)
+            return self.guicontrol.session.title
 
         @balder.for_vdevice('AppEmulatorVDevice', with_connections=balder.Connection())
         def get_title(self):
             page_id = self.AppEmulatorVDevice.main_page_id
-            self.emulator.start(page_id)
-            return self.emulator.page_title
+            self.guicontrol.open(page_id)
+            return self.guicontrol.get_property('emulator::page_title')
 
         @balder.for_vdevice('HumanMachineInterfaceVDevice', with_connections=balder.Connection())
         def get_title(self):
-            self.hmi.start(self.HumanMachineInterfaceVDevice.power_on)
-            return self.hmi.read_title()
+            self.guicontrol.start(self.HumanMachineInterfaceVDevice.power_on)
+            return self.guicontrol.get_property('hmi::title')
 
 .. note::
-    Sometimes python does not allow to reference the type variable for vDevices. You can use a string with the name of
-    the vDevice here too. Balder will automatically resolve this internally.
+    Sometimes, Python does not allow you to reference the type variable for VDevices directly. In such cases, you can
+    use a string containing the name of the VDevice instead. Balder will automatically resolve this internally.
 
-Depending on the current mapped vDevice Balder automatically calls the method variation, that fits for the current
-active vDevice.
+Depending on the currently mapped VDevice, Balder automatically calls the method variation that fits the current active
+VDevice.
 
 .. note::
-    It is important that you only access the vDevices from a method variation that is also decorated with that vDevice.
+    It is important that you only access the VDevices from within a method variation that is also decorated with the
+    corresponding VDevice (using the ``@for_vdevice`` decorator). Otherwise Balder will raise an error.
 
 Nested method variation calls
 -----------------------------
 
-Often you want to call other methods from methods itself. You can freely do this. Balder will handle the correct calling
-of all methods in the feature, also for nested calls.
+Often, you may want to call other methods from within a method itself. You can do this freely. Balder will handle the
+correct invocation of all methods in the feature, including nested calls.
 
 Bind vDevice for connection-trees
 =================================
 
-You can also narrow the method variations even further by specifying a specific connection tree in the
-``@balder.for_vdevice(..)`` decorator. This allows you to implement different method variations for different
-connections, depending on the mapped device and its connections to the device, that uses the feature.
-
+You can further refine method variations by specifying a particular connection tree in the ``@balder.for_vdevice(..)``
+decorator. This enables you to implement different method variations for specific connections, depending on the mapped
+device and its connections to the device that owns the feature.
 
 Method variations depending on connection-trees
 -----------------------------------------------
 
-Let's go back to an easy scenario which only has one single vDevice:
+
+Let's return to a simple scenario that involves only a single VDevice. The following scenario is defined to use a
+connection with either a ``ConfirmableConnection`` or a ``NonConfirmableConnection``. A ConfirmableConnection means
+that every message must be confirmed by the receiver, while a ``NonConfirmableConnection`` means that no such
+confirmation is required. This scenario would look like the following snippet:
 
 .. code-block:: python
 
     # scenario_title_check.py
+    from lib.connections import ConfirmableConnection, NonConfirmableConnection
+    from lib.scenario_features import SendFeature, RecvFeature
 
     class ScenarioSendMessage(balder.Scenario):
 
         class Receiver(balder.Device):
             recv = RecvFeature()
 
-        @balder.connect(with_device=Receiver, over_connection=SmsConnection | EMailConnection)
+        @balder.connect(with_device=Receiver, over_connection=ConfirmableConnection | NonConfirmableConnection)
         class Sender(balder.Device):
-            send = SendFeature(receiver=ScenarioSendMessage.Receiver)
+            send = SendFeature(receiver=Receiver)
 
         def test_send_msg(self):
             SEND_TEXT = 'Hello World'
             self.Sender.send.send_msg(SEND_TEXT)
             assert self.Receiver.recv.get_last_message() == SEND_TEXT
 
-In this example we ignore the connection establishment, which would be implemented with :ref:`Fixtures`. We assume that
-the connection between the two elements is already established.
-
-Our ``SendFeature`` class is implemented in the following way:
+Our ``SendFeature`` also supports both of these connection types. But we will need two different implementations for
+``send()``. This would be implemented like shown below:
 
 .. code-block:: python
 
     # features.py
 
+    @balder.for_vdevice('Receiver', over_connection=ConfirmableConnection | NonConfirmableConnection)
     class SendFeature(balder.Feature):
 
-        sms_provider = ...
-        email_provider = ...
+        session = ...
 
         class Receiver(balder.VDevice):
             receiver = RecvFeature()
 
-        @balder.for_vdevice('Receiver', SmsConnection)
+        @balder.for_vdevice('Receiver', ConfirmableConnection)
         def send(self, msg):
-            phone_number = self.Receiver.receiver.get_phone_number()
-            this.sms_provider.send(phone_number, msg)
+            session = self.session.start_new_session()
+            session.establish(self.Receiver.address)
+            session.write(msg)
+            session.wait_for_confirmation()
+            session.close()
 
-        @balder.for_vdevice('Receiver', EMailConnection)
+        @balder.for_vdevice('Receiver', NonConfirmableConnection)
         def send(self, msg):
-            mail_addr = self.Receiver.receiver.get_email()
-            this.email_provider.login()
-            this.email_provider.send(mail_addr, msg)
+            session.send_message(self.Receiver.address, msg)
 
-As you can see it is also possible to define method variations depending on the current active connection tree. Even
-it is not clear which variation it will execute in scenario level, till now it does not matter over which connection
-the two devices are connected with each other. It is enough if the setup will restrict this later. If we specify that
-our setup only supports an ``EMailConnection`` for example, Balder automatically knows which method variation should be
-called.
+As you can see, you can define methods multiple times for different VDevices and / or different sub connection types.
+Even though it is not clear which variation will be executed at the scenario level, so far it does not matter through
+which connection the two devices are connected to each other. It is sufficient if the setup restricts this later.
+
+For example, if we specify that our setup only supports an ``ConfirmableConnection``, Balder automatically knows which
+method variation should be called.
+
 
 What happens if we have multiple possibilities?
 -----------------------------------------------
 
-
-It is the responsibility of the feature developer that there exists exactly one clear variation for every possible
-vDevice and connection-tree constellation. For this Balder will execute an initial check on the beginning of the
+It is the responsibility of the feature developer to ensure that exactly one clear variation exists for every possible
+VDevice and connection-tree constellation. To this end, Balder performs an initial check at the beginning of the
 execution.
 
-Instead of illegally multiple method variations (multiple variations, with independent OR connections), hierarchically
-method variations are allowed. It is possible that you provide different implementations for different sizes of an
-connection-tree. If you have one method variation with a connection tree ``Tcp.based_on(Ethernet)`` and one with a
-single ``Ethernet``, of course you want to use the method variation with the bigger tree (the
-``Tcp.based_on(Ethernet)``). Theoretically, however, the small one would also fit. Here Balder first tries to sort these
-trees hierarchically and check if one of them is CONTAINED-IN another. Balder allows the execution and selects the
-biggest one if, this hierarchical structure works for all method-variation candidates of a variation.
+Instead of allowing illegal multiple method variations (such as multiple variations with independent OR connections),
+Balder supports hierarchical method variations. This means you can provide different implementations for connection
+trees of varying sizes. For example, if you have one method variation with a connection tree ``Tcp.based_on(Ethernet)``
+and another with a single Ethernet, you naturally want to use the variation with the larger tree
+(``Tcp.based_on(Ethernet)``). Theoretically, however, the smaller one could also match. In such cases, Balder first
+sorts these trees hierarchically and checks if one is CONTAINED-IN another. If this hierarchical structure applies to
+all method-variation candidates for a given variation, Balder allows execution and automatically selects the largest
+one.
 
-It will secure that for every possible constellation only one method variation is implemented or that all possibilities
-of the method variation connection-tree are CONTAINED-IN each other. Otherwise it will run in an error in the collecting
-stage of Balder. It would be not possible to execute the test session with that.
-
-Use multi-vDevice feature multiple times
-========================================
-
-.. warning::
-    This function has not yet been extensively tested.
-
-..
-    .. todo
-
-Maybe you wondered if you can use a feature multiple times. Normally Balder does not support this, because it is
-not defined which scenario-feature should be replaced with which setup-feature. But there is one useful
-possibility to define features multiple times. Map different vDevices on it.
-
-Let's assume we have two receiver devices and one sender device that wants to send to both receiver. We could implement
-all of that with our two features ``SendFeature`` and ``RecvFeature``:
-
-.. code-block:: python
-
-    # scenario_title_check.py
-
-    class ScenarioSendMessage(balder.Scenario):
-
-        class Sender(balder.Device):
-            send_to_recv1 = SendFeature(receiver='Receiver1')
-            send_to_recv2 = SendFeature(receiver='Receiver2')
-
-        @balder.connect(with_device=Sender, over_connection=SmsConnection | EMailConnection)
-        class Receiver1(balder.Device):
-            recv = RecvFeature()
-
-        @balder.connect(with_device=Sender, over_connection=SmsConnection | EMailConnection)
-        class Receiver2(balder.Device):
-            recv = RecvFeature()
-
-        def test_send_msg(self):
-            SEND_TEXT = 'Hello Receiver {}'
-            self.Sender.send_to_recv1.send_msg(SEND_TEXT.format(1))
-            self.Sender.send_to_recv2.send_msg(SEND_TEXT.format(2))
-            assert self.Receiver1.recv.get_last_message() == SEND_TEXT.format(1)
-            assert self.Receiver2.recv.get_last_message() == SEND_TEXT.format(2)
-
-Of course the related setup has to support this too. In this case you have to provide a vDevice-Device mapping on setup
-and on scenario level. The setup implementation could look like the following example:
-
-.. code-block:: python
-
-    class SetupSenderAndReceiver(balder.Setup):
-
-        class SendDevice(balder.Device):
-            send_recv1 = SendFeature(receiver='RecvDevice1')
-            send_recv2 = SendFeature(receiver='RecvDevice2')
-
-        @balder.connect(with_device=SendDevice, over_connection=SmsConnection)
-        class RecvDevice1(balder.Device):
-            recv = RecvFeature()
-
-        @balder.connect(with_device=SendDevice, over_connection=SmsConnection)
-        class RecvDevice2(balder.Device):
-            recv = RecvFeature()
-
-As you can see in the example above, you only have to secure that Balder exactly knows which feature instance it should
-use for which device. With this it is possible to instantiate the same features multiple times.
+This approach ensures that, for every possible constellation, either only one method variation is implemented or all
+connection-tree possibilities in the method variations are CONTAINED-IN each other. Otherwise, Balder will raise an
+error during the collecting stage, making it impossible to execute the test session.
 
 Class based for_vdevice
 =======================
 
-It is highly recommended to provide a class based ``@balder.for_vdevice(..)`` too. This makes it much easier for a user
-of the feature to figure out what it is suitable for, because this class based decorator describes exactly the usable
-interface of the feature. For this you should define a ``@balder.for_vdevice(..)`` class decorator for every vDevice you
-have:
+It is highly recommended to also provide a class-based ``@balder.for_vdevice(..)`` decorator. This makes it much easier
+for users of the feature to understand what it is suitable for, since the **class-based decorator** precisely describes
+the usable interface of the feature. To achieve this, you should define a ``@balder.for_vdevice(..)`` class decorator
+for every VDevice you have:
 
 .. code-block:: python
 
@@ -462,9 +402,7 @@ have:
     @balder.for_vdevice(HumanMachineInterfaceVDevice) # allow every connection for this vDevice
     class GetTitleFeature(balder.Features):
 
-        browser = ..
-        emulator = ..
-        hmi = ..
+        guicontrol = ..
 
         class WebserverVDevice(balder.VDevice):
             serv = HttpServerFeature()
@@ -480,15 +418,16 @@ have:
 
         ...
 
-The class based decorator always prescribe the possible vDevice connections and the allowed connection-trees between the
-corresponding devices later. It always describes the merged data of the method variations.
+The **class-based decorator** always defines the possible VDevice mappings and the allowed connection trees between the
+corresponding devices. Put simply, the class-based decorator describes the combined interface and constraints from all
+the method variation decorators.
 
 .. note::
-    Balder automatically throws a warning if you have not specified a class based ``@balder.for_vdevice(..)`` for a
-    defined vDevice, if there are some method variations for it. This warning contains a proposal for an class based
-    decorator.
+    Balder automatically issues a warning if you have not specified a class-based ``@balder.for_vdevice(..)`` decorator
+    for a defined VDevice, especially when there are method variations associated with it. This warning includes a
+    suggestion for the appropriate class-based decorator.
 
-.. note::
-    If you define a class based decorator which is a smaller set than the possibilities defined with method variations,
-    balder will reduce the method variation set to the defined class based decoration here! In this case, Balder will
-    throw a warning.
+.. warning::
+    If you define a class-based decorator that specifies a smaller set of possibilities than those provided by the
+    method variations, Balder will automatically restrict the method variations to align with the class-based decorator.
+    In this case, Balder will issue a warning to inform you of the adjustment.
