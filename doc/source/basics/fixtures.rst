@@ -1,23 +1,18 @@
 Fixtures
 ********
 
-.. important::
-
-    .. todo complete reworking of this section
-
-    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
-
-Fixtures are functions or methods that ensure that code is executed before or after specific times of a test run.
-Fixtures can be executed at different times in the Balder process (**execution-level**) and can be defined on different
-positions (**definition-scope**). The order, in which these fixtures will be executed, can be influenced by chained
-dependencies too. You can learn more about this in this section.
+Fixtures are functions or methods that run code before or after specific stages in a test execution. In Balder,
+fixtures can be triggered at various points during the testing process (known as the **execution-level**) and can be
+defined in different locations within your code (known as the **definition-scope**). The order in which these fixtures
+run can also be affected by chained dependencies between them. You'll learn more about all this in the following
+sections.
 
 A simple fixture
 ================
 
-It is very easy to define a fixture. Simply create a function and add the ``@balder.fixture()`` decorator to it.
+Defining a fixture is straightforward. Just create a function and decorate it with ``@balder.fixture()``.
 
-.. code-block:: py
+.. code-block:: python
 
     # file balderglob.py
 
@@ -28,75 +23,75 @@ It is very easy to define a fixture. Simply create a function and add the ``@bal
         print("will be executed after the test session")
 
 In the example above, we use the decorator ``@balder.fixture(level='session')`` with the argument ``level``. This
-defines the **execution-level** of the fixture. It describes on which position the fixture will be executed. We placed
-this fixture in the global ``balderglob.py`` file, which secures that the fixture will always be executed. A fixture
-has the most extensive validity if it is in the global ``balderglob.py`` file. With this, it will be used in every
-scenario/setup variation.
+defines the **execution-level** of the fixture, which specifies when and how often it will run during the testing
+process. We placed this fixture in the global ``balderglob.py`` file to ensure it always gets executed. A fixture
+defined here has the broadest scope, meaning it applies to every scenario and setup variation in your tests.
 
-What does this fixture do now? The passed parameter ``level="session"`` specifies that the fixture will finally be
-executed only once for the session. A fixture with ``level="session"`` will be called once directly after the test
-session starts.
+What exactly does this fixture do? The parameter ``level="session"`` means the fixture will run only once for the
+entire test session. Specifically, a fixture at the session level gets called right after the test session begins.
 
-But what does the ``yield`` command do? A fixture usually has two code sections that are separated with the python
-command ``yield``. The code before the ``yield`` will be executed before the test-branch runs. It's the **construct**
-part of the fixture. The code behind will be executed after the branch ran itself. This is the so called **teardown**.
+But what about the ``yield`` statement? Fixtures typically divide into two parts, separated by the Python ``yield``
+keyword. The code before ``yield`` runs before the relevant test branch (like a scenario or variation) starts - this is
+the construct phase, where you set things up. The code after ``yield`` runs afterward, once the test branch has
+finished - this is the teardown phase, where you clean up resources.
 
 .. note::
-
-    You can also omit the ``yield`` command. But with this, Balder assumes that no teardown code is available.
+    You can also omit the yield statement entirely. In that case, Balder assumes there is no teardown code to execute
+    after the test branch finishes.
 
 Execution-Level
 ---------------
 
-The decorator ``@balder.fixture(level="session")`` defines a fixture function that will be executed on the
-``session`` level, which means that the fixture will run before the test session starts (construct-part) and after
-it ends (teardown-part). There are a lot of different other levels you can use with your fixture. For example, if you
-need a fixture that reads some logs from a device after every testcase was executed, you can define one with the
-**execution-level** ``'testcase'``. This will be executed before and after every relevant testcase. You can find more
-information about the **execution-level** in the section :ref:`Execution-Level possibilities`.
+The decorator ``@balder.fixture(level="session")`` defines a fixture function that runs at the execution-level
+``session``. This means the fixture's construct part executes right before the entire test session begins, while the
+teardown part runs after the session ends. Balder offers many other execution levels for fixtures to suit different
+needs. For instance, if you want a fixture to read logs from a device after each test case finishes, you can set its
+**execution-level** to ``'testcase'``. In this case, the fixture will run before and after every relevant test case. For
+details on all available options, see the section :ref:`Execution-Level possibilities`.
 
 Definition-Scope
 ----------------
 
-The **definition-scope** describes the validity of the fixture. It depends on the definition position, the fixture is
-located in the Balder testsystem. For example, if you implement a fixture in the global ``balderglob.py`` file, it has
-the **definition-scope** GLOBAL. This means, that it is valid for the whole test session. It is valid for every testcase
-that is executed within a test session. If a fixture (that is defined in the ``balderglob.py`` file) has the decorator
-``@balder.fixture(level="session")`` it will always be executed, independent of the :ref:`Scenario <Scenarios>` and
-independent which :ref:`Setup <Setups>` or variation matches. If the fixture has
-the decorator ``@balder.fixture(level="scenario")``, but is still defined in the ``balderglob.py`` file, it has a
-different **execution-level** but it keeps the power to be executed in any available :ref:`Scenario <Scenarios>`.
+The **definition-scope** describes the validity of a fixture. It depends on where the fixture is defined within the
+Balder test system. For example, if you implement a fixture in the global ``balderglob.py`` file, it has the
+**definition-scope** GLOBAL. This means it is valid for the entire test session and applies to every test case executed
+during that session. If a fixture defined in the ``balderglob.py`` file uses the decorator
+``@balder.fixture(level="session")``, it will always be executed - regardless of the specific
+:ref:`Scenario <Scenarios>` or which :ref:`Setup <Setups>` or variation is matched. That is similar for all other
+**execution-level**, as long as it is defined within the ``balderglob.py`` file.
 
-The situation differs when you define the fixture in a single :ref:`Scenario <Scenarios>`. Let's just call this
-scenario ``ScenarioA``. In addition, we have another scenario ``ScenarioB``. We add a decorator with a ``session``
-**execution-level** (decorator `@balder.fixture(level="session")`) to the fixture method in our ``ScenarioA``. Now we
-call our test environment without any scenario filter. Our fixture will be called at session level. If we now add a
-scenario filter and only activate our ``ScenarioA``, we have the same situation. But if we trigger a run, that only
-uses the ``ScenarioB`` this behavior will change. In this case our fixture won't be called, because our
-**definition-scope** is not active (fixture is defined in the not executed ``ScenarioA``).
+.. note::
+    The ``balderglob.py`` is a global configuration file that can be used to define fixtures too. It always needs to be
+    placed in the working-dir root directory.
 
-You can find more detailed information about the **definition-scope** at the
+The situation changes when you define the fixture inside a single :ref:`Scenario <Scenarios>`. Let's say we call this
+one ``ScenarioA``, and we also have another called ``ScenarioB``. Suppose we add a decorator with an
+**execution-level** ``testcase`` (``@balder.fixture(level="testcase")``) to the fixture method in ``ScenarioA``. If we
+run the test environment, the fixture will be called for all testcases that belong to the ``ScenarioA``, but for no
+testcases of ``ScenarioB``. The **definition-scope** is limited to the ``ScenarioA`` only.
+
+You can find more detailed information about the definition scope in the section
 :ref:`Definition-Scopes <Definition-Scope possibilities>`.
 
 Fixture ordering
 ----------------
 
-Like you saw in the earlier sections, it is due to two important characteristics, when and how a fixture will be
-executed - the **execution-level**, which is defined at the fixture decorator and the **definition-scope**, which is
-defined over the location the fixture is placed in. But how does Balder order the fixtures that are within the same
-**execution-level**?
+As you saw in the earlier sections, two important characteristics determine when and how a fixture will be executed:
+the **execution-level**, which is specified as argument in the fixture decorator, and the **definition-scope**,
+which depends on where the fixture is placed in your code. But how does Balder order fixtures that share the same
+execution level?
 
-First of all, Balder creates a outer ordering by its **definition-scope**. Before the scenario-scoped-fixtures (defined
-within a :class:`Scenario <Scenario>` class) will be executed, the setup-scoped-fixtures (defined in the
-:class:`Setup <Setup>` class) will run. Global-fixtures (defined in the global ``balderglob.py`` file) will be executed
-before them both. With this mechanism we have a basic ordering, but the order for fixture with the same
-**definition-scope** (and of course the same **execution-level**) is still undefined. For this Balder provides the
-ability of chaining fixtures with each other.
+First, Balder establishes an initial ordering based on the **definition-scope**. Global fixtures (defined in the
+``balderglob.py`` file) run first. Next come setup-scoped fixtures (defined inside a :class:`Setup <Setup>` class).
+Finally, scenario-scoped fixtures (defined within a :class:`Scenario <Scenario>` class) are executed. This gives us a
+basic sequence, but the order remains undefined for fixtures that have the same **definition-scope** (and, of course,
+the same **execution-level**). To handle this, Balder allows you to chain fixtures together, creating explicit
+dependencies.
 
 Take a look at the following example:
 
 
-.. code-block:: py
+.. code-block:: python
 
     # file `balderglob.py`
 
@@ -114,7 +109,7 @@ Take a look at the following example:
 
 If you run this test session, the following output will be generated:
 
-.. code-block::
+.. code-block:: none
 
     Fixture1: is executed before the test session
     Fixture2: is executed before the test session
@@ -124,19 +119,21 @@ If you run this test session, the following output will be generated:
     Fixture2: will be executed after the test session
     Fixture1: will be executed after the test session
 
-The fixture ``my_own_fixture2`` references the ``my_own_fixture1``, by using the same name as function argument name.
-With this definition it is clear, that the ``my_own_fixture1`` has to run before ``my_own_fixture2``. If you
-wouldn't provide this chaining attribute Balder will select the ordering by itself. This is also ok, because sometimes
-it simply doesn't matter which fixture runs first.
+
+You can reference another fixture by adding a function or method argument with the same name as that fixture's
+function or method. As shown in the example, the fixture ``my_own_fixture2`` references ``my_own_fixture1`` by using
+the same name for its function argument. With this setup, it's clear that ``my_own_fixture1`` must run before
+``my_own_fixture2``. If you don't provide this chaining mechanism, Balder will determine the order itself. That's
+perfectly fine, because sometimes the exact sequence simply doesn't matter.
 
 Referencing other fixtures
 ---------------------------
 
-If you reference another fixture like mentioned above you need access to its return value.
+If you reference another fixture as described above, you'll need access to its return value.
 
-Now let's look at the previous example again with a small change:
+Now, let's revisit the previous example with a small modification:
 
-.. code-block:: py
+.. code-block:: python
 
     # file `balderglob.py`
 
@@ -152,11 +149,12 @@ Now let's look at the previous example again with a small change:
         yield
         print("Fixture2: will be executed after the test session")
 
-We now calculate some value within the ``my_own_fixture1`` construct part and return it with the ``yield`` keyword. The
-value will be given to the parameter ``my_own_fixture1`` of the fixture ``my_own_fixture2(my_own_fixture1)`` and can
-directly be used there. This example would produce the following output:
+In this updated example, we calculate a value in the construct part of ``my_own_fixture1`` (the code before the
+``yield``) and pass it back using the ``yield`` keyword. This value is then automatically injected into the parameter
+``my_own_fixture1`` of the dependent fixture ``my_own_fixture2``, where you can use it directly. Running this example
+would produce the following output:
 
-.. code-block: cmd
+.. code-block:: none
 
     Fixture1: is executed before the test session
     Fixture2: is executed before the test session - value of Fixture 1 is `42`
@@ -166,90 +164,96 @@ directly be used there. This example would produce the following output:
     Fixture2: will be executed after the test session
     Fixture1: will be executed after the test session
 
-You can also refer fixtures from another **execution-level** or **definition-scope**, but you have to secure that your
-referred fixture runs before the fixture that references it. For more information about the referencing of fixtures and
-the related ordering, see :ref:`reference fixtures`.
+
+You can also reference fixtures that have a different **execution-level** or **definition-scope**, but you must ensure
+that the referenced fixture runs before the one that depends on it. For more information about referencing fixtures
+and how it affects their order, see :ref:`reference fixtures`.
 
 Execution-Level possibilities
 =============================
+Balder supports various **execution-levels** that you can assign to a fixture. Since tests in Balder are organized into
+scenarios - and these scenarios can run under specific setups - there are multiple points where you can focus during
+test execution.
 
-Balder supports different levels that can be assigned to a fixture. Because Balder is a scenario-based test system and
-these scenarios can be run under certain setups, there are several levels where you can zoom in during a test
-execution. The following table shows all possible **execution-level** attributes:
+The following table lists all possible **execution-level** options:
 
 +------------------------+---------------------------------------------------------------------------------------------+
 | level                  | description                                                                                 |
 +========================+=============================================================================================+
-| ``session``            | This is the furthest out execution-level. The construct part of the fixture will be         |
-|                        | executed directly after the collecting and solving process, but before some user code runs. |
-|                        | The teardown code will be executed after the whole test session was executed.               |
+| ``session``            | This is the outermost **execution-level**. The construct part of the fixture runs right     |
+|                        | after the collecting and resolving process but before any test code executes. The teardown  |
+|                        | part runs after the entire test session has finished.                                       |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``setup``              | Depending on the **definition-scope** this fixture runs after every or specific             |
-|                        | :ref:`Setup <Setups>` change. It embraces every new :ref:`Setup <Setups>` class that will   |
-|                        | be get active in the test executor.                                                         |
+| ``setup``              | Depending on the **definition-scope**, this fixture runs before and after every             |
+|                        | :ref:`Setup <Setups>` change. It surrounds the activation of each new :ref:`Setup <Setups>` |
+|                        | class in the test executor.                                                                 |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``scenario``           | Depending on the **definition-scope** this fixture runs after every or specific             |
-|                        | :ref:`Scenario <Scenarios>` changes. It embraces every new :class:`Setup <Setups>` class    |
-|                        | that will be get active in the test executor.                                               |
+| ``scenario``           | Depending on the **definition-scope**, this fixture runs before and after every             |
+|                        | :ref:`Scenario <Scenarios>` change. It surrounds the activation of each new                 |
+|                        | :ref:`Scenario <Scenarios>` class in the test executor.                                     |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``variation``          | The **variation** in the Balder test system is a new possible device assignment between the |
-|                        | :ref:`Scenario-Devices <Scenario-Device>` and the :ref:`Setup-Devices <Setup-Device>`.      |
-|                        | Depending on the **definition-scope** this fixture runs before and after every new device   |
-|                        | variation of its scoped :ref:`Setup <Setups>` / :ref:`Scenario <Scenarios>` constellation.  |
+| ``variation``          | A variation in the Balder test system refers to a possible device assignment between        |
+|                        | :ref:`Scenario-Devices <Scenario-Device>` and :ref:`Setup-Devices <Setup-Device>`.          |
+|                        | Depending on the **definition-scope**, this fixture runs before and after every new device  |
+|                        | variation within its scoped :ref:`Setup <Setups>` / :ref:`Scenario <Scenarios>`             |
+|                        | combination.                                                                                |
 +------------------------+---------------------------------------------------------------------------------------------+
-| ``testcase``           | Depending on the **definition-scope** this fixture runs after every or specific testmethod. |
-|                        | It embraces every new testcase which is defined in the :ref:`Scenario <Scenarios>` class    |
-|                        | that is in the defined **definition-scope**.                                                |
+| ``testcase``           | Depending on the **definition-scope**, this fixture runs before and after every test        |
+|                        | method. It surrounds each new test case defined in the :ref:`Scenario <Scenarios>` class    |
+|                        | within the specified definition scope.                                                      |
 +------------------------+---------------------------------------------------------------------------------------------+
 
 Definition-Scope possibilities
 ==============================
 
-Balder has three different **definition-scopes**. These scopes define the validity of the fixtures.
+Balder offers three different **definition-scopes**. These scopes determine the validity and applicability of your
+fixtures.
 
-The following table shows these scopes:
+The following table outlines these scopes:
 
 +------------------------+------------------------+--------------------------------------------------------------------+
 | Definition             | Validity               | description                                                        |
 +========================+========================+====================================================================+
-| as function in         | everywhere             | This fixture will always be executed. It doesn't matter which      |
-| ``balderglob.py`` file |                        | specific testset is called. This fixture will be executed in       |
-|                        |                        | every test run.                                                    |
+| as function in         | everywhere             | This fixture will always be executed, no matter which specific     |
+| ``balderglob.py`` file |                        | test setup or scenario is selected. It runs in every test session. |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this setup     | This fixture runs only if the setup (the fixture is defined in)    |
-|                        |                        | will be executed in the current testrun. If the                    |
-| :ref:`Setups`          |                        | **execution-level** is ``session`` it will be executed as          |
-|                        |                        | session-fixture only if this setup is in the executor tree. If the |
-|                        |                        | **execution-level** is ``setup`` or lower, this fixture will only  |
-|                        |                        | be called if the setup is currently active in the test run.        |
+| as method in           | only in this setup     | This fixture runs only if the setup where it is defined is         |
+| :ref:`Setups`          |                        | executed in the current test run. If the **execution-level** is    |
+|                        |                        | ``session``, it acts as a session fixture but only if this setup   |
+|                        |                        | appears in the executor tree. If the **execution-level** is        |
+|                        |                        | ``setup`` or lower, the fixture is called only when the setup is   |
+|                        |                        | active during the test run.                                        |
 +------------------------+------------------------+--------------------------------------------------------------------+
-| as method in           | only in this scenario  | This fixture runs only if the scenario (the fixture is defined in) |
-| :ref:`Scenarios`       |                        | will be executed in the current testrun. If the                    |
-|                        |                        | **execution-level** is ``session`` or `setup` it will be executed  |
-|                        |                        | as session-/ or setup-fixture only if this scenario is in the      |
-|                        |                        | executor tree. If the  **execution-level** is ``scenario`` or      |
-|                        |                        | lower, this fixture will only be called if the scenario is         |
-|                        |                        | currently active in the test run.                                  |
+| as method in           | only in this scenario  | This fixture runs only if the scenario where it is defined is      |
+| :ref:`Scenarios`       |                        | executed in the current test run. If the **execution-level** is    |
+|                        |                        | ``session`` or ``setup``, it acts as a session or setup fixture    |
+|                        |                        | but only if this scenario appears in the executor tree. If the     |
+|                        |                        | **execution-level** is ``scenario`` or lower, the fixture is       |
+|                        |                        | called only when the scenario is active during the test run.       |
 +------------------------+------------------------+--------------------------------------------------------------------+
 
 Reference fixtures
 ==================
 
-As mentioned above, Balder can reference fixtures among each other.
+As mentioned earlier, Balder allows fixtures to reference one another.
 
-Sometimes you want to use the values of some fixtures in testcases or other fixtures. For example if you prepare an
-object in a fixture you maybe want to use this object in another fixture or in your testcase too. This can be
-realized in Balder by simply referencing fixtures through method/function attributes.
+Sometimes, you may want to use values from certain fixtures in your test cases or in other fixtures. For example, if
+you prepare an object in one fixture, you might need to access that object in another fixture or directly in a test
+case. In Balder, this is achieved simply by referencing fixtures through function or method parameters.
 
-.. code-block:: py
+.. code-block:: python
 
     # file `balderglob.py`
 
     import balder
 
     class MyWorker:
-        def prepare_it(self): self.workload = do_something()
-        def work(): self.workload.pop(0)
+
+        def prepare_it(self):
+            self.workload = do_something()
+
+        def work(self):
+            self.workload.pop(0)
 
     @balder.fixture(scope="session")
     def prepared_worker():
@@ -261,26 +265,28 @@ realized in Balder by simply referencing fixtures through method/function attrib
     def do_one_work(prepared_worker):
         workload = prepared_worker.work()
 
-As you can see other fixtures can be referenced from another **execution-level** by simply add the fixture function name
-as parameter at the function/method. This works for fixtures within the same **execution-level** and
-**definition-scope**, but also for fixtures that have different **execution-levels** and/or **definition-scopes**. It is
-only important, that the fixture you reference, was executed before.
+
+As you can see, fixtures from other **execution-levels** can be referenced simply by adding the fixture's function name
+as a parameter in your function or method. This approach works for fixtures that share the same **execution-level** and
+**definition-scope**, but also for those with different **execution-levels** and/or **definition-scopes**. The key
+requirement is that the referenced fixture must have executed before the one that depends on it.
 
 .. note::
 
-    If you only want to influence the fixture ordering with-in the same **execution-level** and **definition-scope**
-    you can also reference them in the similar way. It always influence the ordering, because a referenced fixture has
-    to run before the fixture that references it.
+    If you only want to influence the ordering of fixtures within the same **execution level** and **definition scope**,
+    you can reference them in a similar way. This always affects the order, because a referenced fixture must run before
+    the one that depends on it.
 
-    Of course the order influence only works for fixtures with the same **execution-level** and **definition-scope**.
-    It is not possible to define that a fixture with SCENARIO LEVEL should run before a fixture with SETUP LEVEL.
+    Of course, this ordering influence only works for fixtures that share the same **execution-level** and
+    **definition-scope**. It's not possible to specify that a fixture at the scenario level should run before one at
+    the setup level.
 
-In addition to referencing fixtures with each other, you can also access the return value from a test method. Let's take
-a look at the next scenario:
+In addition to referencing fixtures with one another, you can also access their return values directly from a test
+method. Let's take a look at the following example:
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `scenario_work/scenario_work.py`
+    # file `scenarios/scenario_work.py`
 
     import balder
 
@@ -295,19 +301,19 @@ a look at the next scenario:
             new_workload = prepared_worker.work()
             ...
 
-This example now uses the previous defined fixture ``prepared_worker``, that is defined in the ``balderglob.py`` file.
-The test gets the instantiated ``NewObject`` here.
+In this example, we're using the previously defined fixture ``prepared_worker``, which is located in the
+``balderglob.py`` file. The test method receives the instantiated ``MyObject`` from it.
 
 .. note::
-    You can also define a class- or a staticmethod as fixture. Balder automatically detects that, and will manage the
-    ``self`` or ``cls`` attributes correctly.
+    You can also define a class method or static method as a fixture. Balder automatically detects this and handles
+    the ``self`` or ``cls`` parameters correctly.
 
-You can reference fixtures from different places and also reference them from your test method. But be careful while
-referencing fixtures from different **execution-levels** or/and **definition-scopes**. It doesn't make sense to
-reference a fixture with an deeper **execution-level** from a fixture with a higher one. Take a look at the following
-example:
+You can reference fixtures defined in different locations and even access them directly from your test methods. However,
+be careful when referencing fixtures that have different **execution-levels** and/or different **definition-scopes**.
+It doesn't make sense to reference a fixture with a deeper **execution-level** from one with a higher level. Take a
+look at the following NOT WORKING example:
 
-.. code-block:: py
+.. code-block:: python
 
     # file `balderglob.py`
 
@@ -326,18 +332,18 @@ example:
     def print_result(calc_add):
         print("the result is {}".format(calc_add))
 
-In the NOT WORKING example above, it is tried to reference a fixture with ``level="testcase"`` from a fixture with
-``level="session"``. This doesn't make sense, because the fixture ``print_result`` will only be executed once in the
-beginning of the test session.
+In the non-working example above, it attempts to reference a fixture with ``level="testcase"`` from a fixture with
+``level="session"``. This doesn't make sense, because the session-level fixture runs only once at the start of the test
+session, while the testcase-level fixture runs multiple times (once before and after each test case). As a result, the
+session fixture can't reliably access values from something that hasn't executed yet or that changes per test case.
 
-The same problem can occur if you try to refer a fixture from an **definition-scope** that is more specific than the
-**definition-scope** of the fixture that references it. For example, assume we have the following fixtures defined:
+A similar issue can arise if you try to reference a fixture from a **definition-scope** that is narrower (more specific)
+than the **definition-scope** of the fixture doing the referencing. For example, assume we have the following fixtures
+defined:
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `scenario_specific/scenario_specific.py`
-
-    # BE CAREFUL: THIS EXAMPLE LEADS TO AN ERROR!
+    # file `scenarios/scenario_specific.py`
 
     import balder
 
@@ -351,11 +357,12 @@ The same problem can occur if you try to refer a fixture from an **definition-sc
         def calc_multiply(self):
             self.scenario_testcase_cnt += 1
 
-Now we want to reference the ``calc_multiply()`` fixture from a higher  **definition-scope** like our setup class:
+Now, suppose we want to reference the calc_multiply() fixture from a broader **definition-scope**, such as in our
+setup class:
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `setup_base/setup_base.py`
+    # file `setups/setup_base.py`
 
     # BE CAREFUL: THIS EXAMPLE LEADS TO AN ERROR!
 
@@ -369,26 +376,30 @@ Now we want to reference the ``calc_multiply()`` fixture from a higher  **defini
         def prepare_device(self, calc_multiply):
             self.MyDevice.setup(calc_multiply)
 
-We try to access a fixture that is defined in a more specific **definition-scope** than the referencing fixture. This
-can not work, because it would be possible that another :class:`Scenario` matches with our ``SetupBase`` here too. This
-other :class:`Scenario` maybe has no ``calc_multiply`` fixture.
+
+In this example, we're trying to access a fixture that's defined in a more specific **definition-scope** than the one
+doing the referencing. This won't work, because another :class:`Scenario <Scenario>` could also match with our
+``SetupBase`` here. In such a case, we would end up with results from two different ``calc_multiply`` fixtures during
+a single setup run, which won't work. Therefore, you need to ensure that the fixtures you reference have already
+executed before the one that is doing the referencing.
 
 
 Name conflicts
 --------------
 
-Maybe you wonder what should we do if there are some fixtures with the same name and we want to
-reference them? For example if you define a fixture ``calc`` in your global ``balderglob.py`` file, while you use a
-:class:`Scenario` which has a fixture ``calc`` defined too. Now you want to reference `calc` within the test method of
-this scenario. Which value will be provided?
+You might wonder what happens if there are fixtures with the same name and you want to reference them. For example,
+suppose you define a fixture named ``calc`` in your global ``balderglob.py`` file, and you're using a
+:class:`Scenario <Scenario>` that also defines a fixture called ``calc``. Now, if you want to reference ``calc`` within
+a test method of that scenario, which value will be provided?
 
-First of all, every fixture will be called by Balder. It won't matter if they have the same name. The name will only
-matter if you want to referencing these fixtures. Maybe it will be getting clearer if we take a look at the following
-example:
+First, Balder will execute every fixture, regardless of whether they share the same name. The name only matters when
+you're referencing these fixtures.
 
-.. code-block:: py
+It might become clearer if we look at the following example:
 
-    # file `scenario_my/scenario_my.py`
+.. code-block:: python
+
+    # file `scenarios/scenario_my.py`
 
     import balder
 
@@ -400,9 +411,9 @@ example:
         def calc(self):
             yield 3 * 5
 
-Now we have a fixture with the same name in our global ``balderglob.py`` file:
+Now, suppose we have a fixture with the same name defined in our global ``balderglob.py`` file:
 
-.. code-block:: py
+.. code-block:: python
 
     # file `balderglob.py`
 
@@ -412,16 +423,16 @@ Now we have a fixture with the same name in our global ``balderglob.py`` file:
     def calc():
         yield 3 * 1
 
-Both fixtures have the same name ``calc`` and the same **execution-level**. First of all the **definition-scope**
-doesn't matter for the executed ordering of the fixtures as long as they are not referenced among each other. If you
-reference them, Balder will be forced to adjust the order of them. However, the situation is different if you reference
-these fixtures. If you have two fixtures with the same **execution-level** and with the same name, but different
-**definition-scopes**, Balder will select them according their **definition-scope**.
+Both fixtures have the same name ``calc`` and the same **execution-level**. The **definition-scope** doesn't affect the
+execution order of the fixtures as long as they aren't referenced by each other. In that case, Balder can run them in
+any sequence it chooses. However, things change when you do reference these fixtures. If you have two fixtures with the
+same **execution-level** and the same name but different **definition-scopes**, Balder selects the appropriate one based
+on their **definition-scopes**.
 
-For example, if you referencing the ``calc`` fixture from another fixture in the ``balderglob.py`` file, it
-will call the next higher one (related to the **definition-scope**):
+For example, if you reference the ``calc`` fixture from another fixture in the ``balderglob.py`` file, Balder will use
+the one with the broadest scope (the global one, in this case):
 
-.. code-block::
+.. code-block:: python
 
     # file `balderglob.py`
 
@@ -441,11 +452,12 @@ This will print the following output:
 
     print_my_thing from balderglob.py: calculation is 3
 
-But which fixture will be used if we reference it from our setup (matches with our ``ScenarioMy``):
+But which fixture will be used if we reference ``calc`` from a fixture in our setup class (assuming it matches with our
+``ScenarioMy``)?
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `setup_main/setup_main.py`
+    # file `setups/setup_main.py`
 
     import balder
 
@@ -457,18 +469,20 @@ But which fixture will be used if we reference it from our setup (matches with o
         def print_it(self, calc):
             print("print_it from setup: calculation is {}".format(calc))
 
-It will search for a fixture in the ``SetupMain`` first. There is no one, so it goes the **definition-scope**
-upwards, till it finds some. In our example it would call the ``calc`` of ``balderglob.py`` here too:
+
+Balder will first search for a fixture named ``calc`` within the ``SetupMain`` class itself. If none exists there, it
+moves upward through the **definition-scope** hierarchy until it finds one. In our example, this means it would use the
+``calc`` fixture from the ``balderglob.py`` file here as well.
 
 .. code-block:: none
 
     print_it from setup: calculation is 3
 
-The behavior differs if you reference ``calc`` from another fixture in our ``ScenarioMy``:
+The behavior changes if you reference ``calc`` from another fixture within our ``ScenarioMy`` class:
 
-.. code-block:: py
+.. code-block:: python
 
-    # file `scenario_my/scenario_my.py`
+    # file `scenarios/scenario_my.py`
 
     import balder
 
@@ -483,10 +497,12 @@ The behavior differs if you reference ``calc`` from another fixture in our ``Sce
         def print_my_calc(self, calc):
             print("print_it from scenario: calculation is {}".format(calc))
 
-Similar to the procedure described above, it would first search in the SCENARIO definition scope, then in the matched
-SETUP definition scope (only the current matched one is possible) and last but not least it searches in the BALDERGLOB
-for the referenced fixture. In this case here, the next fixture with the referenced name is in the same
-**definition-scope**, the ``ScenarioMy`` itself. This results in the following output:
+Similar to the process described above, Balder first searches in the scenario's **definition-scope**, then in the
+matched setup's **definition-scope** (only the currently active one), and finally in the global scope
+(the balderglob.py file) for the referenced fixture. In this case, the closest fixture with the matching name is found
+in the same definition scope - the ``ScenarioMy`` class itself.
+
+This produces the following output:
 
 .. code-block:: none
 
@@ -495,11 +511,12 @@ for the referenced fixture. In this case here, the next fixture with the referen
 Special case: Unclear-Setup-Scoped-Fixture-Reference problematic
 ----------------------------------------------------------------
 
-There is one single case, you should be aware with. If you want to reference a session-fixture
-with the **definition-scope** SETUP from a session-fixture with the **definition-level** SCENARIO. For this case it is
-not clear which setup Balder should use, because no setup is active yet (we are still on SESSION level).
+There's one specific case you should be aware of: attempting to reference a session-level fixture with a
+**definition scope** of SETUP from a session-level fixture with a definition scope of SCENARIO. In this situation,
+it's unclear which setup Balder should use, since no setup is active yet (we're still at the SESSION level).
 
-This should be avoided and not use. Balder will throw an exception :class:`UnclearSetupScopedFixtureReference` here!
+This should be avoided. Balder will throw an :class:`UnclearSetupScopedFixtureReference` exception in such cases!
 
 .. note::
-    Note that you can freely implement these fixture levels, but you could not reference them.
+    Note that you can freely define fixtures at any of these execution levels, but you need to be careful, when you are
+    trying to reference the levels themselves.
