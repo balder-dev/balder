@@ -1,88 +1,75 @@
 BalderHub - the share place of tests
 ************************************
 
-.. important::
+Balder's grand vision is to create a shared space for open-source testing projects. We call them **BalderHub** packages.
+These packages are standard Python packages that you can install as usual and easily integrate into your specific
+project. This allows you to reuse existing scenario (mostly with ready-to-use test cases) and feature implementations
+on your own. You only need to provide custom implementations for the parts that truly depend on your specific device /
+application, without recreating the general test logic.
 
-    .. todo complete reworking of this section
+Along the way, these ``balderhub-*`` packages also provide common implementations, so you only need to write your
+application-specific code while reusing various test devices. The idea is that you can access a wide range of
+different tests that clever minds have already thought through. You simply inherit from their scenarios, add the
+specific setup-device feature code for your device, and get started.
 
-    Please note that this part of the documentation is not yet finished. It will still be revised and updated.
+Have a look at our `BalderHub Entry Page <https://hub.balder.dev>`_, we already have packages packages for web tests
+or even embedded device tests. Check it out.
 
-Balder' grand vision is to create a shared place for open-source testing-projects. We call them **BalderHub** packages.
-These packages are normal python packages. You can easily install them like normal and simply include
-them into your specific project. That allows you to reuse scenario and feature implementation by your own. You only have
-to provide your custom implementation that really depends on your device, but not the general test logic.
+Contribute
+==========
 
+Imagine unlocking a treasure trove of ready-made tests that supercharge your development pipeline - welcome to the
+power of **BalderHub projects**. These open-source marvels, crafted by a passionate community, deliver reusable
+scenarios and setups for everything from URL handling and web interactions to remote protocols like RFB and SNMP,
+all installable like any Python package. By harnessing BalderHub, you not only slash development time and boost
+test consistency across platforms but also become part of a collaborative cosmos where ideas evolve, innovations
+thrive, and testing transforms from a chore into a shared adventure.
 
-Along the way these ``balderhub-*`` packages provide some common implementation too, so you only need to implement your
-application specific code, but you can reuse different test devices. The idea is that you can access a wide range of
-different tests where a lot of clever minds has already think about. You simply have to inherit from their scenarios,
-add the specific setup-device feature code for your device and go for it. Different mock functions, helper devices or
-complete testable implementations of remote devices (for example a dhcp server for dhcp-client tests) are already
-provided in these BalderHub project. This helps you and your team to develop test a lot of faster.
+Ready to contribute your own project or explore what's out there? Dive in and help shape the future of open-source
+testing!
 
 .. note::
 
-    Balder is a very young project. Unfortunately, this also means that we do not have so many
-    `BalderHub projects <https://hub.balder.dev>`_ at the moment.
+    We are just at the beginning.
 
-    We need your help here. There are a lot of people in this world, that are experts in the thing they are doing and
-    exactly these experts we need here.
-
-    Do you know one area really well? Do you like the concept of Balder? Think about to initiate an own
-    BalderHub project. Take a look into our `Balder GitHub Group <https://github.com/balder-dev>`_ and feel free to
-    contribute to an existing project or create your own one. If you are not secure if your subject already exist or
-    if you are searching for some colleagues to develop a BalderHub project within a group, fell free to
+    Do you know one area really well? Do you like the concept of Balder? Think about initiating your own BalderHub
+    project. Take a look at our `Balder GitHub Group <https://github.com/balder-dev>`_ and feel free to contribute to
+    an existing project or create your own. If you're not sure whether your topic already exists or if you're looking
+    for colleagues to develop a BalderHub project together as a group, feel free to
     `create an issue <https://github.com/balder-dev/hub.balder.dev/issues>`_ or
     `start a new discussion <https://github.com/balder-dev/hub.balder.dev/discussions>`_.
 
-    If you want to add your package within the `BalderHub projects <https://hub.balder.dev>`_, just ask for help by
-    creating `an issue in the main hub project <https://github.com/balder-dev/hub.balder.dev/issues>`_.
+    If you want to add your package to `the BalderHub projects <https://hub.balder.dev>`_, just ask for help by
+    creating an issue in `the main hub project <https://github.com/balder-dev/hub.balder.dev/issues>`_.
 
 Where can I search for?
 =======================
 
-Our idea is that all public BalderHub packages are contained in our
-`BalderHub GitHub Group <https://github.com/balder-dev>`_. Of course you can create a package by your own too, but if
-you want to share it easily with the community it is the best way to move your repository to our
-`BalderHub GitHub Group <https://github.com/balder-dev>`_. With this it is also available on the
-`BalderHub Entry Page <https://hub.balder.dev>`_ webpage and under ``https://hub.balder.dev/projects/<your project>``.
+All official BalderHub projects are part of the `BalderHub GitHub Group <https://github.com/balder-dev>`_ and are
+displayed on the `BalderHub Entry Page <https://hub.balder.dev>`_ as well as under
+``https://hub.balder.dev/projects/<your-project>``.
 
 How can I use them?
 ===================
 
-You can use a BalderHub project easily by installing it into your python environment. For this you can use ``pip``. The
-public BalderHub projects are published on `PyPi <https://pypi.org>`.
+You can easily use a BalderHub project by installing it in your Python environment. To do this, simply use ``pip`` or
+any other manager of your choice. Public BalderHub projects are published on `PyPI <https://pypi.org>`_.
 
-Which scenarios are used?
+Using BalderHub Scenarios
 -------------------------
 
-If you want to use a scenario of a BalderHub project, you have to create a new scenario class in your project and
-inherit from the installed package. For example, if you want to use the scenario ``ScenarioExample`` of the
-project ``balderhub-example``, you have to create a new scenario file in your project and imports the BalderHub
-scenario:
+If you want to use a scenario from a BalderHub project, simply import it in any ``scenario_*.py`` file in your project,
+as shown below:
+
 
 .. code-block:: python
 
     # file tests/scenarios/scenario_for_me.py
     from balderhub.example.scenarios import ScenarioExample
 
-With that the whole scenario will be active and all test methods of the scenario ``ScenarioExample`` will be
-used. Of course your setup-devices have to implement the features of the scenario-devices too.
+By doing this, the entire scenario becomes active, and all the test methods from the ``ScenarioExample`` scenario will
+be executed. Don't forget to provide an implementation for the features within your setup.
 
-..
-    .. todo
-
-..
-    Limit test methods
-    ------------------
-    You can also limit test methods, by using the ``RUN``, ``SKIP`` and/or ``IGNORE`` class attributes. For example, the
-    following code only executes the test method ``test_simple_add()``:
-    .. code-block:: python
-        # file tests/scenarios/scenario_for_me.py
-        from balderhub.example.scenarios import ScenarioExample
-        class ScenarioForMe(ScenarioExample):
-            RUN = ['test_simple_add']
-    You find our more about these class attributes at :ref:`Mark test to SKIP or IGNORE`.
 
 How create my own BalderHub project?
 ====================================
@@ -90,4 +77,9 @@ How create my own BalderHub project?
 If you want to contribute to a existing BalderHub project or if you want to create a new BalderHub project, but still
 have some questions, feel free to `create an issue <https://github.com/balder-dev/hub.balder.dev/issues>`_ or
 `start a new discussion <https://github.com/balder-dev/hub.balder.dev/discussions>`_. Your contribution is really
+appreciated.
+
+If you want to contribute to an existing BalderHub project or create a new one but still have some questions, feel free
+to `create an issue <https://github.com/balder-dev/hub.balder.dev/issues>`_ or
+`start a new discussion <https://github.com/balder-dev/hub.balder.dev/discussions>`_. Any contribution is very much
 appreciated.
