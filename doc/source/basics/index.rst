@@ -21,9 +21,9 @@ about some of these topics, please take a look at the `Reference Guides <../deep
     setups.rst
     devices.rst
     features.rst
+    connections.rst
     vdevices.rst
     fixtures.rst
-    connections.rst
     parametrization.rst
     configuration.rst
     balderhub.rst
