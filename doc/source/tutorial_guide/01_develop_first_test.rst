@@ -1,5 +1,5 @@
-Balder Intro Example
-********************
+Part 1: Develop a Login Test from Scratch
+*****************************************
 
 
 .. note::
