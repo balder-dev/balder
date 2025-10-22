@@ -13,10 +13,3 @@ explains the basic concepts of Balder.
     :caption: Getting Started
 
     00_intro.rst
-    01_create_scenario.rst
-    02_single_setup.rst
-    03_double_setup.rst
-    04_add_fixtures.rst
-    05_one_common_setup.rst
-    06_develop_with_connection_trees.rst
-    07_convert_in_balderhub.rst
