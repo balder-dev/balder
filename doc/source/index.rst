@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Balder
-******
+Balder: Testing real-world complexity
+*************************************
 
 .. toctree::
    :maxdepth: 2
@@ -18,47 +18,157 @@ Balder
 
    BalderHub <https://hub.balder.dev>
 
-Balder is a very powerful, universal and flexible python test system that allows you to reuse a once written testcode as
-efficiently as possible for different but similar platforms/devices/applications.
+Balder is a Python test framework that allows you to reuse test code you've written once across different platforms,
+devices, or applications. You can **install ready-to-use tests** or apply your **own pre-written tests** to evaluate
+all kinds of end-user devices/applications - without reinventing the wheel.
 
-In the real world you have a lot of different projects that use the same interfaces, like
-the SNMP, SMTP or HTTP protocol. Other processes like *login into backend* are being implemented multiple
-times as well. This often works in the similar way for login with the app, over the api or directly over the web
-frontend. If you want to test these various possibilities, you have to provide similar tests, which are often times
-repetitive.
 
-For example if you have a backend system which you are testing on the login function, you would have three possible
-ways to login. You could use the mobile app, the normal web app and the api interface. For all of these possibilities
-you follow a similar pattern:
+.. raw:: html
 
-1. open the login area/create the login request
-2. insert the username
-3. insert the password
-4. send the request
-5. check if you are successfully logged in
+   <div class="balder-highlight-container">
 
-These steps are independent from the method you want to login with. You would still have the same **Scenario** but
-different **Setups**:
+     <div class="balder-row">
+       <div class="balder-image-side">
+         <img src="_static/icons8/icons8-connect.svg" alt="connection icon" />
+       </div>
+       <div class="balder-text-side">
+         <h4>Scalability without the Headache</h4>
+         <p>
+           Write a single test scenario for your core business logic, and reuse it across the web, mobile apps,
+           desktop applications, or even embedded devices.
+           <br/><br/>
+           <b>No rewrites are needed!</b>
+         </p>
+       </div>
+     </div>
 
-* **Setup 1:** a smartphone app on iOS
-* **Setup 2:** a smartphone app on Android
-* **Setup 3:** a webpage which provides the login area
-* **Setup 4:** a API endpoint which allows to identify with your username and password
+     <div class="balder-row reverse">
+       <div class="balder-image-side">
+         <img src="_static/icons8/icons8-share.svg" alt="share icon" />
+       </div>
+       <div class="balder-text-side">
+         <h4>Reusability at its Core</h4>
+         <p>
+           Every component in Balder is designed with sharing in mind. You can package your Balder tests or/and
+           test-features and easily share them <b>within your company</b> or with the <b>entire open-source community</b>.
+         </p>
+       </div>
+     </div>
 
-Balder was created especially for that. You can write one **Scenario** and use it for different setups.
+     <div class="balder-row">
+       <div class="balder-image-side">
+         <img src="_static/icons8/icons8-synchronize.svg" alt="synchronization icon" />
+       </div>
+       <div class="balder-text-side">
+         <h4>Testing Multiple Versions - all at once</h4>
+         <p>
+           Stop copying your test code every time a new product version comes out. Simply replace the specific test
+           features that change in the product.
+           <br/><br/>
+           <b>Balder will manage everything else</b> seamlessly!
+         </p>
+       </div>
+     </div>
 
-You can find out more about Scenario-Based-Testing and how Balder works in this documentation.
+     <div class="balder-row reverse">
+       <div class="balder-image-side">
+         <img src="_static/icons8/icons8-file.svg" alt="file icon" />
+       </div>
+       <div class="balder-text-side">
+         <h4>Ready-to-use Tests</h4>
+         <p>
+           BalderHub projects allow you to install tests just like any other Python package.
+           <br/><br/>
+           Simply integrate them into your workflow and <b>start using them</b> right away!
+         </p>
+       </div>
+     </div>
 
-If you are completely new, we recommend to start with the :ref:`Getting Started <Getting Started>` section. Since, in
-our opinion, the best way is learning-by-doing. We recommend to continue with the :ref:`Tutorial Guide`. If
-you want to discover all components of Balder you can continue with the :ref:`Basic Guides<Basic Guides>`. All profound
-functions of Balder, like the different internal work processes, you can find in the
-:ref:`Reference Guides<Reference Guides>`.
+     <div class="balder-row">
+       <div class="balder-image-side">
+         <img src="_static/icons8/icons8-checkmark.svg" alt="checkmark icon" />
+       </div>
+       <div class="balder-text-side">
+         <h4>Test-your-Tests</h4>
+         <p>
+           Testing your tests can help reduce flaky ones, but it often takes a lot of time.
+           <br/><br/>
+           Not with Balder: <b>Testing your tests has never been easier</b>.
+         </p>
+       </div>
+     </div>
 
-It is recommended to go throw the different subsections of the :ref:`Getting Started <Getting Started>` and the
-:ref:`Tutorial Guide` in the provided order to fully understand the basic functionality of **Scenario-based-testing**
-and how it works in the Balder framework. The different subsections of :ref:`Basic Guides<Basic Guides>` and
-:ref:`Reference Guides<Reference Guides>` are created independently from each other. So feel free to jump to the
-subsection you want to learn more about. But we always recommend to start with the complete
-:ref:`Getting Started <Getting Started>` section before going deeper into the :ref:`Basic Guides<Basic Guides>` and
-:ref:`Reference Guides<Reference Guides>`.
+     <div class="balder-row reverse">
+       <div class="balder-image-side">
+         <img src="_static/icons8/icons8-user.svg" alt="user icon" />
+       </div>
+       <div class="balder-text-side">
+         <h4>Community driven power</h4>
+         <p>
+           Tests thrive when <b>maintained by a collective</b>. Balder fosters collaboration, where diverse minds
+           tackle complex challenges <b>together</b>.
+           <br/><br/>
+           Leading to robust solutions that a single team could never achieve alone.
+         </p>
+       </div>
+     </div>
+
+   </div>
+
+
+
+Are you up for it?
+==================
+
+Let's dive in and explore our tutorials.
+
+.. raw:: html
+
+   <div class="balder-button-grid">
+     <a class="balder-button-item" href="./tutorial_guide/01_develop_first_test.html">
+       <h4>Writing your first own test</h4>
+       <p>Let's develop a real-world test for NextCloud</p>
+     </a>
+     <a class="balder-button-item" href="./tutorial_guide/02_install_first_web_tests.html">
+       <h4>Installing tests</h4>
+       <p>Install tests for validating file operations of the NextCloud Web App</p>
+     </a>
+     <a class="balder-button-item" href="./tutorial_guide/03_port_web_tests_to_cli.html">
+       <h4>Reusing Web Test to test a CLI</h4>
+       <p>Multiply your efforts, without multiplying your workload</p>
+     </a>
+     <a class="balder-button-item" href="https://hub.balder.dev/en/latest/develop_own.html">
+       <h4>Publish your Tests</h4>
+       <p>Write your own BalderHub package and share it with your company or with the whole world</p>
+     </a>
+   </div>
+
+
+To get a short introduction to how Balder works, take a look at the :ref:`Getting Started <Getting Started>` section.
+It provides a brief overview of the theory behind the Balder test system. You'll find a detailed explanation of all
+components in the :ref:`Basic Guides <Basic Guides>`.
+
+The different subsections of :ref:`Basic Guides <Basic Guides>` and :ref:`Reference Guides <Reference Guides>` are
+written independently of each other. So feel free to jump to any subsection you want to learn more about. However, we
+always recommend starting with the complete :ref:`Getting Started <Getting Started>` section before diving deeper into
+the :ref:`Basic Guides <Basic Guides>` and :ref:`Reference Guides <Reference Guides>`.
+
+Let's build the open-source testing universe together
+=====================================================
+
+
+Help to build the future of testing, by developing your own BalderHub project.
+
+`With BalderHub projects <https://hub.balder.dev>`__, you can easily share your tests with your team, your company, or
+even the entire world.
+
+Help build the future of testing
+`by creating your own BalderHub project <https://hub.balder.dev/en/latest/develop_own.html>`__.
+
+
+.. raw:: html
+
+   <dl class="footnote">
+      <dt class="label"><em>Icons from</em></dt>
+      <dd><p><em><a href="https://icons8.com">icons8.com</a></em></p></dd>
+   </dl>
