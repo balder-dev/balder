@@ -13,3 +13,6 @@ explains the basic concepts of Balder.
     :caption: Getting Started
 
     00_intro.rst
+    01_develop_first_test.rst
+    02_install_first_web_tests.rst
+    03_port_web_tests_to_cli.rst
