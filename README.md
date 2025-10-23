@@ -7,11 +7,11 @@ Balder is a flexible Python test system that allows you to reuse test code writt
 platforms, devices, or applications. It enables you to install ready-to-use test cases and provides various test 
 development features that help you test your software or devices much faster.
 
-You can share your own testcode by creating a new BalderHub project, or you use an 
-[existing BalderHub project](https://hub.balder.dev), by simply installing and using it. This makes the test development 
-for your project much faster, since it is often times enough to only provide the user-specific code.
+You can use shared test code by installing an [existing BalderHub project](https://hub.balder.dev), or you can create 
+your own. This makes test development for your project much faster, since it is oftentimes enough to install a BalderHub
+project and only provide the user-specific code.
 
-Be part of the progress and share your tests with others, your company or the whole world.
+Be part of the progress and share your tests with others, your company, or the whole world.
 
 # Installation
 
@@ -38,298 +38,271 @@ balder --working-dir /path/to/working/dir
 # How does it work?
 
 Balder allows you to reuse previously written test code by dividing it into the components that **are needed** for a 
-test (`Scenario`) and the components that **we have** (`Setup`).
+test (`Scenario`) and the components that **you have** (`Setup`).
 
-`Scenario` classes define a test. Only describe the most important aspects **you need** for the execution of the 
-corresponding test (method of the scenario class) inside `Scenario` classes. 
+You can define a test within a method of a `Scenario` class. This is often an abstract layer, where you only describe 
+the general business logic without providing any specific implementation details.
 
-In contrast, `Setup` classes describe exactly what **you have**. This is where you define all the devices and their 
-features. Balder will then automatically search for mappings and run your test with them.
+These specific implementation details are provided in the `Setup` classes. They describe exactly **what you have**. In 
+these classes, you provide an implementation for the abstract elements that were defined earlier in the `Scenario`. 
+
+Balder then automatically searches for matching mappings and runs your tests using them.
 
 ## Define the `Scenario` class
 
-Inside `Scenario` or `Setup` classes, inner `Device` classes describe your environment. For example, if you want to test 
-the process of sending a message between two devices, you can create a `Scenario` like shown below:
+Inside `Scenario` or `Setup` classes, you can describe the environment using inner `Device` classes. For example, let's 
+write a test that validates the functionality of a lamp. For that, keep in mind that we want to make this test as 
+flexible as possible. It should be able to run with all kind of things that have a lamp:
 
 ```python
 import balder
-from .features import SendMessageFeature, RecvMessageFeature
+from lib.scenario_features import BaseLightFeature
 
 
-class ScenarioMessaging(balder.Scenario):
+class ScenarioLight(balder.Scenario):
     
-    class Sender(balder.Device):
-        send = SendMessageFeature()
+    # The device with its features that are required for this test
+    class LightSpendingDevice(balder.Device):
+        light = BaseLightFeature()
     
-    @balder.connect(Sender, over_connection=balder.Connection())
-    class Receiver(balder.Device):
-        recv = RecvMessageFeature()
+    def test_check_light(self):
+        self.LightSpendingDevice.light.switch_on()
+        assert self.LightSpendingDevice.light.light_is_on()
+        self.LightSpendingDevice.light.switch_off()
+        assert not self.LightSpendingDevice.light.light_is_on()
         
     
 
 ```
 
-You have now defined, that the `Sender` device must be able to send messages (has `SendMessageFeature()`), while 
-the `Receiver` device must be able to receive messages (has `RecvMessageFeature()`). Both devices are connected with 
-each other. For this we use the general connection `balder.Connection()`, which allows every type of connection.
+Here, we have defined that a `LightSpendingDevice` **needs to have** a feature called `BaseLightFeature` so that this 
+scenario can be executed.
 
-You can implement your test, by adding a new method that starts with `test_*()`:
+We have also added a test case (named with a `test_*()` prefix) called `test_check_light`, which executes the validation
+of a lamp, by switching it on and off and checking its state.
 
-```python
-import balder
-from .features import SendMessageFeature, RecvMessageFeature
+**Note:** The `BaseLightFeature` is an abstract Feature class that defines the abstract methods `switch_on()`, 
+`switch_off()`, and `light_is_on()`.
 
-
-class ScenarioMessaging(balder.Scenario):
-    
-    class Sender(balder.Device):
-        send = SendMessageFeature()
-    
-    @balder.connect(Sender, over_connection=balder.Connection())
-    class Receiver(balder.Device):
-        recv = RecvMessageFeature()
-        
-    def test_send_msg(self):
-        MESSAGE_TXT = "Hello World"
-        self.Sender.send.send_msg(MESSAGE_TXT)
-        received_msg = self.Receiver.recv.get_last_received_msg()
-        assert received_msg == MESSAGE_TXT
-
-```
 
 ## Define the `Setup` class
 
-The next step is defining a `Setup` class, which describes what we have. For a `Scenario` to match a `Setup`, all of 
-your scenario-devices must be able to map to a sub selection of some setup-devices. 
+The next step is defining a `Setup` class, which describes what we have. For a `Scenario` to match a `Setup`, the 
+features of all scenario devices must be implemented by the mapped setup devices.
 
-For example, if you want to verify if your DUT is able to receive messages from your computer (both are connected over 
-USB), just create a `Setup` class with the both devices `Computer` and `Dut` and add an implementation (subclasses) of 
-our previously defined feature classes `SendMessageFeature` and `RecvMessageFeature` to them:
+For example, if we want to test a car that includes a lamp, we could have a setup like the one shown below:
 
 ```python
 import balder
-from balder import connections as cnns
-from .setup_features import SendUsbMessageFeature, RecvUsbMessageFeature
+from lib.setup_features import CarEngineFeature, CarLightFeature
 
 
-class SetupOverUsb(balder.Setup):
+class SetupGarage(balder.Setup):
     
-    class Computer(balder.Device):
-        # non-abstract subclass of `SendMessageFeature`
-        send = SendUsbMessageFeature()
+    class Car(balder.Device):
+        car_engine = CarEngineFeature()
+        car_light = CarLightFeature() # subclass of `lib.scenario_feature.BaseLightFeature`
+        ...
     
-    @balder.connect(Computer, over_connection=cnns.UsbConnection())
-    class Dut(balder.Device):
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvUsbMessageFeature()
 
 ```
 
-With the features `SendUsbMessageFeature` and `RecvUsbMessageFeature`, both devices hold an implementation of our 
-previous scenario-level features `SendMessageFeature` and `RecvMessageFeature`. They are the child classes of our
-scenario-level features and hold the full implementation for sending/receiving data over USB.
+When you run Balder in this environment, it will collect the `ScenarioLight` and the `SetupMyCar` classes and try to 
+find mappings between them. Based on the `ScenarioLight`, Balder looks for a device that provides an implementation of 
+the single `BaseLightFeature`. To do this, it scans all available setups. Since the `SetupMyCar.Car` device provides an 
+implementation through the `CarLightFeature`, this device will match.
 
-As soon as you run Balder, Balder will automatically detect that our scenario `ScenarioMessaging` can be mapped to the 
-`SetupOverUsb`. This will cause Balder to run the test `test_send_msg()` with the implemented setup-level version of 
-the features.
+```shell
++----------------------------------------------------------------------------------------------------------------------+
+| BALDER Testsystem                                                                                                    |
+|  python version 3.10.12 (main, Aug 15 2025, 14:32:43) [GCC 11.4.0] | balder version 0.1.0b14                         |
++----------------------------------------------------------------------------------------------------------------------+
+Collect 1 Setups and 1 Scenarios
+  resolve them to 1 valid variations
 
-The big advantage of Balder is the reusability. If you want to test if the communication also works in the other 
-direction, just add the features inverted:
-
-```python
-import balder
-from balder import connections as cnns
-from .setup_features import SendUsbMessageFeature, RecvUsbMessageFeature
-
-
-class SetupOverUsb(balder.Setup):
-    
-    class Computer(balder.Device):
-        # non-abstract subclass of `SendMessageFeature`
-        send = SendUsbMessageFeature()
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvUsbMessageFeature()
-    
-    @balder.connect(Computer, over_connection=cnns.UsbConnection())
-    class Dut(balder.Device):
-        # non-abstract subclass of `SendMessageFeature`
-        send = SendUsbMessageFeature()
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvUsbMessageFeature()
-
+================================================== START TESTSESSION ===================================================
+SETUP SetupGarage
+  SCENARIO ScenarioLight
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car
+      TEST ScenarioLight.test_check_light [.]
+================================================== FINISH TESTSESSION ==================================================
+TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 1 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
 ```
 
-Balder will now run the test once with the `Computer` being the sender and once with the `Dut` being the Sender, even 
-though you didn't implement anything new.
+## Add another Device to the `Setup` class
 
-|             | `ScenarioMessaging.Sender` | `ScenarioMessaging.Sender` |
-|-------------|----------------------------|----------------------------|
-| VARIATION 1 | `SetupOverUsb.Computer`    | `SetupOverUsb.Dut`         |
-| VARIATION 2 | `SetupOverUsb.Dut`         | `SetupOverUsb.Computer`    |
+Now the big advantage of Balder comes into play. We can run our test with all devices that can implement the 
+`BaseLightFeature`, independent of how this will be implemented in detail. **You do not need to rewrite the test**.
 
-Do you have another device, that should be tested too? Just add it to your setup:
+So, We have more devices in our garage. So let's add them:
 
 ```python
 import balder
-from balder import connections as cnns
-from .setup_features import SendUsbMessageFeature, RecvUsbMessageFeature
+from lib.setup_features import CarEngineFeature, CarLightFeature, PedalFeature, BicycleLightFeature, GateOpenerFeature
 
 
-class SetupOverUsb(balder.Setup):
+class SetupGarage(balder.Setup):
     
-    class Computer(balder.Device):
-        # non-abstract subclass of `SendMessageFeature`
-        send = SendUsbMessageFeature()
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvUsbMessageFeature()
+    class Car(balder.Device):
+        car_engine = CarEngineFeature()
+        car_light = CarLightFeature() # subclass of `lib.scenario_feature.BaseLightFeature`
+        ...
     
-    @balder.connect(Computer, over_connection=cnns.UsbConnection())
-    class Dut(balder.Device):
-        # non-abstract subclass of `SendMessageFeature`
-        send = SendUsbMessageFeature()
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvUsbMessageFeature()
+    class Bicycle(balder.Device):
+        pedals = PedalFeature()
+        light = BicycleLightFeature() # another subclass of `lib.scenario_feature.BaseLightFeature`
         
-    @balder.connect(Computer, over_connection=cnns.UsbConnection())
-    class AnotherDut(balder.Device):
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvUsbMessageFeature()
+    class GarageGate(balder.Device):
+        opener = GateOpenerFeature()
 
 ```
 
-Now balder will run our scenario once each with the following mappings:
+If we run Balder now, it will find more mappings because the `Bicycle` device also provides an implementation for the 
+`BaseLightFeature` we are looking for.
 
-|             | `ScenarioMessaging.Sender` | `ScenarioMessaging.Sender` |
-|-------------|----------------------------|----------------------------|
-| VARIATION 1 | `SetupOverUsb.Computer`    | `SetupOverUsb.Dut`         |
-| VARIATION 2 | `SetupOverUsb.Dut`         | `SetupOverUsb.Computer`    |
-| VARIATION 3 | `SetupOverUsb.Computer`    | `SetupOverUsb.AnotherDut`  |
+```shell
++----------------------------------------------------------------------------------------------------------------------+
+| BALDER Testsystem                                                                                                    |
+|  python version 3.10.12 (main, Aug 15 2025, 14:32:43) [GCC 11.4.0] | balder version 0.1.0b14                         |
++----------------------------------------------------------------------------------------------------------------------+
+Collect 1 Setups and 1 Scenarios
+  resolve them to 2 valid variations
 
-If you want to test a `Dut` device that does not use USB for communication, you can also add other feature 
-implementations of ``SendMessageFeature`` and ``RecvMessageFeature`` in your setup devices. For this we just add a new 
-setup:
-
-```python
-import balder
-from balder import connections as cnns
-from .setup_features import SendUsbMessageFeature, RecvUsbMessageFeature, SendBluetoothMessageFeature, RecvBluetoothMessageFeature
-
-
-class SetupOverUsb(balder.Setup):
-    
-    ...
-
-class SetupOverBluetooth(balder.Setup):
-    class Computer(balder.Device):
-        # non-abstract subclass of `SendMessageFeature`
-        send = SendBluetoothMessageFeature()
-    
-    @balder.connect(Computer, over_connection=cnns.BluetoothConnection)
-    class Dut(balder.Device):
-        # non-abstract subclass of `RecvMessageFeature`
-        recv = RecvBluetoothMessageFeature()
-
+================================================== START TESTSESSION ===================================================
+SETUP SetupGarage
+  SCENARIO ScenarioLight
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Bicycle
+      TEST ScenarioLight.test_check_light [.]
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car
+      TEST ScenarioLight.test_check_light [.]
+================================================== FINISH TESTSESSION ==================================================
+TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 2 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
 ```
 
-If you now execute Balder, it will run the scenario with all possible device constellations of the `SetupOverUsb` and 
-the `SetupOverBluetooth`. 
+Balder handles all of this for you. You only need to describe your environment by defining `Scenario` and `Setup` 
+classes, then provide the specific implementations by creating the features. Balder will automatically search for and 
+apply the mappings between them.
 
-|             | `ScenarioMessaging.Sender`      | `ScenarioMessaging.Sender` |
-|-------------|---------------------------------|----------------------------|
-| VARIATION 1 | `SetupOverUsb.Computer`         | `SetupOverUsb.Dut`         |
-| VARIATION 2 | `SetupOverUsb.Dut`              | `SetupOverUsb.Computer`    |
-| VARIATION 3 | `SetupOverUsb.Computer`         | `SetupOverUsb.AnotherDut`  |
-| VARIATION 4 | `SetupOverBluetooth.Computer`   | `SetupOverBluetooth.Dut`   |
+**NOTE:** Balder offers many more elements to design complete device structures, including connections between multiple 
+devices.
 
-NOTE: *You could also add all of these devices in a shared setup and use one common feature for both protocols, but for this you would need to use VDevices. You can read more about this in [the documentation section about VDevices](https://docs.balder.dev/en/latest/basics/vdevices.html)*
+You can learn more about that in the 
+[Tutorial Section of the Documentation](https://docs.balder.dev/en/latest/tutorial_guide/index.html).
 
 
 # Example: Use an installable BalderHub package
 
-With Balder you can create custom test environments or install open source available test packages, so called 
-[BalderHub packages](https://hub.balder.dev). If you want to test a SNMP client device for example, you can use the 
-[package balderhub-snmpagent](https://github.com/balder-dev/balderhub-snmpagent). Just install it with:
+With Balder, you can create custom test environments or install open-source-available test packages, known as 
+[BalderHub packages](https://hub.balder.dev). For example, if you want to test the login functionality of a website, simply use the 
+ready-to-use scenario `ScenarioSimpleLogin` from the [`balderhub-auth` package](https://hub.balder.dev/projects/auth/en/latest/examples.html), 
+
+
+We want to use [Selenium](https://www.selenium.dev/) to control the browser and of course use html elements, so let's install 
+`balderhub-selenium` and `balderhub-html` right away.
 
 ```
-$ pip install balderhub-snmpagent
+$ pip install balderhub-auth balderhub-selenium balderhub-html
 ```
 
-You only need to provide two things: The configuration of your DUT as subclass of `SnmpSystemConfig` and your 
-environment (the `Setup` class):
+So as mentioned, you don't need to define a scenario and a test yourself; you can simply import it:
 
 ```python
-# file `features.py`
-from balderhub.snmpagent.lib import features
+# file `scenario_balderhub.py`
 
-class MySnmpSystemConfig(features.SnmpSystemConfig):
-
-    host = "192.168.178.28"
-    sys_descr = "my fancy sysDescr"
-    sys_object_id = "1.3.6.1.4.1.1234.2.3.9.1"
-    read_community = "public"
-    write_community = "public"
+from balderhub.auth.scenarios import ScenarioSimpleLogin
 
 ```
 
+According to the [documentation of this BalderHub project](https://hub.balder.dev/projects/auth/en/latest/examples.html), 
+we only need to define the login page by overwriting the ``LoginPage`` feature:
+
 ```python
-# file `setup_example.py`
+
+# file `lib/pages.py`
+
+import balderhub.auth.contrib.html.pages
+from balderhub.html.lib.utils import Selector
+from balderhub.url.lib.utils import Url
+import balderhub.html.lib.utils.components as html
+
+
+class LoginPage(balderhub.auth.contrib.html.pages.LoginPage):
+
+    url = Url('https://example.com')
+
+    # Overwrite abstract property
+    @property
+    def input_username(self):
+            return html.inputs.HtmlTextInput.by_selector(self.driver, Selector.by_name('user'))
+
+    # Overwrite abstract property
+    @property
+    def input_password(self):
+        return html.inputs.HtmlPasswordInput.by_selector(self.driver, Selector.by_name('user'))
+
+    # Overwrite abstract property
+    @property
+    def btn_login(self):
+        return html.HtmlButtonElement.by_selector(self.driver, Selector.by_id('submit-button'))
+
+```
+
+And use it in our setup:
+
+```python
+
+
+# file `setups/setup_office.py`
+
 import balder
-from balderhub.snmpagent.lib.connections import SnmpConnection
-from balderhub.snmpagent.lib.features import HasSnmpSystemGroupFeature
-from balderhub.snmpagent.lib.setup_features import SendSnmpGetRequestPysnmpFeature, SendSnmpSetRequestPysnmpFeature
-from . import features as setup_features
+import balderhub.auth.lib.scenario_features.role
+from balderhub.selenium.lib.setup_features import SeleniumChromeWebdriverFeature
 
+from lib.pages import LoginPage
 
-class SetupPrinter(balder.Setup):
+class UserConfig(balderhub.auth.lib.scenario_features.role.UserRoleFeature):
+    # provide the credentials for the log in
+        username = 'admin'
+        password = 'secret'
 
-    class Printer(balder.Device):
-        _snmp_sys = HasSnmpSystemGroupFeature()
-        config = setup_features.SnmpSystemConfig()
+class SetupOffice(balder.Setup):
 
-    @balder.connect(Printer, over_connection=SnmpConnection())
-    class HostPc(balder.Device):
-        get_request_snmp = SendSnmpGetRequestPysnmpFeature()
-        set_request_snmp = SendSnmpSetRequestPysnmpFeature()
+    class Server(balder.Device):
+        user = UserConfig()
 
+    class Browser(balder.Device):
+        selenium = SeleniumChromeWebdriverFeature()
+        page_login = LoginPage()
+
+    # fixture to prepare selenium - will be executed before the test session runs
+    @balder.fixture('session')
+    def selenium(self):
+        self.Browser.selenium.create()
+        yield
+        self.Browser.selenium.quit()
 ```
 
-Call Balder in your project:
+When you run Balder now, it will execute a complete login test that you didn't write yourself - 
+**it was created by the open-source community**.
 
-```
-$ balder
-```
-
-And all existing and matching tests in [balderhub-snmpagent](https://github.com/balder-dev/balderhub-snmpagent) will 
-then be executed for you:
-
-```
+```shell
 +----------------------------------------------------------------------------------------------------------------------+
 | BALDER Testsystem                                                                                                    |
-|  python version 3.10.6 (main, Mar 10 2023, 10:55:28) [GCC 11.3.0] | balder version 0.1.0b6                           |
+|  python version 3.10.12 (main, Aug 15 2025, 14:32:43) [GCC 11.4.0] | balder version 0.1.0b14                         |
 +----------------------------------------------------------------------------------------------------------------------+
-Collect 1 Setups and 3 Scenarios
-  resolve them to 3 mapping candidates
+Collect 1 Setups and 1 Scenarios
+  resolve them to 1 valid variations
 
 ================================================== START TESTSESSION ===================================================
-SETUP SetupPrinter
-  SCENARIO ScenarioMibSysDescr
-    VARIATION ScenarioMibSysDescr.SnmpAgent:SetupPrinter.Printer | ScenarioMibSysDescr.SnmpManager:SetupPrinter.HostPc
-      TEST ScenarioMibSysDescr.test_get_sys_descr [.]
-      TEST ScenarioMibSysDescr.test_get_sys_descr_ascii_check [.]
-      TEST ScenarioMibSysDescr.test_set_sys_descr [.]
-  SCENARIO ScenarioMibSysObjectId
-    VARIATION ScenarioMibSysObjectId.SnmpAgent:SetupPrinter.Printer | ScenarioMibSysObjectId.SnmpManager:SetupPrinter.HostPc
-      TEST ScenarioMibSysObjectId.test_get_sys_object_id [.]
-      TEST ScenarioMibSysObjectId.test_set_sys_object_id [.]
-  SCENARIO ScenarioMibSysUpTime
-    VARIATION ScenarioMibSysUpTime.SnmpAgent:SetupPrinter.Printer | ScenarioMibSysUpTime.SnmpManager:SetupPrinter.HostPc
-      TEST ScenarioMibSysUpTime.test_get_sys_up_time [.]
-      TEST ScenarioMibSysUpTime.test_get_sys_up_time_changed_check [.]
-      TEST ScenarioMibSysUpTime.test_set_sys_up_time [.]
+SETUP SetupOffice
+  SCENARIO ScenarioSimpleLogin
+    VARIATION ScenarioSimpleLogin.Client:SetupOffice.Browser | ScenarioSimpleLogin.System:SetupOffice.Server
+      TEST ScenarioSimpleLogin.test_login [.]
 ================================================== FINISH TESTSESSION ==================================================
-TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 8 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
+TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 1 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
 ```
 
+If you'd like to learn more about it, feel free to dive [into the documentation](https://balder.dev).
 
 # Contribution guidelines
 
