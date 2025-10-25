@@ -72,7 +72,7 @@ html_title = "<release>"
 html_logo = "_static/balder.png"
 html_theme_options = {
     "announcement": (
-        "Balder official release date: 25th of October - Stay Tuned"
+        "Balder v0.1.0 is here - Check it out"
     )
 }
 
