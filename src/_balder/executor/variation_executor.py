@@ -614,6 +614,8 @@ class VariationExecutor(BasicExecutableExecutor):
     def restore_original_vdevice_references(self):
         """
         This method restores all previously exchanged :class:`VDevice` references to the original ones.
+
+        This method is the cleanup method for :meth:`VariationExecutor.exchange_unmapped_vdevice_references`.
         """
         all_devices = NormalScenarioSetupController.get_for(
             self.cur_scenario_class.__class__).get_all_abs_inner_device_classes()
@@ -633,10 +635,10 @@ class VariationExecutor(BasicExecutableExecutor):
         objects, will be replaced with the related feature instances of the mapped device object.
 
         .. note::
-            Note that this method expects that the true defined scenario features are already replaced with the real
-            setup features. In addition to that, the method expects, that the vDevice-Device mapping of every feature
-            was set to the resolved setup device! So the method requires that the method
-            `update_scenario_device_feature_instances()` was called before.
+            Note that this method expects that the defined scenario features instances are already replaced with the
+            current active setup features. In addition to that, the method expects, that the vDevice-Device mapping of
+            every feature was set to the resolved setup device! This means, the method
+            `update_scenario_device_feature_instances()` needs to be called before.
         """
         for scenario_device, _ in self._base_device_mapping.items():
             # these features are subclasses of the real defined one (because they are already the replaced ones)
