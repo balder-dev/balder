@@ -191,6 +191,7 @@ class VariationExecutor(BasicExecutableExecutor):
             # do nothing if this variation can not be applied (is discarded)
             return
 
+        self.restore_vdevice_feature_instances()
         self.restore_original_vdevice_references()
         self.revert_active_vdevice_device_mappings_in_all_features()
         self.revert_scenario_device_feature_instances()
@@ -663,6 +664,31 @@ class VariationExecutor(BasicExecutableExecutor):
                         # because `cur_feature` is only the object instance, the value will be overwritten only for this
                         # object
                         setattr(cur_vdevice, cur_vdevice_attr_name, replacing_candidate)
+
+    def restore_vdevice_feature_instances(self):
+        """
+        This method restores all previously exchanged :class:`VDevice` feature references to the original ones.
+
+        This method is the cleanup method for :meth:`VariationExecutor.update_vdevice_referenced_feature_instances`.
+
+        .. note::
+            Note that this method expects that the defined scenario features are still replaced with the active
+            setup features. In addition to that, the method expects, that the vDevice-Device mapping of every feature
+            is still set!
+
+        """
+        for scenario_device, _ in self._base_device_mapping.items():
+            # these features are subclasses of the real defined one (because they are already the replaced ones)
+            all_device_features = DeviceController.get_for(scenario_device).get_all_instantiated_feature_objects()
+            for _, cur_feature in all_device_features.items():
+                # now get the related vDevice class and update its attributes
+                cur_vdevice, cur_device = cur_feature.active_vdevice_device_mapping
+                if cur_vdevice is not None and cur_device is not None:
+                    cur_vdevice_controller = VDeviceController.get_for(cur_vdevice)
+                    original_features_of_cur_vdev = cur_vdevice_controller.get_original_instanced_feature_objects()
+
+                    for cur_vdev_attr_name, cur_vdev_orig_feature in original_features_of_cur_vdev.items():
+                        setattr(cur_vdevice, cur_vdev_attr_name, cur_vdev_orig_feature)
 
     def verify_applicability(self) -> None:
         """
