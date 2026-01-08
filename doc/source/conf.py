@@ -71,9 +71,6 @@ html_theme = "furo"
 html_title = "<release>"
 html_logo = "_static/balder.png"
 html_theme_options = {
-    "announcement": (
-        "Balder v0.1.0 is here - Check it out"
-    )
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
