@@ -219,9 +219,6 @@ class Solver:
                 variation_executor = VariationExecutor(device_mapping=cur_device_mapping, parent=scenario_executor)
                 variation_executor.verify_applicability()
 
-                if not variation_executor.can_be_applied():
-                    continue
-
                 scenario_executor.add_variation_executor(variation_executor)
 
                 for cur_testcase in scenario_executor.base_scenario_controller.get_all_test_methods():
