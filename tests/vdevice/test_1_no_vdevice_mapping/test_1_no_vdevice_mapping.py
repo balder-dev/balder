@@ -28,4 +28,4 @@ def processed(env_dir):
 
     assert session.executor_tree.executor_result == ResultState.NOT_RUN, \
         "test session does not terminates with error"
-    assert len(session.executor_tree.all_child_executors) == 0, "found not expected child elements in the tree"
+    assert len(session.executor_tree.get_setup_executors()) == 0, "found not expected child elements in the tree"
