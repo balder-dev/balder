@@ -79,9 +79,10 @@ class SetupExecutor(BasicExecutableExecutor):
         print(f"SETUP {self.base_setup_class.__class__.__name__}")
 
     def _body_execution(self, show_discarded):
-        for cur_scenario_executor in self.get_scenario_executors():
+        for cur_scenario_executor in self.get_scenario_executors(return_discarded=show_discarded):
             prev_mark = cur_scenario_executor.prev_mark
-            if cur_scenario_executor.has_runnable_tests(show_discarded) or cur_scenario_executor.has_skipped_tests():
+            if cur_scenario_executor.has_runnable_tests(consider_discarded_too=show_discarded) \
+                    or cur_scenario_executor.has_skipped_tests():
                 cur_scenario_executor.execute(show_discarded=show_discarded)
             elif prev_mark == PreviousExecutorMark.SKIP:
                 cur_scenario_executor.set_result_for_whole_branch(ResultState.SKIP)
@@ -123,13 +124,26 @@ class SetupExecutor(BasicExecutableExecutor):
                     # object
                     setattr(cur_feature, cur_ref_feature_name, replacing_candidate)
 
-    def get_scenario_executors(self) -> List[ScenarioExecutor]:
-        """returns a list with all scenario executors that belongs to this setup executor"""
-        return self._scenario_executors
+    def get_scenario_executors(self, return_discarded=False) -> List[ScenarioExecutor]:
+        """
+        returns a list with all scenario executors that belongs to this setup executor
+
+        :param return_discarded: True if the method should return discarded variations too
+
+        :return: a list of relevant :class:`ScenarioExecutor`
+        """
+        if return_discarded:
+            return self._scenario_executors
+
+        return [
+            cur_scenario_executor
+            for cur_scenario_executor in self._scenario_executors
+            if len(cur_scenario_executor.get_variation_executors(return_discarded=False)) > 0
+        ]
 
     def cleanup_empty_executor_branches(self, consider_discarded=False):
         to_remove_executor = []
-        for cur_scenario_executor in self.get_scenario_executors():
+        for cur_scenario_executor in self.get_scenario_executors(return_discarded=consider_discarded):
             cur_scenario_executor.cleanup_empty_executor_branches(consider_discarded=consider_discarded)
             if len(cur_scenario_executor.get_variation_executors(return_discarded=consider_discarded)) == 0:
                 # remove this whole executor because it has no children anymore

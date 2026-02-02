@@ -62,9 +62,10 @@ class ExecutorTree(BasicExecutableExecutor):
             self.update_inner_feature_reference_in_all_setups()
 
     def _body_execution(self, show_discarded):
-        for cur_setup_executor in self.get_setup_executors():
+        for cur_setup_executor in self.get_setup_executors(return_discarded=show_discarded):
             prev_mark = cur_setup_executor.prev_mark
-            if cur_setup_executor.has_runnable_tests(show_discarded) or cur_setup_executor.has_skipped_tests():
+            if cur_setup_executor.has_runnable_tests(consider_discarded_too=show_discarded) \
+                    or cur_setup_executor.has_skipped_tests():
                 cur_setup_executor.execute(show_discarded=show_discarded)
             elif prev_mark == PreviousExecutorMark.SKIP:
                 cur_setup_executor.set_result_for_whole_branch(ResultState.SKIP)
@@ -78,17 +79,30 @@ class ExecutorTree(BasicExecutableExecutor):
 
     # ---------------------------------- METHODS -----------------------------------------------------------------------
 
-    def get_setup_executors(self) -> List[SetupExecutor]:
-        """returns all setup executors of this tree"""
-        return self._setup_executors
+    def get_setup_executors(self, return_discarded=False) -> List[SetupExecutor]:
+        """
+        returns all setup executors of this tree
 
-    def get_all_scenario_executors(self) -> List[ScenarioExecutor]:
+        :param return_discarded: True if the method should return discarded variations too
+
+        :return: a list of relevant :class:`SetupExecutor`
+        """
+        if return_discarded:
+            return self._setup_executors
+
+        return [
+            cur_setup_executor
+            for cur_setup_executor in self._setup_executors
+            if len(cur_setup_executor.get_scenario_executors(return_discarded=False)) > 0
+        ]
+
+    def get_all_scenario_executors(self, return_discarded=False) -> List[ScenarioExecutor]:
         """
         returns a list with all scenario executors
         """
         all_scenario_executor = []
-        for cur_setup_executor in self.get_setup_executors():
-            all_scenario_executor += cur_setup_executor.get_scenario_executors()
+        for cur_setup_executor in self.get_setup_executors(return_discarded=return_discarded):
+            all_scenario_executor += cur_setup_executor.get_scenario_executors(return_discarded=return_discarded)
         return all_scenario_executor
 
     def get_all_variation_executors(self, return_discarded=False) -> List[VariationExecutor]:
@@ -96,7 +110,7 @@ class ExecutorTree(BasicExecutableExecutor):
         returns a list with all variation executors
         """
         all_variation_executor = []
-        for cur_scenario_executor in self.get_all_scenario_executors():
+        for cur_scenario_executor in self.get_all_scenario_executors(return_discarded=return_discarded):
             all_variation_executor += cur_scenario_executor.get_variation_executors(return_discarded=return_discarded)
         return all_variation_executor
 
@@ -136,9 +150,9 @@ class ExecutorTree(BasicExecutableExecutor):
 
     def cleanup_empty_executor_branches(self, consider_discarded=False):
         to_remove_executor = []
-        for cur_setup_executor in self.get_setup_executors():
+        for cur_setup_executor in self.get_setup_executors(return_discarded=consider_discarded):
             cur_setup_executor.cleanup_empty_executor_branches(consider_discarded=consider_discarded)
-            if len(cur_setup_executor.get_scenario_executors()) == 0:
+            if len(cur_setup_executor.get_scenario_executors(return_discarded=consider_discarded)) == 0:
                 # remove this whole executor because it has no children anymore
                 to_remove_executor.append(cur_setup_executor)
         for cur_setup_executor in to_remove_executor:
@@ -169,7 +183,7 @@ class ExecutorTree(BasicExecutableExecutor):
         print_line(start_text)
         # check if there exists runnable elements
         runnables = [cur_exec.has_runnable_tests(consider_discarded_too=show_discarded)
-                     for cur_exec in self.get_setup_executors()]
+                     for cur_exec in self.get_setup_executors(return_discarded=show_discarded)]
         one_or_more_runnable_setups = None if len(runnables) == 0 else max(runnables)
         if one_or_more_runnable_setups:
             super().execute(show_discarded=show_discarded)
@@ -189,8 +203,8 @@ class ExecutorTree(BasicExecutableExecutor):
     def print_tree(self, show_discarded=False) -> None:
         """this method is an auxiliary method which outputs the entire tree"""
         print("RESOLVING OVERVIEW", end="\n\n")
-        for cur_setup_executor in self.get_setup_executors():
-            for cur_scenario_executor in cur_setup_executor.get_scenario_executors():
+        for cur_setup_executor in self.get_setup_executors(return_discarded=show_discarded):
+            for cur_scenario_executor in cur_setup_executor.get_scenario_executors(return_discarded=show_discarded):
                 for cur_variation_executor in cur_scenario_executor.get_variation_executors(
                         return_discarded=show_discarded):
                     applicable = cur_variation_executor.prev_mark != PreviousExecutorMark.DISCARDED

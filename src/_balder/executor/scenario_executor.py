@@ -99,7 +99,8 @@ class ScenarioExecutor(BasicExecutableExecutor):
     def _body_execution(self, show_discarded):
         for cur_variation_executor in self.get_variation_executors(return_discarded=show_discarded):
             prev_mark = cur_variation_executor.prev_mark
-            if cur_variation_executor.has_runnable_tests() or cur_variation_executor.has_skipped_tests():
+            if cur_variation_executor.has_runnable_tests(consider_discarded_too=show_discarded) \
+                    or cur_variation_executor.has_skipped_tests():
                 cur_variation_executor.execute(show_discarded=show_discarded)
             elif prev_mark == PreviousExecutorMark.SKIP:
                 cur_variation_executor.set_result_for_whole_branch(ResultState.SKIP)
