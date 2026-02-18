@@ -1,12 +1,12 @@
 Part 1: Develop a Login Test from Scratch
 *****************************************
 
-As described in the `Balder Intro Example <Balder Intro Example>`_, we want to test the official Nextcloud app. For this, we set up Docker to
+As described in the :ref:`Balder Intro Example <Balder Intro Example>`, we want to test the official Nextcloud app. For this, we set up Docker to
 be able to test the application locally.
 
 .. note::
     Make sure you have completed the preparation steps and installed Docker, Docker Compose, and Balder. You can find
-    an explanation about that in `Balder Intro Example <Balder Intro Example>`_.
+    an explanation about that in :ref:`Balder Intro Example <Balder Intro Example>`.
 
 In this first part of this tutorial, we'll test the login process of the Nextcloud app. Normally, we would use the
 ``ScenarioSimpleLogin`` from the ``balderhub-auth`` package, since the test is already implemented there. However, for
@@ -172,8 +172,8 @@ If we use more than one feature in the scenario class, Balder will also check fo
 feature implementation conditions. Additionally, it validates that these devices are connected using the exact
 connections specified.
 
-You can read more about the mechanism of how Balder works in `this guide <Balder execution mechanism>`__. For details on
-how connections can be used to select specific variations, see `this guide <Connections>`__.
+You can read more about the mechanism of how Balder works in :ref:`this guide <Balder execution mechanism>`. For details
+on how connections can be used to select specific variations, see :ref:`this guide <Connections>`.
 
 Define the Setup
 ----------------
@@ -432,7 +432,7 @@ So, let's do this:
     `balderhub-selenium documentation <https://hub.balder.dev/projects/selenium>`_.
 
 Last but not least, we need to make sure that Selenium is set up before the test is executed. For that, let's use
-fixtures (see `Fixtures <Fixtures>`_):
+fixtures (see :ref:`Fixtures <Fixtures>`):
 
 .. code-block:: python
 
@@ -487,5 +487,5 @@ through the Selenium Grid website at http://localhost:4444 (if you've added the 
     ----------
 
 Okay, but now it's time to install tests. This significantly speeds up the test development process. So, let's jump to
-`Part 2 <Part 2: Install Tests for Nextcloud Web>`_ of this tutorial and install tests for validating file operations
+:ref:`Part 2 <Part 2: Install Tests for Nextcloud Web>` of this tutorial and install tests for validating file operations
 within the Nextcloud web app.

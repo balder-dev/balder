@@ -15,8 +15,8 @@ Nextcloud is an open-source software platform designed for self-hosted file stor
 to set up their own cloud server, similar to commercial services like Dropbox or Google Drive, but with a strong
 emphasis on user control and data privacy. Individuals or organizations can manage files, share them securely, and
 decide who has access - without relying on external companies. (We will use installable tests for that in
-`Part 2: Install Tests for NextCloud Web <Part 2: Install Tests for NextCloud Web>`_ and
-`Part 3: Reuse Web Tests for NextCloud CLI <Part 3: Reuse Web Tests for NextCloud CLI>`_.)
+:ref:`Part 2: Install Tests for NextCloud Web <Part 2: Install Tests for NextCloud Web>` and
+:ref:`Part 3: Reuse Web Tests for NextCloud CLI <Part 3: Reuse Web Tests for NextCloud CLI>`.)
 
 The platform offers many more tools than just syncing files across devices. For example, it supports editing documents
 in real time, managing calendars and contacts, and handling video calls. However, in this tutorial, we will limit our
@@ -266,4 +266,4 @@ package. This package provides features you can directly use later on. Run the f
 
 Now that we are all set up, we can begin the hands-on part of the tutorial. In this first section, we will focus on
 testing the login mechanism of Nextcloud. Let's dive right in with
-`Part 1: Develop a Login Test from Scratch <Part 1: Develop a Login Test from Scratch>`_.
+:ref:`Part 1: Develop a Login Test from Scratch <Part 1: Develop a Login Test from Scratch>`.

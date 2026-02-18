@@ -8,7 +8,7 @@ synchronize your desktop computer's file system with the app.
 
 Now we want to write tests that validate file operations such as COPY, MOVE, CREATE, DELETE, or RENAME for both files
 and directories within Nextcloud. We will start by testing the Nextcloud web app, since we already set it up
-(see `Balder Intro Example <Balder Intro Example>`_.).
+(see :ref:`Balder Intro Example <Balder Intro Example>`.).
 
 Let's install Tests
 ===================
@@ -66,7 +66,7 @@ Defining our setup
 ------------------
 
 Before we start implementing these features, let's add them to our setup. We'll create a new setup class that looks
-similar to the one from `Part 1: Develop a Login Test from Scratch <Part 1: Develop a Login Test from Scratch>`_:
+similar to the one from :ref:`Part 1: Develop a Login Test from Scratch <Part 1: Develop a Login Test from Scratch>`:
 
 .. code-block:: python
 
@@ -205,8 +205,8 @@ new fixture ``login``:
 
 Finally, we need to complete one last step. As described in
 `the balderhub-nextcloud documentation <https://hub.balder.dev/projects/nextcloud>`_, we must define a so-called
-`VDevice mapping <VDevices and method-variations>`_ between the pages and the Nextcloud server device. Additionally, we
-need to override the implementation of ``balderhub.nextcloud.lib.scenario_features.IsNextcloudServer`` (which is
+:ref:`VDevice mapping <VDevices and method-variations>` between the pages and the Nextcloud server device. Additionally,
+we need to override the implementation of ``balderhub.nextcloud.lib.scenario_features.IsNextcloudServer`` (which is
 required by the vDevice) and specify the correct hostname. This will provide the pages with all the necessary
 information about the Nextcloud server to establish a connection.
 
@@ -337,8 +337,8 @@ these features each require only one or two methods to implement. So, let's defi
             return FileSystemItemList(result)
 
 Because all of our features interact with the Nextcloud Files page, we've added them as an
-`inner feature reference <Inner-Feature-Referencing>`_. This allows us to use everything that this page-feature provides
-within our feature. According to the documentation of
+:ref:`inner feature reference <Inner-Feature-Referencing>`. This allows us to use everything that this page-feature
+provides within our feature. According to the documentation of
 `balderhub-nextcloud <https://hub.balder.dev/projects/nextcloud>`_, this is the page object that lets us interact with
 the Files page of the NextCloud web app.
 
