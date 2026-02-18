@@ -82,8 +82,6 @@ html_css_files = ['custom.css']
 
 # -- mermaid
 
-mermaid_version = ""
-
 html_js_files = [
    'js/mermaid.js',
 ]
