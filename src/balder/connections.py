@@ -13,6 +13,7 @@ from _balder.objects.connections.osi_5_session import PptpConnection
 from _balder.objects.connections.osi_6_presentation import TelnetConnection
 from _balder.objects.connections.osi_7_application import HttpConnection, ImapConnection, LdapConnection, \
     NtpConnection, RpcConnection, SmtpConnection, SntpConnection, SshConnection, DnsConnection
+from _balder.objects.connections.power_connections import PowerConnection, ACPowerConnection, DCPowerConnection
 
 __all__ = [
     # OSI: Physical Layer
@@ -39,5 +40,8 @@ __all__ = [
 
     # OSI Application Layer
     "HttpConnection", "ImapConnection", "LdapConnection", "NtpConnection", "RpcConnection",
-    "SmtpConnection", "SntpConnection", "SshConnection", "DnsConnection"
+    "SmtpConnection", "SntpConnection", "SshConnection", "DnsConnection",
+
+    # General Power Connection
+    "PowerConnection", "ACPowerConnection", "DCPowerConnection",
 ]
