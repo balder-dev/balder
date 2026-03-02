@@ -3,15 +3,19 @@
   <img style="margin: 20px;max-width: 68%" src="https://docs.balder.dev/en/latest/_static/balder_w_boarder.png" alt="Balder logo">
 </div>
 
-Balder is a flexible Python test system that allows you to reuse test code written once for different but similar 
-platforms, devices, or applications. It enables you to install ready-to-use test cases and provides various test 
-development features that help you test your software or devices much faster.
+Balder is a Python test system that allows you to reuse test code written once for different but similar product 
+versions or variations. By separating the test logic from the product-specific implementation, it allows you to 
+**adapt entire test suites to new devices or technologies in minutes** - even if they use completely different 
+underlying mechanisms.
 
-You can use shared test code by installing an [existing BalderHub project](https://hub.balder.dev), or you can create 
-your own. This makes test development for your project much faster, since it is oftentimes enough to install a BalderHub
-project and only provide the user-specific code.
+This enables you to **install ready-to-use test cases** and provides various test development features that 
+helps to test software or embedded devices much faster.
 
-Be part of the progress and share your tests with others, your company, or the whole world.
+You can import reusable test code (fully customizable) from [existing BalderHub project](https://hub.balder.dev), or 
+build your own one.
+
+Be part of the progress and share your tests within your team, your company, or the whole world.
+
 
 # Installation
 
@@ -23,7 +27,7 @@ python -m pip install baldertest
 
 # Run Balder
 
-After you've installed it, you can run Balder inside a Balder environment with the following command:
+After you've installed it, you can run Balder  with the following command:
 
 ```
 balder
@@ -37,80 +41,85 @@ balder --working-dir /path/to/working/dir
 
 # How does it work?
 
-Balder allows you to reuse previously written test code by dividing it into the components that **are needed** for a 
-test (`Scenario`) and the components that **you have** (`Setup`).
+Balder allows to reuse test code by splitting tests into two key concepts:
 
-You can define a test within a method of a `Scenario` class. This is often an abstract layer, where you only describe 
-the general business logic without providing any specific implementation details.
+**Scenarios:** Define what **is needed** for a test - mostly abstract business logic without implementation details.
 
-These specific implementation details are provided in the `Setup` classes. They describe exactly **what you have**. In 
-these classes, you provide an implementation for the abstract elements that were defined earlier in the `Scenario`. 
+**Setups:** Describe what **you have** available - concrete implementations of the (abstract) features from Scenarios.
 
-Balder then automatically searches for matching mappings and runs your tests using them.
+Tests are written as methods in Scenario classes (prefixed with `test_*`). Balder automatically resolves compatible 
+mappings between Scenarios and Setups, generating and running variations dynamically.
 
 ## Define the `Scenario` class
 
-Inside `Scenario` or `Setup` classes, you can describe the environment using inner `Device` classes. For example, let's 
-write a test that validates the functionality of a lamp. For that, keep in mind that we want to make this test as 
-flexible as possible. It should be able to run with all kind of things that have a lamp:
+Scenarios use inner Device classes to outline required devices and their features. Features are abstract classes 
+defining interfaces (e.g., methods like `switch_on()`).
+
+Here's an example Scenario for testing a light source's basic functionality, making it adaptable to any light-emitting 
+device:
 
 ```python
 import balder
-from lib.scenario_features import BaseLightFeature
+from lib.scenario_features import BaseLightSpendingFeature, BaseLightDetectorFeature
 
 
 class ScenarioLight(balder.Scenario):
     
-    # The device with its features that are required for this test
+    # The devices with its features that are required for this test
+    
     class LightSpendingDevice(balder.Device):
-        light = BaseLightFeature()
+        light = BaseLightSpendingFeature()
+    
+    @balder.connect(LightSpendingDevice, over_connection=balder.Connection)
+    class LightDetectingDevice(balder.Device):
+        detector = BaseLightDetectorFeature()
     
     def test_check_light(self):
         self.LightSpendingDevice.light.switch_on()
-        assert self.LightSpendingDevice.light.light_is_on()
+        assert self.LightDetectingDevice.detector.light_is_on()
         self.LightSpendingDevice.light.switch_off()
-        assert not self.LightSpendingDevice.light.light_is_on()
+        assert not self.LightDetectingDevice.detector.light_is_on()
         
     
 
 ```
 
-Here, we have defined that a `LightSpendingDevice` **needs to have** a feature called `BaseLightFeature` so that this 
-scenario can be executed.
+This Scenario requires two devices: one to emit light and one to detect it. The test logic remains generic.
 
-We have also added a test case (named with a `test_*()` prefix) called `test_check_light`, which executes the validation
-of a lamp, by switching it on and off and checking its state.
+`BaseLightSpendingFeature`: Abstract feature with methods like `switch_on()` and `switch_off()`.
 
-**Note:** The `BaseLightFeature` is an abstract Feature class that defines the abstract methods `switch_on()`, 
-`switch_off()`, and `light_is_on()`.
+`BaseLightDetectorFeature`: Abstract feature with methods like `light_is_on()`.
 
 
 ## Define the `Setup` class
 
-The next step is defining a `Setup` class, which describes what we have. For a `Scenario` to match a `Setup`, the 
-features of all scenario devices must be implemented by the mapped setup devices.
+Next step is defining a `Setup` class that describes what **we have**. For a `Scenario` to match a 
+`Setup`, every feature required by the Scenario must exist as a subclass within the corresponding mapped Device in the 
+Setup.
 
-For example, if we want to test a car that includes a lamp, we could have a setup like the one shown below:
+For testing a car with a light in a garage setup:
 
 ```python
 import balder
-from lib.setup_features import CarEngineFeature, CarLightFeature
+from lib.setup_features import CarEngineFeature, CarLightFeature, \
+    LightDetectorFeature
 
 
 class SetupGarage(balder.Setup):
     
     class Car(balder.Device):
         car_engine = CarEngineFeature()
-        car_light = CarLightFeature() # subclass of `lib.scenario_feature.BaseLightFeature`
+        car_light = CarLightFeature() # subclass of `BaseLightSpendingFeature`
         ...
     
+    @balder.connect(Car, over_connection=balder.Connection)
+    class Sensor(balder.Device):
+        detector = LightDetectorFeature()  # subclass of `BaseLightDetectorFeature`
 
 ```
 
-When you run Balder in this environment, it will collect the `ScenarioLight` and the `SetupMyCar` classes and try to 
-find mappings between them. Based on the `ScenarioLight`, Balder looks for a device that provides an implementation of 
-the single `BaseLightFeature`. To do this, it scans all available setups. Since the `SetupMyCar.Car` device provides an 
-implementation through the `CarLightFeature`, this device will match.
+Balder scans for matches: It checks if Setup devices implement all required Scenario features. In our case, it finds 
+one matching variation (`LightSpendingDevice -> Car | LightDetectingDevice -> Sensor`) and runs the test with it.
 
 ```shell
 +----------------------------------------------------------------------------------------------------------------------+
@@ -123,7 +132,7 @@ Collect 1 Setups and 1 Scenarios
 ================================================== START TESTSESSION ===================================================
 SETUP SetupGarage
   SCENARIO ScenarioLight
-    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car | ScenarioLight.LightDetectingDevice:SetupGarage.Sensor
       TEST ScenarioLight.test_check_light [.]
 ================================================== FINISH TESTSESSION ==================================================
 TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 1 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
@@ -132,33 +141,48 @@ TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 1 | TOTAL 
 ## Add another Device to the `Setup` class
 
 Now the big advantage of Balder comes into play. We can run our test with all devices that can implement the 
-`BaseLightFeature`, independent of how this will be implemented in detail. **You do not need to rewrite the test**.
+`BaseLightSpendingFeature`, independent of how this will be implemented in detail. 
+**You do not need to rewrite the test**.
 
 So, We have more devices in our garage. So let's add them:
 
 ```python
 import balder
-from lib.setup_features import CarEngineFeature, CarLightFeature, PedalFeature, BicycleLightFeature, GateOpenerFeature
+from lib.setup_features import CarEngineFeature, CarLightFeature, \
+    PedalFeature, BicycleLightFeature, \
+    GateOpenerFeature, \
+    LightDetectorFeature
 
 
 class SetupGarage(balder.Setup):
     
     class Car(balder.Device):
         car_engine = CarEngineFeature()
-        car_light = CarLightFeature() # subclass of `lib.scenario_feature.BaseLightFeature`
+        car_light = CarLightFeature() # subclass of `BaseLightSpendingFeature`
         ...
     
     class Bicycle(balder.Device):
         pedals = PedalFeature()
-        light = BicycleLightFeature() # another subclass of `lib.scenario_feature.BaseLightFeature`
+        light = BicycleLightFeature() # another subclass of `BaseLightSpendingFeature`
         
     class GarageGate(balder.Device):
         opener = GateOpenerFeature()
 
+    @balder.connect(Car, over_connection=balder.Connection)
+    @balder.connect(Bicycle, over_connection=balder.Connection)
+    class Sensor(balder.Device):
+        detector = LightDetectorFeature()  # subclass of `BaseLightDetectorFeature`
+
+
 ```
 
-If we run Balder now, it will find more mappings because the `Bicycle` device also provides an implementation for the 
-`BaseLightFeature` we are looking for.
+
+The `BicycleLightFeature` can be implemented totally different to the `CarLightFeature`, but because it always provides
+an implementation for the abstract methods within `BaseLightSpendingFeature`, the test can be executed 
+in both variants.
+
+Balder now detects the two variations (`Car` and `Bicycle` as light sources):
+
 
 ```shell
 +----------------------------------------------------------------------------------------------------------------------+
@@ -171,19 +195,87 @@ Collect 1 Setups and 1 Scenarios
 ================================================== START TESTSESSION ===================================================
 SETUP SetupGarage
   SCENARIO ScenarioLight
-    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Bicycle
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Bicycle | ScenarioLight.LightDetectingDevice:SetupGarage.Sensor
       TEST ScenarioLight.test_check_light [.]
-    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car | ScenarioLight.LightDetectingDevice:SetupGarage.Sensor
       TEST ScenarioLight.test_check_light [.]
 ================================================== FINISH TESTSESSION ==================================================
 TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 2 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
 ```
 
-Balder handles all of this for you. You only need to describe your environment by defining `Scenario` and `Setup` 
-classes, then provide the specific implementations by creating the features. Balder will automatically search for and 
-apply the mappings between them.
+The test implementation within the `ScenarioLight` has not changed, but the execution will be once with the 
+`CarLightFeature` and once with the `BicycleLightFeature`!
 
-**NOTE:** Balder offers many more elements to design complete device structures, including connections between multiple 
+## Use another Light-Sensor
+
+Do you have another test setup, that is using another method to check if the light is powered on? Replace 
+`LightDetectorFeature` with the new `MeasureLightByVoltageFeature` (is a subclass of `BaseLightDetectorFeature` 
+too):
+
+
+```python
+import balder
+from lib.setup_features import CarEngineFeature, CarLightFeature, \
+    PedalFeature, BicycleLightFeature, \
+    GateOpenerFeature, \
+    MeasureLightByVoltageFeature
+
+
+class SetupLaboratory(balder.Setup):
+    
+    class Car(balder.Device):
+        car_engine = CarEngineFeature()
+        car_light = CarLightFeature() # subclass of `BaseLightSpendingFeature`
+        ...
+    
+    class Bicycle(balder.Device):
+        pedals = PedalFeature()
+        light = BicycleLightFeature() # another subclass of `BaseLightSpendingFeature`
+        
+    class GarageGate(balder.Device):
+        opener = GateOpenerFeature()
+
+    @balder.connect(Car, over_connection=balder.Connection)
+    @balder.connect(Bicycle, over_connection=balder.Connection)
+    class Sensor(balder.Device):
+        detector = MeasureLightByVoltageFeature()  # another subclass of `BaseLightDetectorFeature`
+
+
+```
+
+And when Balder is executed, it performs both settings, once by measuring the light with the sensor (`SetupGarage`) and 
+once by detecting it via the voltage measurement (`SetupLaboratory`).
+
+```shell
++----------------------------------------------------------------------------------------------------------------------+
+| BALDER Testsystem                                                                                                    |
+|  python version 3.10.12 (main, Aug 15 2025, 14:32:43) [GCC 11.4.0] | balder version 0.1.0b14                         |
++----------------------------------------------------------------------------------------------------------------------+
+Collect 2 Setups and 1 Scenarios
+  resolve them to 4 valid variations
+
+================================================== START TESTSESSION ===================================================
+SETUP SetupGarage
+  SCENARIO ScenarioLight
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Bicycle | ScenarioLight.LightDetectingDevice:SetupGarage.Sensor
+      TEST ScenarioLight.test_check_light [.]
+    VARIATION ScenarioLight.LightSpendingDevice:SetupGarage.Car | ScenarioLight.LightDetectingDevice:SetupGarage.Sensor
+      TEST ScenarioLight.test_check_light [.]
+SETUP SetupLaboratory
+  SCENARIO ScenarioLight
+    VARIATION ScenarioLight.LightSpendingDevice:SetupLaboratory.Bicycle | ScenarioLight.LightDetectingDevice:SetupLaboratory.Sensor
+      TEST ScenarioLight.test_check_light [.]
+    VARIATION ScenarioLight.LightSpendingDevice:SetupLaboratory.Car | ScenarioLight.LightDetectingDevice:SetupLaboratory.Sensor
+      TEST ScenarioLight.test_check_light [.]
+================================================== FINISH TESTSESSION ==================================================
+TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 2 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
+```
+
+Balder takes care of all that for you. All you need to do is describe your environments by defining the `Scenario` and 
+`Setup` classes and provide the specific implementations by creating the setup level features. Balder automatically 
+determines the applicable variations and runs the tests with them.
+
+**NOTE:** Balder offers many more elements to design complete device structures, including connections between 
 devices.
 
 You can learn more about that in the 
@@ -197,14 +289,14 @@ With Balder, you can create custom test environments or install open-source-avai
 ready-to-use scenario `ScenarioSimpleLogin` from the [`balderhub-auth` package](https://hub.balder.dev/projects/auth/en/latest/examples.html), 
 
 
-We want to use [Selenium](https://www.selenium.dev/) to control the browser and of course use html elements, so let's install 
+If you want to use [Selenium](https://www.selenium.dev/) to control the browser and of course use html elements, you can install 
 `balderhub-selenium` and `balderhub-html` right away.
 
 ```
 $ pip install balderhub-auth balderhub-selenium balderhub-html
 ```
 
-So as mentioned, you don't need to define a scenario and a test yourself; you can simply import it:
+Instead of writing an own test scenario, you can simply import a ready-to-use one:
 
 ```python
 # file `scenario_balderhub.py`
@@ -233,7 +325,7 @@ class LoginPage(balderhub.auth.contrib.html.pages.LoginPage):
     # Overwrite abstract property
     @property
     def input_username(self):
-            return html.inputs.HtmlTextInput.by_selector(self.driver, Selector.by_name('user'))
+        return html.inputs.HtmlTextInput.by_selector(self.driver, Selector.by_name('user'))
 
     # Overwrite abstract property
     @property
@@ -259,11 +351,7 @@ import balderhub.auth.lib.scenario_features.role
 from balderhub.selenium.lib.setup_features import SeleniumChromeWebdriverFeature
 
 from lib.pages import LoginPage
-
-class UserConfig(balderhub.auth.lib.scenario_features.role.UserRoleFeature):
-    # provide the credentials for the log in
-        username = 'admin'
-        password = 'secret'
+from lib.setup_features import UserConfig  # another feature providing the user login data 
 
 class SetupOffice(balder.Setup):
 
