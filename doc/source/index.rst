@@ -18,8 +18,8 @@ Balder: Testing real-world complexity
 
    BalderHub <https://hub.balder.dev>
 
-Balder is a Python test framework that allows you to reuse test code you've written once across different platforms,
-devices, or applications. This means, that you can **install ready-to-use tests** or apply your
+Balder is a Python test framework that allows you to reuse test code you've written once across different but similar
+product versions or variations. This means, that you can **install ready-to-use tests** or apply your
 **own pre-written tests** to evaluate all kinds of software - without reinventing the wheel.
 
 
@@ -34,8 +34,8 @@ devices, or applications. This means, that you can **install ready-to-use tests*
        <div class="balder-text-side">
          <h4>Scalability without the Headache</h4>
          <p>
-           Write a single test scenario for your core business logic, and reuse it across the web, mobile apps,
-           desktop applications, or even embedded devices.
+           Write a single test scenario for your core business logic, and reuse it across all your
+           <b>product variations</b> - for web, mobile or desktop apps and even for embedded devices.
            <br/><br/>
            <b>No rewrites are needed!</b>
          </p>
@@ -60,9 +60,9 @@ devices, or applications. This means, that you can **install ready-to-use tests*
          <img src="_static/icons8/icons8-synchronize.svg" alt="synchronization icon" />
        </div>
        <div class="balder-text-side">
-         <h4>Testing Multiple Versions - all at once</h4>
+         <h4>Testing Multiple Product Variations - all at once</h4>
          <p>
-           Stop copying your test code every time a new product version comes out. Simply replace the specific test
+           Stop copying your test code every time a new product variation comes out. Simply replace the specific test
            features that change in the product.
            <br/><br/>
            <b>Balder will manage everything else</b> seamlessly!
@@ -77,7 +77,8 @@ devices, or applications. This means, that you can **install ready-to-use tests*
        <div class="balder-text-side">
          <h4>Ready-to-use Tests</h4>
          <p>
-           BalderHub projects allow you to install tests just like any other Python package.
+           BalderHub projects allow you to install tests just like any other Python package while staying fully
+           customizable.
            <br/><br/>
            Simply integrate them into your workflow and <b>start using them</b> right away!
          </p>
@@ -105,8 +106,8 @@ devices, or applications. This means, that you can **install ready-to-use tests*
        <div class="balder-text-side">
          <h4>Community driven power</h4>
          <p>
-           Tests thrive when <b>maintained by a collective</b>. Balder fosters collaboration, where diverse minds
-           tackle complex challenges <b>together</b>.
+           Tests thrive when <b>maintained by a collective</b>. BalderHub packages are developed by an
+           <b>Open-Source Community</b>, where diverse minds tackle complex challenges <b>together</b>.
            <br/><br/>
            Leading to robust solutions that a single team could never achieve alone.
          </p>
