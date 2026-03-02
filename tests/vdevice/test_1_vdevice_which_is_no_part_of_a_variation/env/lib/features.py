@@ -13,6 +13,12 @@ class AddCalculateFeature(balder.Feature):
         raise NotImplementedError("has to be implemented in subclass")
 
 
+class CalculatorHelperFeature(balder.Feature):
+
+    def get_help_with(self, number):
+        return number
+
+
 class ProvidesANumberFeature(balder.Feature):
     the_number = 0
 

@@ -1,4 +1,5 @@
-from ..lib.features import AddCalculateFeature, ProvidesANumberFeature
+import balder
+from ..lib.features import AddCalculateFeature, ProvidesANumberFeature, CalculatorHelperFeature
 from ..lib.utils import SharedObj
 
 
@@ -12,6 +13,9 @@ class PyAddProvideANumber(ProvidesANumberFeature):
 
 
 class PyAddCalculate(AddCalculateFeature):
+
+    class Helper(balder.VDevice):
+        helper = CalculatorHelperFeature()
 
     def get_numbers(self):
         self.all_numbers = SharedObj.shared_mem_list
