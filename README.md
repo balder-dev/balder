@@ -268,7 +268,7 @@ SETUP SetupLaboratory
     VARIATION ScenarioLight.LightSpendingDevice:SetupLaboratory.Car | ScenarioLight.LightDetectingDevice:SetupLaboratory.Sensor
       TEST ScenarioLight.test_check_light [.]
 ================================================== FINISH TESTSESSION ==================================================
-TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 2 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
+TOTAL NOT_RUN: 0 | TOTAL FAILURE: 0 | TOTAL ERROR: 0 | TOTAL SUCCESS: 4 | TOTAL SKIP: 0 | TOTAL COVERED_BY: 0
 ```
 
 Balder takes care of all that for you. All you need to do is describe your environments by defining the `Scenario` and 
@@ -407,6 +407,6 @@ your idea already exists or if you want to discuss your ideas with others, feel 
 
 Balder is free and Open-Source
 
-Copyright (c) 2022-2025 Max Stahlschmidt and others
+Copyright (c) 2022-2026 Max Stahlschmidt and others
 
 Distributed under the terms of the MIT license
