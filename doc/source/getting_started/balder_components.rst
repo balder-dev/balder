@@ -6,15 +6,18 @@ facts about :ref:`Scenarios` and :ref:`Setups` and how their :ref:`Devices` work
 :ref:`Features` are and how Balder matches these between :ref:`Scenarios` and :ref:`Setups`. You will also learn how to
 connect devices with each other over :ref:`Connections` and how :ref:`connection trees` are defined.
 
+By working through this section, you should be able to understand Balder tests and also manage and set up your
+own tests with Balder.
+
 Note that this section only provides an overview of the components. You can find a detailed description of each
 element in the :ref:`Basic Guide <Basic Guides>`.
 
 Difference setup and scenario
 =============================
 
-The basis of Balder is based on individual scenarios and setups that are in a fixed relationship to each other.
-Scenarios define a situation under which individual tests are carried out. Setups, on the other hand, describe how a
-test environment currently looks like. Two of the most important statements in Balder are:
+The key concept in Balder is the separation of test logic within scenarios and the specific implementation within setup
+classes. Scenarios define a situation under which individual tests are carried out. Setups, on the other hand, describe
+how a test environment currently looks like. So, the most important statements in Balder are:
 
 **Scenario:** Describes what you need
 
@@ -27,8 +30,7 @@ Scenario: Describes what you need
 
 A :ref:`Scenario <Scenarios>` always defines what **you need**. So for example if you want to test an online login on a
 server, you need the server and a client device that tries to connect to the server device. These are the components of
-a :ref:`Scenario <Scenarios>`. It describes what you need. In this case all other devices that are connected with the
-network don't matter.
+a :ref:`Scenario <Scenarios>`.
 
 Setup: Describes what you have
 ------------------------------
@@ -42,14 +44,10 @@ scenario-devices with compatible setup-devices.
 What are devices?
 =================
 
-A device can be a component of a :ref:`Setup <Setups>` or of a :ref:`Scenario <Scenarios>`. In generally it describes
+A device is a component of a :ref:`Setup <Setups>` or of a :ref:`Scenario <Scenarios>`. In generally it describes
 a container object, which represents a test component, an application or a real physically device. Generally, a device
-can be everything which has functionality.
-
-In Balder, devices are inner-classes of :ref:`Setups` or :ref:`Scenarios`. These classes have class properties that
-describe instantiated feature classes (later more). This easily allows you to use these features
-by referencing the :ref:`Setup <Setups>` or :ref:`Scenario <Scenarios>` devices in your test. You can access the
-properties with ``self.MyDevice.*``.
+contains functionality, so called :ref:`Features <Features>`. These features can directly be used within your
+test scenario or within fixtures of your setup. You can access these properties with ``self.MyDevice.*``.
 
 .. note::
     Note that a device itself never implements something by itself! A device should only have class-attributes which
@@ -58,18 +56,18 @@ properties with ``self.MyDevice.*``.
 Functionality = Feature
 -----------------------
 
-A device is a collection of so called :ref:`Features`. Every feature stands for a functionality the device has. So for
-example a **BrowserDevice** can have ``OpenAWebpageFeature()``, which describes the functionality to interact with a
-website. It does not provide the site itself. The website should be provided over another **ServerDevice**
+A device can also be described as a collection of :ref:`Features`. Every feature stands for a functionality the device
+has. So for example a **ClientDevice** can have ``OpenAWebpageFeature()``, which describes the functionality to
+interact with a website. It does not provide the site itself. The website should be provided by another **ServerDevice**
 which uses something like a ``ProvideWebpageFeature()``.
 
-In Balder you have to define scenario-devices similar to the following example code:
+In Balder you have to add features to scenario-devices as class attributes like shown below:
 
 .. code-block:: python
 
     class ScenarioMyOwn(balder.Scenario):
         ...
-        class BrowserDevice(balder.Device):
+        class ClientDevice(balder.Device):
             webpage = OpenAWebpageFeature()
 
         class ServerDevice(balder.Device):
@@ -81,21 +79,22 @@ In Balder you have to define scenario-devices similar to the following example c
             ...
 
 .. note::
-    Please note, that :class:`Scenario` classes must be defined inside files that start with `scenario_*.py`. In
-    addition their class name has to start with `Scenario*`. Otherwise the file will not be picked up by Balder.
+    Please note, that :class:`Scenario` classes must be defined inside files that start with ``scenario_*.py``. In
+    addition their class name has to start with ``Scenario*``. Otherwise the file will not be picked up by Balder.
 
 
 How to connect devices
 ======================
 
-In the real world, devices are connected with each other. If you have a **BrowserDevice** and a **ServerDevice** like
-mentioned before, you could expect that these are connected with each other over something like a HTTP connection. For
+In the real world, devices are connected with each other. If you have a **ClientDevice** and a **ServerDevice** like
+mentioned before, you could expect that these are connected with each other a HTTP connection. For
 this, Balder provides :ref:`Connections`.
 
 Simple connections
 ------------------
 
-Balder is shipped with a lot of different connections (see :ref:`Connections API`). In addition, you can create your
+Balder is shipped with a lot of different connections (see :ref:`Connections API`), that are organized in a so called
+:ref:`connection-tree <Global connection-trees>`. In addition to that, you can also create your
 own ones, by simply inheriting from the master class :class:`Connection`.
 
 .. code-block:: python
@@ -119,8 +118,8 @@ Connections between devices
 ---------------------------
 
 We have learned a lot about connections and how they are organized, but how do we connect some devices with each other?
-This is really simple, because Balder provides a decorator ``connect(..)`` here. If you want to connect the two devices
-``BrowserDevice`` and ``ServerDevice`` with each other, you can do the following:
+This is really simple, because Balder provides a decorator ``@balder.connect(..)`` here. If you want to connect the
+``ClientDevice`` with the ``ServerDevice``, you can do the following:
 
 .. code-block:: python
 
@@ -128,10 +127,10 @@ This is really simple, because Balder provides a decorator ``connect(..)`` here.
 
     class ScenarioMyOwn(balder.Scenario):
         ...
-        class BrowserDevice(balder.Device):
+        class ClientDevice(balder.Device):
             ...
 
-        @balder.connect(BrowserDevice, over_connection=HttpConnection.based_on(IpV4Connection))
+        @balder.connect(ClientDevice, over_connection=HttpConnection.based_on(IpV4Connection))
         class ServerDevice(balder.Device):
             ...
 
@@ -140,54 +139,63 @@ It works the same way in setups.
 How setups work?
 ================
 
-So far we have defined the so-called scenario level (**what we need**). But of course we also have to define the actual
-real environment that we have. For this we use the :class:`Setup` classes.
+So far we have finished the scenario level (**what we need**). But of course we also have to define the actual
+real implementation for what we want to test. For this we use the :class:`Setup` classes.
 
 As mentioned earlier, **Setups always describe what you have**! Similar to :ref:`Scenarios` you define all your devices
-and add features to it. But here you can define everything you have or you want to use in the testenvironment. Balder
+and add features to it. But here you can define everything you have or you want to use in the test environment. Balder
 will automatically determine (based on the feature set and the connections between the devices) in which constellation
-a scenario will fit to a setup.
+a scenario fits to a setup.
 
 Implement features
 ------------------
 
 Often scenario-features don't provide the whole implementation. In most cases, these features are abstract
-and a user specific implementation has to be provided on setup level (means, in a child feature that is instantiated
-inside a setup devices). For this, you can add a new module `features_setup.py` into the `setups` directory, that
-provides the specific setup level features:
+and a user specific implementation has to be provided on setup level (means, the setup device needs to hold the feature
+implementations of the scenario devices).
+
+This implementation normally holds your specific code. We want to add them into a new module
+``lib/scenario_features.py``, that provides the specific setup level features:
 
 .. code-block:: none
 
-    |- tests/
+    |- src/
+        |- lib/
+            |- scenario_features.py
+            |- setup_features.py
         |- scenarios/
             |- ...
         |- setups/
-            |- features_setup.py
             |- setup_my.py
             |- ...
 
 .. note::
-    Balder is not interested in where you implement the feature objects. Feel free to use your own structure, but be
-    careful, where you save your files you want to reuse. Without a clear structure this can be a little bit confusing.
+    Balder doesn't care where you implement the feature objects, but it is easier to use a common understandable
+    structure to make it easier to read your code.
 
 .. note::
-    If you have many features you can also use a python module. For this you create a directory with the name
-    ``features_setup`` and add a ``__init__.py`` file in it.
+    Often its a good idea to use a directory as a python module for managing features. For this you create a directory
+    with the name ``scenario_features`` instead of the ``scenario_features.py`` file and add a ``__init__.py`` file in
+    it.
 
     .. code-block:: none
 
-        |- tests/
+        |- src/
+            |- lib/
+                |- scenario_features/
+                    |- __init__.py
+                    |- ...
+                |- setup_features/
+                    |- __init__.py
+                    |- my_example_feature.py
+                    |- ...
             |- scenarios/
                 |- ...
             |- setups/
-                |- features_setup/
-                    |- __init__.py
-                    |- my_example_feature.py
-                    |- ..
                 |- setup_my.py
                 |- ...
 
-    Here you can implement many files in it, which allows you to separate the features a little bit.
+    Here you can implement many files, which allows you to organize your features in a clear way.
 
 How does Balder know, which feature you are implementing?
 ---------------------------------------------------------
@@ -195,37 +203,46 @@ How does Balder know, which feature you are implementing?
 Maybe you ask yourself how Balder knows which scenario-feature you are implementing in your setup. For this Balder
 uses **Inheritance**!
 
-The scenario-features often implement abstract properties or methods. You can implement them easily by overwriting them.
+A setup level feature always needs to be a subclass of the related scenario-level feature to match.
+
+In most cases the scenario-features implement abstract properties or methods, which are filled with a specific
+implementation on setup level. You can implement them easily by overwriting them.
 
 The file ``features_setup.py`` for example could have the following content:
 
 .. code-block:: python
 
-    # file tests/setups/features_setups.py
+    # file src/lib/setup_features.py
 
-    # import from global lib - has the abstract feature that is directly used in scenario-device
-    from ..lib import MyAbstractExampleFeature
+    from lib import scenario_features
 
-    class MyExampleFeature(MyAbstractExampleFeature):
+    class SeleniumFeature(scenario_features.OpenAWebpageFeature):
 
-        def do_it(self):
-            print("I do it")
+        ...
 
-The setup file itself, defines all the devices you have in your testsystem and adds the features to it in the same way
-like it is done in the scenario, but of course with the subclass, that really provides the implementation:
+        def open_page(self, url):
+            self.selenium.open(url)
+
+        ...
+
+This setup-level feature holds the ready-to-use implementation for the scenario-level feature
+``lib.scenario_features.OpenAWebpageFeature`` by using the selenium Framework.
+
+If you want to use this feature, you need to assign it to a setup device. The setup file itself, defines all the
+devices you have in your test environment and adds the features to it in the same
+way like it is done in the scenario, but with the setup-level implementation of the feature:
 
 .. code-block:: python
 
-    # file tests/setups/setup_my.py
+    # file src/setups/setup_my.py
 
-    # import from setup feature file
     import balder
-    from .features_setup import MyExampleFeature
+    from lib import setup_features
 
     class SetupMy(balder.Setup):
         # also inherits directly from `balder.Device`
         class DeviceDoer(balder.Device):
-            example = MyExampleFeature()
+            selenium = setup_features.SeleniumFeature()
             ...
 
         class OtherDevice(balder.Device):
@@ -234,13 +251,13 @@ like it is done in the scenario, but of course with the subclass, that really pr
         ...
 
 .. note::
-    Please note, that :class:`Setup` classes must be defined inside files that start with `setup_*.py`. In
-    addition their class name has to start with `Setup*`. Otherwise the file will not be picked up by Balder.
+    Please note, that :class:`Setup` classes must be defined inside files that start with ``setup_*.py``. In
+    addition their class name has to start with ``Setup*``. Otherwise the file will not be picked up by Balder.
 
 You can implement more devices than in the scenario, Balder doesn't care. It will search for devices that match the
-**requirement**, defined in scenario. If the matching candidates have a matching connection-tree and if all required
-features of a scenario-device are also implemented in the setup-device, Balder will run the scenario-testcases with this
-constellation!
+**requirement**, defined within the scenario. If the matching candidates have a matching connection-tree and if all
+required features of a scenario-device are also implemented current considered setup-device, Balder will run the
+scenario-testcases with this constellation as a new VARIATION!
 
 .. note::
     Note that test methods have to be defined in scenario classes only. Setups don't support own test methods!
@@ -248,14 +265,16 @@ constellation!
 How does this work together?
 ============================
 
-It is really important to know the difference, so we want to repeat it again. The most important differences
-between scenarios and setups are:
+In order to understand Balder, it is really important to be clear about the meaning of scenarios and setups, which is
+why we want to remind ourselves of this again:
 
 **Scenario:** Describes what you need
 
 **Setup:** Describes what you have
 
-These are the golden rules, Balder works with. After you have defined a scenario, add some devices to it and instantiate
+These are the golden rules, Balder works with.
+
+You have to define a scenario, add some devices to it and instantiate
 their feature objects as their class attributes. This describes what your testcase needs.
 
 Then you think about **what you have**. How does your test rack or your test pc/pipeline look like? All this can be
@@ -270,9 +289,6 @@ determines which device-mappings (between scenarios and setups) match with each 
 that, Balder is interested in the feature sets your devices have. Based on these feature sets, Balder will automatically
 determine the possible mappings between the :ref:`Scenario <Scenarios>`-Devices and the
 :ref:`Setup <Setups>`-Devices.
-
-Generally, Balder will create matching candidates by searching possible mappings of a scenario device with one of
-the available setup devices. In this stage Balder does not care if the devices are compatible.
 
 Feature check
 -------------
@@ -314,9 +330,10 @@ Now let's also take a look at an example that does not work:
 
     ScenarioDevice:                 <=>     SetupDevice:
         MyAbstractFeature1()                    MyFeature1()
-        MyAbstractFeature2()                    MyFeature3()
+        MyAbstractFeature2()
+                                                MyFeature3()
 
-This would not work because there is no feature in the setup, that implements the  ``MyAbstractFeature2()``!
+This wouldn't work because there is no feature in the setup, that implements the  ``MyAbstractFeature2()``!
 
 What about having more features in the ``SetupDevice`` than in the ``ScenarioDevice``?
 
@@ -327,25 +344,122 @@ What about having more features in the ``SetupDevice`` than in the ``ScenarioDev
                                                 MyFeature2()
         MyAbstractFeature3()                    MyFeature3()
 
-This would work, because we have an implementation for ``MyAbstractFeature1`` and for ``MyAbstractFeature3`` in the
-``SetupDevice``. It is not important that the scenario device doesn't provide a parent class for the ``MyFeature2`` of
-the ``SetupDevice``. For this current mapping, we are not interested in it. Remember, the scenario describes
-**what we need**, the setup describes **what we have**. If we have more features implemented in our setup device, it is
-ok and we are not interested in this for the current mapping. Maybe we will need it in another mapping with another
-scenario later.
+This would work, because we have an implementation for all scenario-level features. There is a equivalent subclass
+within the ``SetupDevice`` for the ``MyAbstractFeature1`` and the ``MyAbstractFeature3``. Balder doesn't care, that the
+scenario device doesn't provide a parent class for the ``MyFeature2``. For this current mapping, we are just not
+interested in it. Remember, the scenario describes **what we need**, the setup describes **what we have**. If we have
+more features implemented in our setup device, it is
+okay and we are not interested in this for the current mapping. Maybe we will need it for another scenario within
+another mapping later.
 
 Connection Sub-Tree Check
 -------------------------
 
-With the feature filter we have already filtered a lot of candidates. Now we are interested how the devices are
-connected with each other. For this, we check if the connection-tree, that has been defined in the scenario, is
-contained in the connection tree, that has been defined in the setup. This will be done for every connection between
-the matching devices. Every matching with one or more device-connection that does not pass this, will be filtered.
+The feature filter has already filtered the variation candidates for the most important criteria: If they have an
+implementation for the required features.
+
+Now Balder will also check how the devices are connected with each other. For this, Balder checks if the
+connection-tree, that has been defined in the scenario, is contained in the connection tree, that has been defined
+in the setup. This will be done for every connection between the matching devices.
+
+If one of the variation candidates do not pass this check, because the scenario defined connection is not contained
+within the setup defined connection between two devices of the current variation, the variation will be discarded and
+not considered for execution.
 
 Execution
 =========
 
-In the last step Balder will execute the mappings. You can execute Balder, by simply calling it inside the project
+In the last step Balder will execute the mappings.
+
+Executor Tree
+-------------
+
+When Balder determines valid variations during the resolving process, these variations will be added to the executor
+tree. As soon as Balder enters the execution stage, this tree will be executed.
+
+The tree runs trough the following levels:
+
+.. code-block:: none
+
+    | Construction SESSION Scope
+
+        | Construction SETUP Scope `SetupMy`
+
+            | Construction SCENARIO Scope `ScenarioMyOwn`
+
+                | Construction VARIATION Scope `ScenarioMyOwn.ClientDevice:SetupMy.Client | ScenarioMyOwn.ServerDevice:SetupMy.Server`
+
+                    | Construction TESTCASE Scope `ScenarioMyOwn.test_webpage`
+                        | Run TESTCASE Scope `ScenarioMyOwn.test_webpage`
+                    | Teardown TESTCASE Scope `ScenarioMyOwn.test_webpage`
+                    ... further test cases of this variation
+                | Teardown VARIATION Scope `ScenarioMyOwn.ClientDevice:SetupMy.Client | ScenarioMyOwn.ServerDevice:SetupMy.Server`
+                ... further variations
+
+            | Teardown SCENARIO Scope `ScenarioMyOwn`
+            ... further scenarios of this setup
+
+        | Teardown SETUP Scope `SetupMy`
+        ... further setups
+
+    | Teardown SESSION Scope
+
+Feature Swap before Execution
+-----------------------------
+
+The "magic" occurs right before starting the CONSTRUCTION phase of a new variation. At this point, Balder swaps out
+each abstract feature from the current scenario with a matching feature from the setup level. This setup feature
+contains the actual code needed for the specific variation that's about to run.
+
+In our example, Balder looks at the ``ScenarioMyOwn.ClientDevice`` class. It goes through each feature instance one
+by one and replaces the abstract scenario-level feature with its corresponding setup-level version (which is a subclass
+of it). For instance, it swaps the ``OpenAWebpageFeature()`` assigned to ``ScenarioMyOwn.ClientDevice.webpage`` with
+the equivalent ``SeleniumFeature()`` instance from ``SetupMy.DeviceDoer.selenium``.
+
+.. code-block:: python
+
+    # file src/setups/setup_my.py
+
+    import balder
+    from lib import setup_features
+
+    class SetupMy(balder.Setup):
+        # also inherits directly from `balder.Device`
+        class DeviceDoer(balder.Device):
+            selenium = setup_features.SeleniumFeature()
+            ...
+
+        class OtherDevice(balder.Device):
+            ...
+
+        ...
+
+.. code-block:: python
+
+    import balder
+    from lib import scenario_features
+    ...
+
+    class ScenarioMyOwn(balder.Scenario):
+        ...
+        class ClientDevice(balder.Device):
+            webpage = scenario_features.OpenAWebpageFeature()
+
+        class ServerDevice(balder.Device):
+            provider = scenario_features.ProvideWebpageFeature()
+
+As soon as the Construction-Part of a Variation is entered, every class attribute of a device holds the related
+setup-level feature instance. So in our example, the ``ClientDevice.webpage`` holds the selenium implementation
+``setup_features.SeleniumFeature`` and we can execute its implemented methods.
+
+This will be done equivalent for all scenario-level feature instances that are assigned to scenario devices.
+
+Of course Balder will rollback this afterwards, as soon as the teardown code of the variation was finished.
+
+Run
+---
+
+You can execute Balder, by simply calling it inside the project
 directory:
 
 .. code-block:: none
