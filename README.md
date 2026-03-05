@@ -3,10 +3,10 @@
   <img style="margin: 20px;max-width: 68%" src="https://docs.balder.dev/en/latest/_static/balder_w_boarder.png" alt="Balder logo">
 </div>
 
-Balder is a Python test system that allows you to reuse test code written once for different but similar product 
-versions or variations. By separating the test logic from the product-specific implementation, it allows you to 
-**adapt entire test suites to new devices or technologies in minutes** - even if they use completely different 
-underlying mechanisms.
+Balder is a Python test system that allows you to reuse test code written once for different product versions or 
+variations, without any code duplicates. By separating the test logic from the product-specific implementation, it 
+allows you to **adapt entire test suites to new devices or technologies in minutes** - even if they use completely 
+different underlying mechanisms.
 
 This enables you to **install ready-to-use test cases** and provides various test development features that 
 helps to test software or embedded devices much faster.
@@ -27,7 +27,7 @@ python -m pip install baldertest
 
 # Run Balder
 
-After you've installed it, you can run Balder  with the following command:
+After you've installed it, you can run Balder with the following command:
 
 ```
 balder
@@ -55,8 +55,11 @@ mappings between Scenarios and Setups, generating and running variations dynamic
 Scenarios use inner Device classes to outline required devices and their features. Features are abstract classes 
 defining interfaces (e.g., methods like `switch_on()`).
 
-Here's an example Scenario for testing a light source's basic functionality, making it adaptable to any light-emitting 
-device:
+Let's create a new scenario with two devices. One device emitting light and another device that detects light:
+
+![light_expl_scenario.svg](doc/source/_static/light_expl_scenario.png)
+
+Here's an implementation of this Scenario:
 
 ```python
 import balder
@@ -74,6 +77,8 @@ class ScenarioLight(balder.Scenario):
     class LightDetectingDevice(balder.Device):
         detector = BaseLightDetectorFeature()
     
+    # TEST METHOD: needs to start with `test_*` and is defined in scenarios only 
+    #  -> can use all scenario device features
     def test_check_light(self):
         self.LightSpendingDevice.light.switch_on()
         assert self.LightDetectingDevice.detector.light_is_on()
@@ -90,6 +95,8 @@ This Scenario requires two devices: one to emit light and one to detect it. The 
 
 `BaseLightDetectorFeature`: Abstract feature with methods like `light_is_on()`.
 
+Both devices are connected to each other (defined with the `@balder.connect(..)`), because the light-emitting device
+and the light detecting device need to interact somehow.
 
 ## Define the `Setup` class
 
@@ -97,7 +104,11 @@ Next step is defining a `Setup` class that describes what **we have**. For a `Sc
 `Setup`, every feature required by the Scenario must exist as a subclass within the corresponding mapped Device in the 
 Setup.
 
-For testing a car with a light in a garage setup:
+For testing a car with a light in a garage setup `SetupGarage`:
+
+![light_expl_setup.svg](doc/source/_static/light_expl_setup.png)
+
+In code, this looks like:
 
 ```python
 import balder
@@ -118,7 +129,17 @@ class SetupGarage(balder.Setup):
 
 ```
 
-Balder scans for matches: It checks if Setup devices implement all required Scenario features. In our case, it finds 
+Note that `CarLightFeature` is a subclass of `BaseLightSpendingFeature` and `LightDetectorFeature` is a subclass of 
+`BaseLightDetectorFeature`.
+
+Balder scans for possible matches by checking whether a setup device provides implementations for all the features 
+required by a candidate scenario device. When Balder identifies a valid variation - meaning every scenario device is 
+mapped to a setup device that implements all the necessary scenario features - it executes the tests using that 
+variation.
+
+![light_expl_setup_garage_caronly.gif](doc/source/_static/light_expl_setup_garage_caronly.gif)
+
+In our case, it finds 
 one matching variation (`LightSpendingDevice -> Car | LightDetectingDevice -> Sensor`) and runs the test with it.
 
 ```shell
@@ -144,7 +165,8 @@ Now the big advantage of Balder comes into play. We can run our test with all de
 `BaseLightSpendingFeature`, independent of how this will be implemented in detail. 
 **You do not need to rewrite the test**.
 
-So, We have more devices in our garage. So let's add them:
+So, we have more devices in our garage. So let's add them:
+
 
 ```python
 import balder
@@ -183,6 +205,9 @@ in both variants.
 
 Balder now detects the two variations (`Car` and `Bicycle` as light sources):
 
+![light_expl_setup_garage_full.gif](doc/source/_static/light_expl_setup_garage_full.gif)
+
+Running Balder looks like shown below:
 
 ```shell
 +----------------------------------------------------------------------------------------------------------------------+
