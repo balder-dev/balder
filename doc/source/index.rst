@@ -18,9 +18,9 @@ Balder: Testing real-world complexity
 
    BalderHub <https://hub.balder.dev>
 
-Balder is a Python test framework that allows you to reuse test code you've written once across different but similar
-product versions or variations. This means, that you can **install ready-to-use tests** or apply your
-**own pre-written tests** to evaluate all kinds of software - without reinventing the wheel.
+Balder is a Python test system that allows you to reuse test code written once for different product versions or variations, 
+without any code duplicates. This means, that you can **install ready-to-use tests** or apply your
+**own pre-written tests** to evaluate different product variants - without reinventing the wheel.
 
 
 .. raw:: html
