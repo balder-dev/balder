@@ -868,7 +868,7 @@ class VariationExecutor(BasicExecutableExecutor):
                 method_var_selection = {}
 
                 for cur_method_name, _ in inspect.getmembers(
-                        cur_setup_feature, lambda o: inspect.isfunction(o) or inspect.ismethod(o)):
+                        cur_setup_feature.__class__, lambda o: inspect.isfunction(o) or inspect.ismethod(o)):
 
                     if cur_method_name not in method_var_data_of_feature.keys():
                         # ignore if there was no method-variation registration for the current method
