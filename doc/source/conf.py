@@ -55,7 +55,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # Set canonical URL from the Read the Docs Domain
-html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+html_baseurl = "https://docs.balder.dev/en/stable/"
 
 # Tell Jinja2 templates the build is running on Read the Docs
 if os.environ.get("READTHEDOCS", "") == "True":
@@ -69,6 +69,7 @@ if os.environ.get("READTHEDOCS", "") == "True":
 #
 html_theme = "furo"
 html_title = "Balder Documentation"
+html_short_title = f"Balder {version}"
 html_logo = "_static/balder.png"
 html_theme_options = {
 }
