@@ -6,6 +6,9 @@
 Balder: Testing real-world complexity
 *************************************
 
+.. meta::
+   :description lang=en: Balder: Python test framework for maximum reusability. Write your test code once and reuse it across any product variation or publish it with BalderHub packages.
+
 .. toctree::
    :maxdepth: 2
    :hidden:
