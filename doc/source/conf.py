@@ -68,7 +68,7 @@ if os.environ.get("READTHEDOCS", "") == "True":
 # a list of builtin themes.
 #
 html_theme = "furo"
-html_title = "<release>"
+html_title = "Balder Documentation"
 html_logo = "_static/balder.png"
 html_theme_options = {
 }
