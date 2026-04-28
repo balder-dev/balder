@@ -675,14 +675,19 @@ class Collector:
         This method exchanges all strings (that can be used in decorators) are exchanged with their real objects. It
         secures this for all :class:`Device` and :class:`VDevice` references inside the session.
         """
+        all_scenarios = [scenario for scenario in self.all_collected_scenarios_with_mro
+                         if issubclass(scenario, Scenario) and scenario != Scenario]
+        all_setups = [setup for setup in self.all_collected_setups_with_mro
+                         if issubclass(setup, Setup) and setup != Setup]
+
         # resolve connection Device strings (for all devices that are directly defined inside the scenario/setup)
-        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+        for cur_scenario_or_setup in all_scenarios + all_setups:
             cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
             for cur_device in cur_scenario_or_setup_controller.get_all_inner_device_classes():
                 DeviceController.get_for(cur_device).resolve_connection_device_strings()
 
         # resolve connection VDevice strings (for all absolute devices of this scenario/setup)
-        for cur_scenario_or_setup in self.all_scenarios_and_setups:
+        for cur_scenario_or_setup in all_scenarios + all_setups:
             cur_scenario_or_setup_controller = NormalScenarioSetupController.get_for(cur_scenario_or_setup)
             for cur_device in cur_scenario_or_setup_controller.get_all_abs_inner_device_classes():
                 DeviceController.get_for(cur_device).resolve_mapped_vdevice_strings()
