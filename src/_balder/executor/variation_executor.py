@@ -744,10 +744,9 @@ class VariationExecutor(BasicExecutableExecutor):
                 )
 
                 if vdev_mappings_of_setup_feature[0].device not in self.base_device_mapping.values():
-                    raise NotApplicableVariationException(
-                        f'the mapped setup device `{vdev_mappings_of_setup_feature[0].device.__qualname__}` which is '
-                        f'mapped to the VDevice `{vdev_mappings_of_setup_feature[0].vdevice.__qualname__}` is no part '
-                        f'of this variation')
+                    # ignore this device if it is no part of the mapping (assigned VDev, that does not have an
+                    # mapped scenario device)
+                    continue
 
                 cur_mapped_scenario_device = self.get_scenario_device_for(vdev_mappings_of_setup_feature[0].device)
 
