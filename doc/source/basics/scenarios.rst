@@ -146,7 +146,7 @@ Now, we want to update our features by adding some methods. Let's expand our ``f
             """returns list with tuples (sender_object, the_bytes)"""
             raise NotImplementedError("has to be implemented in subclass")
 
-With that, we added two abstract methods without an implementation yet. We are going to implemented them in the
+With that, we added two abstract methods without an implementation yet. We are going to implement them in the
 :class:`Feature` subclass of our :ref:`Setups` later.
 
 With that, we have added two abstract methods without implementations yet. We will implement them later in the
